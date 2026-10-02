@@ -1,0 +1,55 @@
+# Ejemplo para reconocer el vocabulario completo del lenguaje.
+definir sumar con numero primero, numero segundo devuelve numero
+    devolver primero + segundo
+fin
+
+definir copiar con texto mensaje devuelve texto
+    devolver mensaje
+fin
+
+definir negar con logico valor devuelve logico
+    devolver no valor
+fin
+
+crear variable puntos con 0
+crear variable nombre con "Ana"
+crear variable activo con verdadero
+crear variable opcion con 0
+crear variable computadora con 0
+crear variable año con 2026
+
+preguntar "¿Cómo te llamas?" y guardar en nombre
+preguntar "Elige un número del 1 al 3" y guardar en opcion
+elegir numero entre 1 y 3 y guardar en computadora
+
+si opcion es igual a computadora entonces
+    mostrar "Empate"
+sino
+    si opcion es diferente de computadora entonces
+        mostrar "Jugadas diferentes"
+    fin
+fin
+
+repetir 3 veces
+    cambiar puntos por 1
+fin
+
+mientras puntos es menor que 10 y activo hacer
+    fijar puntos a sumar(puntos, 1)
+fin
+
+si puntos es mayor o igual que 10 entonces
+    mostrar copiar("¡Lo lograste!")
+fin
+
+si puntos es menor o igual que 10 entonces
+    mostrar año
+fin
+
+si puntos es mayor que 0 entonces
+    fijar activo a falso
+fin
+
+mostrar (10 - 2) * 3 / 2.5
+mostrar "Comillas: \"hola\". Salto: \n. Tabulación: \t. Barra: \\."
+juego
