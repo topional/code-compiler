@@ -11,10 +11,9 @@ No comprueba todavía el orden de los tokens, los tipos ni la ejecución.
 | CREAR | crear |
 | VARIABLE | variable |
 | CON | con |
-| FIJAR | fijar |
+| ASIGNAR | asignar |
+| VALOR | valor |
 | A | a |
-| CAMBIAR | cambiar |
-| POR | por |
 | MOSTRAR | mostrar |
 | PREGUNTAR | preguntar |
 | GUARDAR | guardar |
@@ -48,9 +47,11 @@ No comprueba todavía el orden de los tokens, los tipos ni la ejecución.
 | ELEGIR | elegir |
 | ENTRE | entre |
 | JUEGO | juego |
+| CALCULADORA | calculadora |
 
-Las palabras reservadas se escriben en minúsculas y sin tildes. Son sensibles
-a mayúsculas: `mostrar` es MOSTRAR y `Mostrar` es ID. No se pueden usar como nombres.
+Las palabras reservadas se documentan en minúsculas y sin tildes, pero se reconocen
+sin distinguir mayúsculas: `mostrar`, `Mostrar` y `MOSTRAR` son MOSTRAR. La opción
+`caseInsensitive = true` conserva el lexema original. No se pueden usar como nombres.
 Las palabras cortas `a`, `y` y `o` también están reservadas.
 
 ## Otros tokens
@@ -75,7 +76,8 @@ pueden contener otros caracteres Unicode. Los nombres distinguen mayúsculas.
 NUMERO no incluye el signo: `-5` produce RESTA y NUMERO. Los decimales usan
 punto y requieren dígitos a ambos lados. La notación científica no está definida.
 
-TEXTO admite los escapes `\"`, `\\`, `\n`, `\r` y `\t`; el token conserva
+TEXTO usa `caseInsensitive = false` para admitir solo los escapes exactos
+`\"`, `\\`, `\n`, `\r` y `\t` (por ejemplo, `\N` es inválido); el token conserva
 el lexema original. La interpretación de esos escapes se realizará después.
 Los saltos reales dentro de las comillas no están permitidos.
 
@@ -87,10 +89,16 @@ el archivo puede terminar con o sin un salto de línea.
 ## Formas propuestas para las instrucciones
 
 ```text
-crear variable edad con 10
-fijar edad a 11
-cambiar edad por 1
+crear variable edad
+asignar edad valor de 10
+asignar edad valor de 11
+asignar edad valor de edad + 1
 mostrar edad
+mostrar 10
+mostrar "Hola"
+crear variable nombre
+asignar nombre valor de "Ana"
+mostrar nombre
 preguntar "Edad" y guardar en edad
 
 si edad es mayor o igual que 12 entonces
@@ -104,7 +112,7 @@ repetir 3 veces
 fin
 
 mientras edad es menor que 18 hacer
-    cambiar edad por 1
+    asignar edad valor de edad + 1
 fin
 
 definir sumar con numero primero, numero segundo devuelve numero
@@ -114,6 +122,7 @@ fin
 mostrar sumar(2, 3)
 elegir numero entre 1 y 3 y guardar en edad
 juego
+calculadora
 ```
 
 Las comparaciones propuestas son `es igual a`, `es diferente de`, `es mayor que`,
@@ -121,15 +130,29 @@ Las comparaciones propuestas son `es igual a`, `es diferente de`, `es mayor que`
 palabras independientes. El parser deberá combinarlas y diferenciar el `o`
 de esas comparaciones del operador lógico. Los operadores lógicos son `y`, `o`, `no`.
 
-Las variables se crean con un valor inicial; el análisis semántico deberá definir
-y verificar su tipo. Los parámetros y resultados de funciones usan `numero`,
+La declaración tiene la forma `crear variable NOMBRE`, sin valor inicial.
+La asignación tiene la forma `asignar NOMBRE valor de EXPRESIÓN` y establece
+un primer valor o reemplaza el valor de una variable existente.
+Los incrementos usan una expresión, por ejemplo
+`asignar puntos valor de puntos + 1`. `valor` es una palabra reservada y no se
+puede usar como nombre de variable o parámetro.
+
+Como propuesta para el análisis semántico, la primera asignación determinará
+si la variable contiene un número, texto o lógico. Usarla antes de darle un
+valor será un error de variable no inicializada. Las asignaciones posteriores
+deberán respetar su tipo. Los enteros y decimales comparten el tipo `numero`.
+`mostrar` admitirá variables, expresiones y valores directos como `10` o `"Hola"`.
+Estas comprobaciones y la ejecución todavía no están implementadas.
+
+Los parámetros y resultados de funciones usan `numero`,
 `texto` y `logico`. Las funciones sin parámetros podrán omitir `con ...`.
 `devuelve` indica el tipo de resultado y `devolver` entrega el resultado.
 
-`juego` será una instrucción de motivación incorporada. El lenguaje permite
-escribir calculadoras y juegos sencillos usando las construcciones generales;
-`calculadora` no es una palabra reservada. La operación aleatoria y el minijuego
-se implementarán en el entorno de ejecución.
+`juego` y `calculadora` serán instrucciones de motivación incorporadas que
+mostrarán un minijuego y una calculadora, respectivamente. El lenguaje también
+permite escribir calculadoras y juegos sencillos usando las construcciones
+generales. El comportamiento de esas instrucciones y la operación aleatoria
+se implementarán en el entorno de ejecución; por ahora solo se reconocen los tokens.
 
 ## Errores léxicos y pruebas
 

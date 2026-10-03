@@ -31,9 +31,19 @@ def analizar(codigo):
 
 
 class LexerTests(unittest.TestCase):
+    def test_calculadora_y_nombres_similares(self):
+        tokens, errores, _ = analizar("calculadora calculadoraPersonal Calculadora CALCULADORA")
+        self.assertEqual(errores, [])
+        self.assertEqual(tokens, [
+            ("CALCULADORA", "calculadora"),
+            ("ID", "calculadoraPersonal"),
+            ("CALCULADORA", "Calculadora"),
+            ("CALCULADORA", "CALCULADORA"),
+        ])
+
     def test_palabras_reservadas_y_nombres_mas_largos(self):
         tokens, errores, _ = analizar(
-            "mostrar mostrarEdad si sino sinopsis devolver devuelve devolverDato"
+            "mostrar mostrarEdad si sino sinopsis devolver devuelve devolverDato asignar asignarPuntos"
         )
         self.assertEqual(errores, [])
         self.assertEqual(
@@ -43,15 +53,35 @@ class LexerTests(unittest.TestCase):
                 ("SI", "si"), ("SINO", "sino"), ("ID", "sinopsis"),
                 ("DEVOLVER", "devolver"), ("DEVUELVE", "devuelve"),
                 ("ID", "devolverDato"),
+                ("ASIGNAR", "asignar"), ("ID", "asignarPuntos"),
             ],
         )
 
     def test_identificadores_espanoles_y_mayusculas(self):
-        tokens, errores, _ = analizar("año número2 acción _contador Mostrar")
+        tokens, errores, _ = analizar("año número2 acción _contador AÑO Número2")
         self.assertEqual(errores, [])
         self.assertTrue(all(tipo == "ID" for tipo, _ in tokens))
         self.assertEqual([texto for _, texto in tokens],
-                         ["año", "número2", "acción", "_contador", "Mostrar"])
+                         ["año", "número2", "acción", "_contador", "AÑO", "Número2"])
+
+    def test_palabras_mixtas_preservan_el_lexema(self):
+        tokens, errores, _ = analizar(
+            'CrEaR VARIABLE edad\nASIGNAR edad VaLoR DE 11\n'
+            'crear variable nombre\nasignar nombre valor de "Ana"\n'
+            'Mostrar 10\nMOSTRAR "Hola ANA"'
+        )
+        self.assertEqual(errores, [])
+        self.assertEqual(tokens, [
+            ("CREAR", "CrEaR"), ("VARIABLE", "VARIABLE"), ("ID", "edad"),
+            ("SALTO_LINEA", "\n"),
+            ("ASIGNAR", "ASIGNAR"), ("ID", "edad"), ("VALOR", "VaLoR"),
+            ("DE", "DE"), ("NUMERO", "11"), ("SALTO_LINEA", "\n"),
+            ("CREAR", "crear"), ("VARIABLE", "variable"), ("ID", "nombre"),
+            ("SALTO_LINEA", "\n"), ("ASIGNAR", "asignar"), ("ID", "nombre"),
+            ("VALOR", "valor"), ("DE", "de"), ("TEXTO", '"Ana"'),
+            ("SALTO_LINEA", "\n"), ("MOSTRAR", "Mostrar"), ("NUMERO", "10"),
+            ("SALTO_LINEA", "\n"), ("MOSTRAR", "MOSTRAR"), ("TEXTO", '"Hola ANA"'),
+        ])
 
     def test_comparacion_compuesta_y_operador_logico(self):
         tokens, errores, _ = analizar(
@@ -102,7 +132,8 @@ class LexerTests(unittest.TestCase):
 
     def test_literales_mal_formados(self):
         for codigo in ('mostrar "sin cerrar', 'mostrar "dos\nlíneas"',
-                       r'mostrar "escape \q"', "mostrar .5", "mostrar 1.2.3"):
+                       r'mostrar "escape \q"', r'mostrar "escape \N"',
+                       "mostrar .5", "mostrar 1.2.3"):
             with self.subTest(codigo=codigo):
                 _, errores, _ = analizar(codigo)
                 self.assertTrue(errores)

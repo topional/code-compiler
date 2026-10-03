@@ -4,6 +4,24 @@ Proyecto de un lenguaje textual en español para facilitar la transición desde
 Scratch. La versión actual implementa el análisis léxico con ANTLR4 y Python.
 Las reglas propuestas están documentadas en [docs/tokens.md](docs/tokens.md).
 
+La sintaxis básica separa la declaración de la asignación:
+
+```text
+crear variable edad
+asignar edad valor de 10
+mostrar edad
+
+crear variable nombre
+asignar nombre valor de "Ana"
+mostrar nombre
+mostrar 10
+mostrar "Hola"
+```
+
+Las palabras reservadas admiten mayúsculas y minúsculas; los tokens conservan
+el texto original. El uso de variables sin valor y la compatibilidad de tipos
+se comprobarán en la futura etapa semántica.
+
 ## Preparación
 
 Se necesita Python 3, Java, Make y el generador de ANTLR 4.13.1.
@@ -48,5 +66,5 @@ Esa prueba falla intencionalmente porque `@` no está definido.
 
 El lexer reconoce variables, entrada/salida, operaciones, lógica, comparaciones,
 condicionales, ciclos, funciones, tipos, elección aleatoria y la instrucción
-de motivación `juego`. Los programas todavía no se ejecutan. Las siguientes
+de motivación `juego` y `calculadora`. Los programas todavía no se ejecutan. Las siguientes
 etapas son el parser, el análisis semántico y la generación/ejecución de código.

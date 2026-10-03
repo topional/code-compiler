@@ -1,5 +1,12 @@
-crear variable edad con 10
-fijar edad a 11
-cambiar edad por 1
+crear variable edad
+asignar edad valor de 10
+asignar edad valor de 11
+asignar edad valor de edad + 1
 mostrar "Mi edad es:"
 mostrar edad
+
+crear variable nombre
+asignar nombre valor de "Ana"
+mostrar nombre
+mostrar 10
+mostrar "Hola"

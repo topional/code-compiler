@@ -7,16 +7,22 @@ definir copiar con texto mensaje devuelve texto
     devolver mensaje
 fin
 
-definir negar con logico valor devuelve logico
-    devolver no valor
+definir negar con logico estado devuelve logico
+    devolver no estado
 fin
 
-crear variable puntos con 0
-crear variable nombre con "Ana"
-crear variable activo con verdadero
-crear variable opcion con 0
-crear variable computadora con 0
-crear variable año con 2026
+crear variable puntos
+asignar puntos valor de 0
+crear variable nombre
+asignar nombre valor de "Ana"
+crear variable activo
+asignar activo valor de verdadero
+crear variable opcion
+asignar opcion valor de 0
+crear variable computadora
+asignar computadora valor de 0
+crear variable año
+asignar año valor de 2026
 
 preguntar "¿Cómo te llamas?" y guardar en nombre
 preguntar "Elige un número del 1 al 3" y guardar en opcion
@@ -31,11 +37,11 @@ sino
 fin
 
 repetir 3 veces
-    cambiar puntos por 1
+    asignar puntos valor de puntos + 1
 fin
 
 mientras puntos es menor que 10 y activo hacer
-    fijar puntos a sumar(puntos, 1)
+    asignar puntos valor de sumar(puntos, 1)
 fin
 
 si puntos es mayor o igual que 10 entonces
@@ -47,9 +53,11 @@ si puntos es menor o igual que 10 entonces
 fin
 
 si puntos es mayor que 0 entonces
-    fijar activo a falso
+    asignar activo valor de falso
 fin
 
 mostrar (10 - 2) * 3 / 2.5
+mostrar 10
 mostrar "Comillas: \"hola\". Salto: \n. Tabulación: \t. Barra: \\."
 juego
+calculadora

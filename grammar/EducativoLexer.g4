@@ -1,14 +1,16 @@
 lexer grammar EducativoLexer;
-
+options {
+    caseInsensitive = true;
+}
 // Variables, asignaciones y entrada/salida.
+// Formas propuestas: crear variable ID / asignar ID valor de EXPRESION.
 // Las palabras reservadas van antes de ID para resolver empates.
 CREAR     : 'crear';
 VARIABLE  : 'variable';
 CON       : 'con';
-FIJAR     : 'fijar';
+ASIGNAR   : 'asignar';
+VALOR     : 'valor';
 A         : 'a';
-CAMBIAR   : 'cambiar';
-POR       : 'por';
 MOSTRAR   : 'mostrar';
 PREGUNTAR : 'preguntar';
 GUARDAR   : 'guardar';
@@ -50,6 +52,7 @@ TIPO_LOGICO : 'logico';
 ELEGIR    : 'elegir';
 ENTRE     : 'entre';
 JUEGO     : 'juego';
+CALCULADORA : 'calculadora';
 
 // El signo negativo se reconoce por separado del numero.
 SUMA      : '+';
@@ -63,14 +66,16 @@ COMA      : ',';
 NUMERO : DIGITO+ ('.' DIGITO+)?;
 
 // Texto entre comillas. Admite \" , \\ , \n , \r y \t.
-TEXTO : '"' ('\\' ["\\nrt] | ~["\\\r\n])* '"';
+// Los escapes mantienen sus formas exactas, aunque las palabras ignoren el caso.
+TEXTO options { caseInsensitive = false; }
+    : '"' ('\\' ["\\nrt] | ~["\\\r\n])* '"';
 
 // Los nombres admiten letras del español, digitos y guion bajo.
 ID : LETRA (LETRA | DIGITO)*;
 
 // Estas reglas ayudan a reconocer tokens; no producen tokens propios.
 fragment DIGITO : [0-9];
-fragment LETRA  : [a-zA-Z_áéíóúüñÁÉÍÓÚÜÑ];
+fragment LETRA  : [a-z_áéíóúüñ];
 
 // Conservamos los saltos: cada instruccion ocupa una linea.
 SALTO_LINEA : '\r'? '\n';
