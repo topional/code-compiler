@@ -27,9 +27,8 @@ mostrar dado
 ```
 
 Las palabras reservadas admiten mayúsculas y minúsculas; los tokens conservan
-el texto original. Se detectan variables no declaradas y declaraciones duplicadas
-en el mismo ámbito. El uso de variables sin valor y la compatibilidad de tipos
-se comprobarán en la futura etapa semántica.
+el texto original. Se detectan variables no declaradas, declaraciones duplicadas,
+lecturas sin inicializar y tipos incompatibles en asignaciones y operaciones.
 
 ## Preparación
 
@@ -98,25 +97,43 @@ es la base de `src/semantico.py`, que recorre el árbol en el análisis semánti
 
 ## Análisis semántico del parcial
 
-El enunciado pide verificar por lo menos dos errores semánticos. Se implementan:
+El enunciado pide verificar por lo menos dos errores semánticos. Se implementan cuatro:
 
 - Uso de una variable no declarada, tanto al leer como al asignar o preguntar.
 - Declaración repetida de una variable en el mismo ámbito, incluidos parámetros.
+- Lectura de una variable sin un valor inicial garantizado.
+- Tipos incompatibles en asignaciones y operaciones aritméticas o lógicas.
 
-El visitor usa una tabla de símbolos con un ámbito global y ámbitos locales
+El visitor de `src/semantico.py` usa la tabla de `src/tabla_simbolos.py`,
+con un ámbito global y ámbitos locales
 para funciones y bloques. Los parámetros comparten ámbito con el cuerpo de la
 función. Se permite ocultar una variable exterior; los nombres distinguen
 mayúsculas. Las declaraciones se procesan en orden de fuente, también dentro
 de funciones: solo ven declaraciones exteriores anteriores a su definición.
-Los nombres de funciones se tratarán por separado en una etapa posterior.
+La primera asignación válida determina el tipo (`numero`, `texto` o `logico`);
+las siguientes deben respetarlo. Enteros y decimales comparten `numero`. Los
+parámetros tienen tipo conocido y valor al entrar en la función. Una entrada
+con `preguntar` inicializa la variable: conserva su tipo si ya se conoce y, si
+no, establece `texto`. La conversión de la entrada se implementará al ejecutar.
+
+Los operadores aritméticos requieren números, y `no`, `y`, `o` requieren
+lógicos. `+` no concatena textos. Tras un `si`, una variable se considera
+inicializada solo si lo está en todos los caminos. Los ciclos podrían no
+ejecutarse; sus asignaciones no garantizan inicialización posterior. Definir
+una función tampoco ejecuta su cuerpo. Los resultados de llamadas a funciones
+ya visitadas usan el tipo declarado en `devuelve`; las llamadas cuyo tipo aún
+no se conoce quedan pendientes de validación completa de funciones.
 
 ```bash
 make probar ARCHIVO=tests/fixtures/invalid/variable_no_declarada.edu
 make probar ARCHIVO=tests/fixtures/invalid/variable_duplicada.edu
+make probar ARCHIVO=tests/fixtures/invalid/variable_sin_inicializar.edu
+make probar ARCHIVO=tests/fixtures/invalid/tipo_incompatible.edu
 ```
 
-Ambas entradas fallan intencionalmente con código 1 y un mensaje en español.
-`make test` ejecuta 39 pruebas: 16 del lexer, 11 del parser y 12 de semántica.
+Estas entradas fallan intencionalmente con código 1 y un mensaje en español
+que explica el problema y sugiere cómo corregirlo.
+`make test` ejecuta 50 pruebas: 16 del lexer, 11 del parser y 23 de semántica.
 La descripción de los errores para incorporar al informe está en
 [../docs/semantica.md](../docs/semantica.md).
 
@@ -126,7 +143,9 @@ El lexer reconoce variables, entrada/salida, operaciones, lógica, comparaciones
 condicionales, ciclos, funciones, tipos, elección aleatoria y la instrucción
 de motivación `juego` y `calculadora`. El parser comprueba su estructura,
 la separación por líneas, los bloques y la precedencia de las expresiones.
-El analizador semántico comprueba declaraciones y usos de variables. Todavía
-quedan pendientes tipos, inicialización, firmas de funciones, retornos y
-restricciones de los rangos aleatorios. Los programas no se ejecutan. Para el
+El analizador semántico comprueba declaraciones, inicialización y tipos en
+asignaciones y operaciones. Quedan pendientes las condiciones lógicas, la
+compatibilidad de comparaciones, firmas de funciones, retornos y restricciones
+de los rangos aleatorios. La inicialización se analiza de forma conservadora,
+sin evaluar constantes ni los efectos de llamadas a funciones. Los programas no se ejecutan. Para el
 segundo avance se deberá ampliar la semántica a por lo menos seis errores.
