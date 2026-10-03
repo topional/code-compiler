@@ -2,11 +2,7 @@
 
 Proyecto de un lenguaje textual en español para facilitar la transición desde
 Scratch. La versión actual implementa el análisis léxico, sintáctico y semántico parcial
-con ANTLR4 y Python. El vocabulario está documentado en [docs/tokens.md](../docs/tokens.md),
-las reglas en [docs/gramatica.md](../docs/gramatica.md) y los ejemplos con
-derivaciones por la izquierda en [docs/derivaciones.md](../docs/derivaciones.md).
-La sección preparada para el informe está en
-[docs/informe_sintactico.md](../docs/informe_sintactico.md).
+con ANTLR4 y Python.
 
 La sintaxis básica separa la declaración de la asignación:
 
@@ -32,23 +28,37 @@ lecturas sin inicializar y tipos incompatibles en asignaciones y operaciones.
 
 ## Preparación
 
-Se necesita Python 3, Java, GNU Make 4.3 o posterior y el generador de ANTLR 4.13.1.
+Se necesita Python 3.10 o posterior, Java, GNU Make 4.3 o posterior y el generador
+de ANTLR 4.13.1. Ejecutar las órdenes desde la carpeta `lenguaje-educativo`.
+En una máquina nueva, después de clonar el repositorio:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+make generar
+make test
 ```
 
 El runtime de Python y el generador usan la misma versión, 4.13.1. La ruta
 predeterminada del generador es `/usr/local/lib/antlr-4.13.1-complete.jar`.
-Si se encuentra en otro lugar:
+El archivo JAR debe estar instalado antes de ejecutar Make: `pip` instala el
+runtime de Python, pero no descarga el generador. Si el JAR está en otro lugar,
+reemplazar las órdenes de Make anteriores por:
 
 ```bash
 make generar ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
+make test ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
 ```
 
 ## Generar y probar
+
+| Comando | Función |
+| --- | --- |
+| `make generar` | Genera los archivos de ANTLR a partir de las gramáticas `.g4`. |
+| `make test` | Genera lo necesario y ejecuta las 50 pruebas automáticas. |
+| `make probar` | Genera lo necesario y analiza `examples/variables.edu`. |
+| `make probar ARCHIVO=ruta/programa.edu` | Analiza el archivo indicado. |
 
 ```bash
 make generar
@@ -65,11 +75,36 @@ Para ver también el árbol sintáctico:
 .venv/bin/python src/main.py examples/variables.edu --arbol
 ```
 
-`make probar` usa el Python de `.venv`, incluso si el entorno no está activado.
-Los archivos de `src/generated/` se generan desde la gramática y se excluyen de Git.
-Cada integrante debe ejecutar `make generar` después de clonar el repositorio.
+`make probar` y `make test` usan el Python de `.venv`, incluso si el entorno no
+está activado. Ambos dependen de `generar`: no hace falta ejecutar los tres
+comandos por separado. Make reutiliza los archivos actualizados y regenera los
+necesarios cuando cambian las gramáticas.
+
+### Archivos generados por ANTLR
+
+`make generar` utiliza `grammar/EducativoLexer.g4` y
+`grammar/EducativoParser.g4` para crear:
+
+```text
+src/generated/
+├── EducativoLexer.py             # Reconocimiento de tokens
+├── EducativoLexer.tokens         # Vocabulario de tokens
+├── EducativoLexer.interp         # Datos auxiliares de ANTLR
+├── EducativoParser.py            # Análisis sintáctico
+├── EducativoParserVisitor.py     # Base para recorrer el árbol
+├── EducativoParser.tokens
+└── EducativoParser.interp
+```
+
+Ejecutar `make generar` o `make test` antes de ejecutar directamente
+`src/main.py`. Los archivos generados se actualizan desde los `.g4`; los cambios
+del analizador semántico se escriben en `src/semantico.py` y
+`src/tabla_simbolos.py`.
+
+### Flujo del driver
 
 El driver lee el archivo, ejecuta el lexer y luego llama a `parser.programa()`.
+La lectura utiliza `FileStream` de ANTLR, como el ejemplo de clase.
 Si no hay errores, recorre el árbol con `AnalizadorSemantico`. Muestra los tokens,
 `Análisis sintáctico correcto.` y `Análisis semántico parcial correcto.`.
 Ante un error léxico, sintáctico o semántico muestra la posición en stderr y termina con
@@ -134,8 +169,6 @@ make probar ARCHIVO=tests/fixtures/invalid/tipo_incompatible.edu
 Estas entradas fallan intencionalmente con código 1 y un mensaje en español
 que explica el problema y sugiere cómo corregirlo.
 `make test` ejecuta 50 pruebas: 16 del lexer, 11 del parser y 23 de semántica.
-La descripción de los errores para incorporar al informe está en
-[../docs/semantica.md](../docs/semantica.md).
 
 ## Alcance actual
 
