@@ -16,6 +16,10 @@ asignar nombre valor de "Ana"
 mostrar nombre
 mostrar 10
 mostrar "Hola"
+
+crear variable dado
+asignar dado valor de numero aleatorio entre 1 y 6
+mostrar dado
 ```
 
 Las palabras reservadas admiten mayúsculas y minúsculas; los tokens conservan

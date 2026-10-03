@@ -48,8 +48,8 @@ TIPO_NUMERO : 'numero';
 TIPO_TEXTO  : 'texto';
 TIPO_LOGICO : 'logico';
 
-// Operacion aleatoria e instruccion de motivacion.
-ELEGIR    : 'elegir';
+// Expresion propuesta: numero aleatorio entre LIMITE y LIMITE.
+ALEATORIO : 'aleatorio';
 ENTRE     : 'entre';
 JUEGO     : 'juego';
 CALCULADORA : 'calculadora';

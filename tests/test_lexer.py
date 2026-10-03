@@ -31,6 +31,28 @@ def analizar(codigo):
 
 
 class LexerTests(unittest.TestCase):
+    def test_numero_aleatorio_y_limites(self):
+        for limites, esperados in (
+            ("1 y 6", [("NUMERO", "1"), ("Y", "y"), ("NUMERO", "6")]),
+            ("minimo y maximo", [("ID", "minimo"), ("Y", "y"), ("ID", "maximo")]),
+        ):
+            with self.subTest(limites=limites):
+                tokens, errores, _ = analizar(
+                    "asignar dado valor de numero ALEATORIO entre " + limites
+                )
+                self.assertEqual(errores, [])
+                self.assertEqual(tokens, [
+                    ("ASIGNAR", "asignar"), ("ID", "dado"),
+                    ("VALOR", "valor"), ("DE", "de"),
+                    ("TIPO_NUMERO", "numero"), ("ALEATORIO", "ALEATORIO"),
+                    ("ENTRE", "entre"),
+                ] + esperados)
+        tokens, errores, _ = analizar("aleatorio aleatorioDato elegir")
+        self.assertEqual(errores, [])
+        self.assertEqual(tokens, [
+            ("ALEATORIO", "aleatorio"), ("ID", "aleatorioDato"), ("ID", "elegir"),
+        ])
+
     def test_calculadora_y_nombres_similares(self):
         tokens, errores, _ = analizar("calculadora calculadoraPersonal Calculadora CALCULADORA")
         self.assertEqual(errores, [])

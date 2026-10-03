@@ -44,7 +44,7 @@ No comprueba todavía el orden de los tokens, los tipos ni la ejecución.
 | TIPO_NUMERO | numero |
 | TIPO_TEXTO | texto |
 | TIPO_LOGICO | logico |
-| ELEGIR | elegir |
+| ALEATORIO | aleatorio |
 | ENTRE | entre |
 | JUEGO | juego |
 | CALCULADORA | calculadora |
@@ -120,7 +120,7 @@ definir sumar con numero primero, numero segundo devuelve numero
 fin
 
 mostrar sumar(2, 3)
-elegir numero entre 1 y 3 y guardar en edad
+asignar edad valor de numero aleatorio entre 1 y 3
 juego
 calculadora
 ```
@@ -147,6 +147,23 @@ Estas comprobaciones y la ejecución todavía no están implementadas.
 Los parámetros y resultados de funciones usan `numero`,
 `texto` y `logico`. Las funciones sin parámetros podrán omitir `con ...`.
 `devuelve` indica el tipo de resultado y `devolver` entrega el resultado.
+
+La elección aleatoria usa una sola forma: `numero aleatorio entre LIMITE y LIMITE`.
+Se utiliza como valor de una asignación:
+
+```text
+crear variable dado
+asignar dado valor de numero aleatorio entre 1 y 6
+asignar dado valor de numero aleatorio entre minimo y maximo
+```
+
+Los límites podrán ser números enteros o variables que contengan enteros.
+El rango incluirá ambos extremos y el límite inicial deberá ser menor o igual
+al final. La variable destino deberá estar declarada y admitir un valor numérico.
+El parser comprobará la estructura; el análisis semántico y la ejecución
+comprobarán los valores y tipos según estén disponibles. Por ahora, el lexer
+solo reconoce las palabras y valores; no comprueba esas restricciones ni genera
+números aleatorios. `elegir` deja de ser una palabra reservada.
 
 `juego` y `calculadora` serán instrucciones de motivación incorporadas que
 mostrarán un minijuego y una calculadora, respectivamente. El lenguaje también
