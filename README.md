@@ -1,13 +1,12 @@
 # Lenguaje educativo
 
 Proyecto de un lenguaje textual en español para facilitar la transición desde
-Scratch. La versión actual implementa el análisis léxico y sintáctico con ANTLR4
-y Python. El vocabulario está documentado en [docs/tokens.md](../docs/tokens.md),
+Scratch. La versión actual implementa el análisis léxico, sintáctico y semántico parcial
+con ANTLR4 y Python. El vocabulario está documentado en [docs/tokens.md](../docs/tokens.md),
 las reglas en [docs/gramatica.md](../docs/gramatica.md) y los ejemplos con
 derivaciones por la izquierda en [docs/derivaciones.md](../docs/derivaciones.md).
 La sección preparada para el informe está en
 [docs/informe_sintactico.md](../docs/informe_sintactico.md).
-`make test` verifica también las 68 derivaciones y los 85 ejemplos documentados.
 
 La sintaxis básica separa la declaración de la asignación:
 
@@ -28,7 +27,8 @@ mostrar dado
 ```
 
 Las palabras reservadas admiten mayúsculas y minúsculas; los tokens conservan
-el texto original. El uso de variables sin valor y la compatibilidad de tipos
+el texto original. Se detectan variables no declaradas y declaraciones duplicadas
+en el mismo ámbito. El uso de variables sin valor y la compatibilidad de tipos
 se comprobarán en la futura etapa semántica.
 
 ## Preparación
@@ -56,6 +56,7 @@ make generar
 make probar
 make probar ARCHIVO=examples/lexer_completo.edu
 make probar ARCHIVO=examples/parser_completo.edu
+make probar ARCHIVO=examples/semantico_completo.edu
 make test
 ```
 
@@ -70,8 +71,9 @@ Los archivos de `src/generated/` se generan desde la gramática y se excluyen de
 Cada integrante debe ejecutar `make generar` después de clonar el repositorio.
 
 El driver lee el archivo, ejecuta el lexer y luego llama a `parser.programa()`.
-Si ambos análisis pasan, muestra los tokens y `Análisis sintáctico correcto.`.
-Ante un error léxico o sintáctico muestra la posición en stderr y termina con
+Si no hay errores, recorre el árbol con `AnalizadorSemantico`. Muestra los tokens,
+`Análisis sintáctico correcto.` y `Análisis semántico parcial correcto.`.
+Ante un error léxico, sintáctico o semántico muestra la posición en stderr y termina con
 código 1; si el archivo no se puede leer, con código 2. Por ejemplo:
 
 ```bash
@@ -92,7 +94,31 @@ en la segunda. Los mensajes específicos de ANTLR pueden aparecer en inglés.
 
 `grammar/EducativoParser.g4` reutiliza el vocabulario de `EducativoLexer.g4`.
 ANTLR genera `EducativoParser.py` y `EducativoParserVisitor.py`; este último
-servirá como base para recorrer el árbol en el análisis semántico.
+es la base de `src/semantico.py`, que recorre el árbol en el análisis semántico.
+
+## Análisis semántico del parcial
+
+El enunciado pide verificar por lo menos dos errores semánticos. Se implementan:
+
+- Uso de una variable no declarada, tanto al leer como al asignar o preguntar.
+- Declaración repetida de una variable en el mismo ámbito, incluidos parámetros.
+
+El visitor usa una tabla de símbolos con un ámbito global y ámbitos locales
+para funciones y bloques. Los parámetros comparten ámbito con el cuerpo de la
+función. Se permite ocultar una variable exterior; los nombres distinguen
+mayúsculas. Las declaraciones se procesan en orden de fuente, también dentro
+de funciones: solo ven declaraciones exteriores anteriores a su definición.
+Los nombres de funciones se tratarán por separado en una etapa posterior.
+
+```bash
+make probar ARCHIVO=tests/fixtures/invalid/variable_no_declarada.edu
+make probar ARCHIVO=tests/fixtures/invalid/variable_duplicada.edu
+```
+
+Ambas entradas fallan intencionalmente con código 1 y un mensaje en español.
+`make test` ejecuta 39 pruebas: 16 del lexer, 11 del parser y 12 de semántica.
+La descripción de los errores para incorporar al informe está en
+[../docs/semantica.md](../docs/semantica.md).
 
 ## Alcance actual
 
@@ -100,5 +126,7 @@ El lexer reconoce variables, entrada/salida, operaciones, lógica, comparaciones
 condicionales, ciclos, funciones, tipos, elección aleatoria y la instrucción
 de motivación `juego` y `calculadora`. El parser comprueba su estructura,
 la separación por líneas, los bloques y la precedencia de las expresiones.
-Los programas todavía no se ejecutan. Las siguientes etapas son el análisis
-semántico y la generación/ejecución de código.
+El analizador semántico comprueba declaraciones y usos de variables. Todavía
+quedan pendientes tipos, inicialización, firmas de funciones, retornos y
+restricciones de los rangos aleatorios. Los programas no se ejecutan. Para el
+segundo avance se deberá ampliar la semántica a por lo menos seis errores.

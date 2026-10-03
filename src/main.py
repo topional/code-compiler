@@ -1,14 +1,14 @@
-"""Analiza un programa .edu con el lexer y el parser, y muestra sus tokens."""
+"""Analiza el léxico, la sintaxis y las declaraciones de un programa .edu."""
 
 import argparse
 import sys
-from pathlib import Path
 
-from antlr4 import CommonTokenStream, InputStream, Token
+from antlr4 import CommonTokenStream, FileStream, Token
 from antlr4.error.ErrorListener import ErrorListener
 
 from generated.EducativoLexer import EducativoLexer
 from generated.EducativoParser import EducativoParser
+from semantico import AnalizadorSemantico
 
 
 class ErroresLexicos(ErrorListener):
@@ -31,16 +31,16 @@ class ErroresSintacticos(ErrorListener):
 
 def main():
     argumentos = argparse.ArgumentParser(description=__doc__)
-    argumentos.add_argument("archivo", type=Path, help="Programa .edu para analizar")
+    argumentos.add_argument("archivo", help="Programa .edu para analizar")
     argumentos.add_argument("--arbol", action="store_true", help="Mostrar el árbol sintáctico")
     opciones = argumentos.parse_args()
 
     try:
-        codigo = opciones.archivo.read_text(encoding="utf-8")
+        entrada = FileStream(opciones.archivo, encoding="utf-8")
     except (OSError, UnicodeError) as error:
         argumentos.error(f"No se pudo leer el archivo: {error}")
 
-    lexer = EducativoLexer(InputStream(codigo))
+    lexer = EducativoLexer(entrada)
     errores = ErroresLexicos()
     lexer.removeErrorListeners()
     lexer.addErrorListener(errores)
@@ -64,11 +64,19 @@ def main():
             print(mensaje, file=sys.stderr)
         return 1
 
+    semantico = AnalizadorSemantico()
+    semantico.visit(arbol)
+    if semantico.errores:
+        for mensaje in semantico.errores:
+            print(mensaje, file=sys.stderr)
+        return 1
+
     print(f"{'LÍNEA':<7} {'COLUMNA':<9} {'TOKEN':<15} LEXEMA")
     for token in tokens.tokens:
         nombre = "EOF" if token.type == Token.EOF else lexer.symbolicNames[token.type]
         print(f"{token.line:<7} {token.column + 1:<9} {nombre:<15} {token.text!r}")
     print("Análisis sintáctico correcto.")
+    print("Análisis semántico parcial correcto.")
     if opciones.arbol:
         print(arbol.toStringTree(recog=parser))
     return 0

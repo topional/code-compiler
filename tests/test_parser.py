@@ -1,14 +1,15 @@
 """Validación de construcciones, estructura del árbol y errores sintácticos."""
 
+import glob
+import os
 import subprocess
 import sys
 import unittest
-from pathlib import Path
 
 from antlr4 import CommonTokenStream, InputStream
 
-PROYECTO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROYECTO / "src"))
+PROYECTO = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0, os.path.join(PROYECTO, "src"))
 
 from generated.EducativoLexer import EducativoLexer
 from generated.EducativoParser import EducativoParser
@@ -31,9 +32,10 @@ def analizar(codigo):
 
 class ParserTests(unittest.TestCase):
     def test_ejemplos_del_proyecto(self):
-        for archivo in sorted((PROYECTO / "examples").glob("*.edu")):
-            with self.subTest(archivo=archivo.name):
-                _, lexicos, sintacticos = analizar(archivo.read_text(encoding="utf-8"))
+        for archivo in sorted(glob.glob(os.path.join(PROYECTO, "examples", "*.edu"))):
+            with self.subTest(archivo=os.path.basename(archivo)):
+                with open(archivo, encoding="utf-8") as entrada:
+                    _, lexicos, sintacticos = analizar(entrada.read())
                 self.assertEqual(lexicos, [])
                 self.assertEqual(sintacticos, [])
 
@@ -151,8 +153,8 @@ class ParserTests(unittest.TestCase):
                                  ("condicional_sin_fin.edu", "3:1")):
             with self.subTest(nombre=nombre):
                 resultado = subprocess.run(
-                    [sys.executable, str(PROYECTO / "src/main.py"),
-                     str(PROYECTO / "tests/fixtures/invalid" / nombre)],
+                    [sys.executable, os.path.join(PROYECTO, "src/main.py"),
+                     os.path.join(PROYECTO, "tests/fixtures/invalid", nombre)],
                     capture_output=True, text=True, encoding="utf-8",
                 )
                 self.assertEqual(resultado.returncode, 1)
@@ -161,8 +163,8 @@ class ParserTests(unittest.TestCase):
 
     def test_driver_muestra_arbol_y_confirmacion(self):
         resultado = subprocess.run(
-            [sys.executable, str(PROYECTO / "src/main.py"),
-             str(PROYECTO / "examples/variables.edu"), "--arbol"],
+            [sys.executable, os.path.join(PROYECTO, "src/main.py"),
+             os.path.join(PROYECTO, "examples/variables.edu"), "--arbol"],
             capture_output=True, text=True, encoding="utf-8",
         )
         self.assertEqual(resultado.returncode, 0, resultado.stderr)

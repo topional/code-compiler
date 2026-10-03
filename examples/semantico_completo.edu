@@ -1,0 +1,31 @@
+# Valida declaraciones, parámetros, ámbitos y usos de variables.
+crear variable puntos
+asignar puntos valor de 0
+
+definir sumar con numero primero, numero segundo devuelve numero
+    crear variable resultado
+    asignar resultado valor de primero + segundo
+    devolver resultado
+fin
+
+crear variable minimo
+asignar minimo valor de 1
+crear variable maximo
+asignar maximo valor de 6
+crear variable dado
+asignar dado valor de numero aleatorio entre minimo y maximo
+
+si dado es mayor que 3 entonces
+    crear variable mensaje
+    asignar mensaje valor de "Ganaste"
+    mostrar mensaje
+sino
+    crear variable mensaje
+    asignar mensaje valor de "Intenta otra vez"
+    mostrar mensaje
+fin
+
+repetir 2 veces
+    asignar puntos valor de sumar(puntos, dado)
+fin
+mostrar puntos

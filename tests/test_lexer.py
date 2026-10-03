@@ -1,15 +1,16 @@
 """Pruebas de reconocimiento, límites entre tokens y errores del driver."""
 
+import glob
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
-from pathlib import Path
 
 from antlr4 import CommonTokenStream, InputStream, Token
 
-PROYECTO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROYECTO / "src"))
+PROYECTO = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(0, os.path.join(PROYECTO, "src"))
 
 from generated.EducativoLexer import EducativoLexer
 from main import ErroresLexicos
@@ -161,16 +162,17 @@ class LexerTests(unittest.TestCase):
                 self.assertTrue(errores)
 
     def test_ejemplos_validos(self):
-        for archivo in sorted((PROYECTO / "examples").glob("*.edu")):
-            with self.subTest(archivo=archivo.name):
-                tokens, errores, _ = analizar(archivo.read_text(encoding="utf-8"))
+        for archivo in sorted(glob.glob(os.path.join(PROYECTO, "examples", "*.edu"))):
+            with self.subTest(archivo=os.path.basename(archivo)):
+                with open(archivo, encoding="utf-8") as entrada:
+                    tokens, errores, _ = analizar(entrada.read())
                 self.assertEqual(errores, [])
                 self.assertTrue(tokens)
 
     def test_driver_valido_muestra_tokens(self):
         resultado = subprocess.run(
-            [sys.executable, str(PROYECTO / "src/main.py"),
-             str(PROYECTO / "examples/lexer_completo.edu")],
+            [sys.executable, os.path.join(PROYECTO, "src/main.py"),
+             os.path.join(PROYECTO, "examples/lexer_completo.edu")],
             capture_output=True, text=True, encoding="utf-8",
         )
         self.assertEqual(resultado.returncode, 0, resultado.stderr)
@@ -180,8 +182,8 @@ class LexerTests(unittest.TestCase):
 
     def test_driver_invalido_retorna_error(self):
         resultado = subprocess.run(
-            [sys.executable, str(PROYECTO / "src/main.py"),
-             str(PROYECTO / "tests/fixtures/invalid/caracter.edu")],
+            [sys.executable, os.path.join(PROYECTO, "src/main.py"),
+             os.path.join(PROYECTO, "tests/fixtures/invalid/caracter.edu")],
             capture_output=True, text=True, encoding="utf-8",
         )
         self.assertEqual(resultado.returncode, 1)
@@ -191,8 +193,8 @@ class LexerTests(unittest.TestCase):
     def test_driver_archivo_inexistente(self):
         with tempfile.TemporaryDirectory() as carpeta:
             resultado = subprocess.run(
-                [sys.executable, str(PROYECTO / "src/main.py"),
-                 str(Path(carpeta) / "no_existe.edu")],
+                [sys.executable, os.path.join(PROYECTO, "src/main.py"),
+                 os.path.join(carpeta, "no_existe.edu")],
                 capture_output=True, text=True, encoding="utf-8",
             )
         self.assertEqual(resultado.returncode, 2)
