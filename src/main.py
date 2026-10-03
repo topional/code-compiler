@@ -1,4 +1,4 @@
-"""Lee un programa .edu y muestra los tokens reconocidos por el lexer."""
+"""Analiza un programa .edu con el lexer y el parser, y muestra sus tokens."""
 
 import argparse
 import sys
@@ -8,6 +8,7 @@ from antlr4 import CommonTokenStream, InputStream, Token
 from antlr4.error.ErrorListener import ErrorListener
 
 from generated.EducativoLexer import EducativoLexer
+from generated.EducativoParser import EducativoParser
 
 
 class ErroresLexicos(ErrorListener):
@@ -19,9 +20,19 @@ class ErroresLexicos(ErrorListener):
         self.errores.append(f"Error léxico en {line}:{column + 1}: {msg}")
 
 
+class ErroresSintacticos(ErrorListener):
+    def __init__(self):
+        super().__init__()
+        self.errores = []
+
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        self.errores.append(f"Error sintáctico en {line}:{column + 1}: {msg}")
+
+
 def main():
     argumentos = argparse.ArgumentParser(description=__doc__)
     argumentos.add_argument("archivo", type=Path, help="Programa .edu para analizar")
+    argumentos.add_argument("--arbol", action="store_true", help="Mostrar el árbol sintáctico")
     opciones = argumentos.parse_args()
 
     try:
@@ -42,10 +53,24 @@ def main():
             print(mensaje, file=sys.stderr)
         return 1
 
+    parser = EducativoParser(tokens)
+    errores_sintacticos = ErroresSintacticos()
+    parser.removeErrorListeners()
+    parser.addErrorListener(errores_sintacticos)
+    arbol = parser.programa()
+
+    if errores_sintacticos.errores:
+        for mensaje in errores_sintacticos.errores:
+            print(mensaje, file=sys.stderr)
+        return 1
+
     print(f"{'LÍNEA':<7} {'COLUMNA':<9} {'TOKEN':<15} LEXEMA")
     for token in tokens.tokens:
         nombre = "EOF" if token.type == Token.EOF else lexer.symbolicNames[token.type]
         print(f"{token.line:<7} {token.column + 1:<9} {nombre:<15} {token.text!r}")
+    print("Análisis sintáctico correcto.")
+    if opciones.arbol:
+        print(arbol.toStringTree(recog=parser))
     return 0
 
 

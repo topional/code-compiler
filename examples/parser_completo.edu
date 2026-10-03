@@ -1,0 +1,41 @@
+# Programa para validar la sintaxis; todavia no se ejecuta.
+definir sumar con numero primero, numero segundo devuelve numero
+    devolver primero + segundo
+fin
+
+definir saludo devuelve texto
+    devolver "Hola"
+fin
+
+crear variable minimo
+asignar minimo valor de 1
+crear variable maximo
+asignar maximo valor de 6
+crear variable dado
+asignar dado valor de numero aleatorio entre minimo y maximo
+crear variable respuesta
+preguntar "Adivina el resultado del dado" y guardar en respuesta
+
+si respuesta es igual a dado entonces
+    mostrar saludo()
+sino
+    mostrar "Intenta otra vez"
+fin
+
+crear variable puntos
+asignar puntos valor de 0
+repetir 3 veces
+    asignar puntos valor de sumar(puntos, 1)
+fin
+
+mientras puntos es menor que 10 hacer
+    asignar puntos valor de puntos + 1
+    si puntos es mayor o igual que 5 y no falso entonces
+        mostrar puntos
+    fin
+fin
+
+mostrar (2 + 3) * -4
+sumar(2, 3)
+juego
+calculadora
