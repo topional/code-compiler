@@ -1,4 +1,4 @@
-"""Pruebas de reconocimiento, límites entre tokens y errores del driver."""
+"""Pruebas del lexer."""
 
 import glob
 import os

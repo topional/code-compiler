@@ -1,4 +1,4 @@
-"""Analiza el léxico, la sintaxis y la semántica parcial de un programa .edu."""
+"""Analiza un archivo .edu."""
 
 import argparse
 import sys

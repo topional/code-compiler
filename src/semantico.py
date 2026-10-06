@@ -1,4 +1,4 @@
-"""Análisis semántico parcial de declaraciones, inicialización y tipos."""
+"""Revisa variables, inicialización y tipos."""
 
 from generated.EducativoParserVisitor import EducativoParserVisitor
 from tabla_simbolos import TablaSimbolos
@@ -7,11 +7,9 @@ ERROR = "error"
 
 
 class AnalizadorSemantico(EducativoParserVisitor):
-    """Cada instancia recorre un programa en orden de fuente.
+    """Recorre el árbol y revisa la semántica.
 
-    Las funciones y bloques crean ámbitos. Los parámetros comparten ámbito
-    con su cuerpo. None representa un tipo aún desconocido; ERROR evita
-    propagar diagnósticos derivados de un error anterior.
+    None indica tipo desconocido; ERROR indica un error previo.
     """
 
     def __init__(self):
@@ -52,6 +50,20 @@ class AnalizadorSemantico(EducativoParserVisitor):
                               "Asígnale un valor antes de leerla.")
         return simbolo.tipo
 
+    def visitPrograma(self, ctx):
+        self.visit(ctx.instrucciones())
+
+    def visitInstrucciones(self, ctx):
+        # Recorre la lista sin acumular llamadas recursivas en el visitor.
+        while ctx is not None and ctx.sentencia() is not None:
+            self.visit(ctx.sentencia())
+            ctx = ctx.restoPrograma().instrucciones()
+
+    def visitInstruccionesBloque(self, ctx):
+        while ctx.sentencia() is not None:
+            self.visit(ctx.sentencia())
+            ctx = ctx.instruccionesBloque()
+
     def visitDeclaracion(self, ctx):
         self.declarar(ctx.ID())
 
@@ -72,7 +84,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
     def visitEntrada(self, ctx):
         simbolo = self.buscar(ctx.ID())
         if simbolo is not None:
-            # La entrada conserva un tipo ya conocido; sin tipo previo es texto.
+            # Sin tipo previo, la entrada es texto.
             simbolo.tipo = simbolo.tipo or "texto"
             simbolo.inicializada = True
 
@@ -89,19 +101,21 @@ class AnalizadorSemantico(EducativoParserVisitor):
                               f"Usa valores de tipo {esperado}.")
         return None if None in tipos else esperado
 
-    def cadena(self, ctx, operandos, esperado):
-        tipos = [self.visit(operando) for operando in operandos]
-        resultado = tipos[0]
-        for i, tipo in enumerate(tipos[1:]):
-            operador = ctx.getChild(2 * i + 1).getSymbol()
+    def cadena(self, primero, resto, esperado):
+        resultado = self.visit(primero)
+        # Cada resto contiene: operador, operando y otro resto; o epsilon.
+        while resto.getChildCount() != 0:
+            operador = resto.getChild(0).getSymbol()
+            tipo = self.visit(resto.getChild(1))
             resultado = self.operacion(operador, [resultado, tipo], esperado)
+            resto = resto.getChild(2)
         return resultado
 
     def visitDisyuncion(self, ctx):
-        return self.cadena(ctx, ctx.conjuncion(), "logico")
+        return self.cadena(ctx.conjuncion(), ctx.restoO(), "logico")
 
     def visitConjuncion(self, ctx):
-        return self.cadena(ctx, ctx.negacion(), "logico")
+        return self.cadena(ctx.negacion(), ctx.restoY(), "logico")
 
     def visitNegacion(self, ctx):
         if ctx.NO() is not None:
@@ -109,17 +123,20 @@ class AnalizadorSemantico(EducativoParserVisitor):
         return self.visit(ctx.comparacion())
 
     def visitComparacion(self, ctx):
-        tipos = [self.visit(suma) for suma in ctx.suma()]
+        tipos = [self.visit(ctx.suma())]
+        alternativa = ctx.comparacionOpt()
+        if alternativa.suma() is not None:
+            tipos.append(self.visit(alternativa.suma()))
         if ERROR in tipos:
             return ERROR
-        # Compatibilidad de comparaciones se ampliará en la siguiente etapa.
-        return "logico" if ctx.operadorComparacion() is not None else tipos[0]
+        # Falta revisar los tipos de las comparaciones.
+        return "logico" if alternativa.operadorComparacion() is not None else tipos[0]
 
     def visitSuma(self, ctx):
-        return self.cadena(ctx, ctx.producto(), "numero")
+        return self.cadena(ctx.producto(), ctx.restoSuma(), "numero")
 
     def visitProducto(self, ctx):
-        return self.cadena(ctx, ctx.unaria(), "numero")
+        return self.cadena(ctx.unaria(), ctx.restoProducto(), "numero")
 
     def visitUnaria(self, ctx):
         if ctx.RESTA() is not None:
@@ -145,7 +162,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         tipos = [self.visit(limite) for limite in ctx.limite()]
         if ERROR in tipos:
             return ERROR
-        # Enteros y orden del rango quedan pendientes; sí se detectan lecturas sin valor.
+        # Falta validar enteros y el orden del rango.
         return "numero"
 
     def visitLimite(self, ctx):
@@ -155,7 +172,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         funciones_exteriores = self.funciones.copy()
         self.tabla.abrir_ambito()
         try:
-            return self.visitChildren(ctx)
+            return self.visit(ctx.instruccionesBloque())
         finally:
             self.tabla.cerrar_ambito()
             self.funciones = funciones_exteriores
@@ -174,11 +191,15 @@ class AnalizadorSemantico(EducativoParserVisitor):
         self.visit(ctx.expresion())
         antes = self.tabla.estado()
         caminos = []
-        for bloque in ctx.bloque():
+        bloques = [ctx.bloque()]
+        alternativa = ctx.alternativa().bloque()
+        if alternativa is not None:
+            bloques.append(alternativa)
+        for bloque in bloques:
             self.tabla.restaurar(antes)
             self.visit(bloque)
             caminos.append(self.tabla.estado())
-        if ctx.SINO() is None:
+        if alternativa is None:
             caminos.append(antes)
         self.combinar(antes, caminos, ctx.start)
 
@@ -186,7 +207,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         self.visit(ctx.expresion())
         antes = self.tabla.estado()
         self.visit(ctx.bloque())
-        # Un ciclo podría no ejecutarse: sus asignaciones no garantizan un valor.
+        # El ciclo puede ejecutarse cero veces.
         self.combinar(antes, [antes, self.tabla.estado()], ctx.start)
 
     def visitMientras(self, ctx):
@@ -201,21 +222,33 @@ class AnalizadorSemantico(EducativoParserVisitor):
         antes = self.tabla.estado()
         self.tabla.abrir_ambito()
         try:
-            if ctx.parametros() is not None:
-                for parametro in ctx.parametros().parametro():
+            parametros = ctx.parametrosOpt().parametros()
+            if parametros is not None:
+                parametro = parametros.parametro()
+                resto = parametros.restoParametros()
+                while parametro is not None:
                     self.declarar(parametro.ID(), parametro.tipo().getText().lower(), True)
-            return self.visitChildren(ctx.bloque())
+                    parametro = resto.parametro()
+                    resto = resto.restoParametros()
+            # Parámetros y cuerpo comparten el mismo ámbito.
+            return self.visit(ctx.bloque().instruccionesBloque())
         finally:
             self.tabla.cerrar_ambito()
             self.funciones = funciones_exteriores
-            # Definir una función no ejecuta sus asignaciones a variables exteriores.
+            # Definir la función no ejecuta su cuerpo.
             self.tabla.restaurar(antes)
 
     def visitLlamada(self, ctx):
         tipos = []
-        if ctx.argumentos() is not None:
-            tipos = [self.visit(expresion) for expresion in ctx.argumentos().expresion()]
+        argumentos = ctx.argumentosOpt().argumentos()
+        if argumentos is not None:
+            expresion = argumentos.expresion()
+            resto = argumentos.restoArgumentos()
+            while expresion is not None:
+                tipos.append(self.visit(expresion))
+                expresion = resto.expresion()
+                resto = resto.restoArgumentos()
         if ERROR in tipos:
             return ERROR
-        # Firmas y funciones inexistentes quedan para la siguiente etapa.
+        # Falta validar funciones y argumentos.
         return self.funciones.get(ctx.ID().getText())

@@ -1,4 +1,4 @@
-"""Registro de variables declaradas y sus ámbitos de visibilidad."""
+"""Guarda las variables de cada ámbito."""
 
 from dataclasses import dataclass
 
@@ -37,7 +37,7 @@ class TablaSimbolos:
         return None
 
     def estado(self):
-        """Captura el estado de las variables visibles antes de una bifurcación."""
+        """Guarda tipos e inicialización antes de una rama."""
         return [(simbolo, simbolo.tipo, simbolo.inicializada)
                 for ambito in self.ambitos for simbolo in ambito.values()]
 

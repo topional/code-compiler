@@ -1,7 +1,8 @@
-"""Validación de construcciones, estructura del árbol y errores sintácticos."""
+"""Pruebas del parser."""
 
 import glob
 import os
+import re
 import subprocess
 import sys
 import unittest
@@ -30,7 +31,21 @@ def analizar(codigo):
     return parser.programa(), lexicos.errores, sintacticos.errores
 
 
+def elementos(primero, resto):
+    # Extrae los operandos de una lista formada por reglas recursivas.
+    resultado = [primero]
+    while resto.getChildCount() != 0:
+        resultado.append(resto.getChild(1))
+        resto = resto.getChild(2)
+    return resultado
+
+
 class ParserTests(unittest.TestCase):
+    def test_gramatica_sin_cuantificadores(self):
+        with open(os.path.join(PROYECTO, "grammar/EducativoParser.g4"), encoding="utf-8") as entrada:
+            gramatica = re.sub(r"//[^\n]*", "", entrada.read())
+        self.assertNotRegex(gramatica, r"[?*+]")
+
     def test_ejemplos_del_proyecto(self):
         for archivo in sorted(glob.glob(os.path.join(PROYECTO, "examples", "*.edu"))):
             with self.subTest(archivo=os.path.basename(archivo)):
@@ -76,21 +91,23 @@ class ParserTests(unittest.TestCase):
             "sino\nrepetir 2 veces\nmostrar 3\nfin\nfin"
         )
         self.assertEqual(errores, [])
-        exterior = arbol.sentencia(0).condicional()
-        interior = exterior.bloque(0).sentencia(0).condicional()
-        self.assertEqual(len(exterior.bloque()), 2)
-        self.assertEqual(len(interior.bloque()), 2)
-        self.assertIsNotNone(exterior.bloque(1).sentencia(0).repeticion())
+        exterior = arbol.instrucciones().sentencia().condicional()
+        interior = exterior.bloque().instruccionesBloque().sentencia().condicional()
+        self.assertIsNotNone(exterior.alternativa().bloque())
+        self.assertIsNotNone(interior.alternativa().bloque())
+        self.assertIsNotNone(exterior.alternativa().bloque().instruccionesBloque().sentencia().repeticion())
 
     def test_precedencia_aritmetica_y_menos_unario(self):
         arbol, _, errores = analizar("mostrar 2 + 3 * -4 - 5")
         self.assertEqual(errores, [])
-        suma = (arbol.sentencia(0).salida().expresion().disyuncion()
-                .conjuncion(0).negacion(0).comparacion().suma(0))
-        self.assertEqual([p.getText() for p in suma.producto()], ["2", "3*-4", "5"])
-        multiplicacion = suma.producto(1)
-        self.assertEqual([u.getText() for u in multiplicacion.unaria()], ["3", "-4"])
-        self.assertIsNotNone(multiplicacion.unaria(1).RESTA())
+        suma = (arbol.instrucciones().sentencia().salida().expresion().disyuncion()
+                .conjuncion().negacion().comparacion().suma())
+        productos = elementos(suma.producto(), suma.restoSuma())
+        self.assertEqual([p.getText() for p in productos], ["2", "3*-4", "5"])
+        multiplicacion = productos[1]
+        unarias = elementos(multiplicacion.unaria(), multiplicacion.restoProducto())
+        self.assertEqual([u.getText() for u in unarias], ["3", "-4"])
+        self.assertIsNotNone(unarias[1].RESTA())
 
     def test_comparaciones_compuestas_y_logica(self):
         for operador in ("es igual a", "es diferente de", "es mayor que", "es menor que",
@@ -98,21 +115,24 @@ class ParserTests(unittest.TestCase):
             with self.subTest(operador=operador):
                 arbol, _, errores = analizar(f"mostrar puntos {operador} 10 y no falso o verdadero")
                 self.assertEqual(errores, [])
-                disyuncion = arbol.sentencia(0).salida().expresion().disyuncion()
-                self.assertEqual(len(disyuncion.conjuncion()), 2)
-                conjuncion = disyuncion.conjuncion(0)
-                self.assertEqual(len(conjuncion.negacion()), 2)
-                comparacion = conjuncion.negacion(0).comparacion()
-                self.assertEqual(comparacion.operadorComparacion().getText(), operador.replace(" ", ""))
-                self.assertIsNotNone(conjuncion.negacion(1).NO())
+                disyuncion = arbol.instrucciones().sentencia().salida().expresion().disyuncion()
+                conjunciones = elementos(disyuncion.conjuncion(), disyuncion.restoO())
+                self.assertEqual(len(conjunciones), 2)
+                conjuncion = conjunciones[0]
+                negaciones = elementos(conjuncion.negacion(), conjuncion.restoY())
+                self.assertEqual(len(negaciones), 2)
+                comparacion = negaciones[0].comparacion()
+                self.assertEqual(comparacion.comparacionOpt().operadorComparacion().getText(), operador.replace(" ", ""))
+                self.assertIsNotNone(negaciones[1].NO())
 
     def test_y_del_rango_no_consume_el_operador_logico(self):
         arbol, _, errores = analizar("mostrar numero aleatorio entre 1 y 6 es mayor que 3 y verdadero")
         self.assertEqual(errores, [])
-        conjuncion = arbol.sentencia(0).salida().expresion().disyuncion().conjuncion(0)
-        self.assertEqual(len(conjuncion.negacion()), 2)
-        aleatorio = (conjuncion.negacion(0).comparacion().suma(0)
-                     .producto(0).unaria(0).primaria().aleatorio())
+        conjuncion = arbol.instrucciones().sentencia().salida().expresion().disyuncion().conjuncion()
+        negaciones = elementos(conjuncion.negacion(), conjuncion.restoY())
+        self.assertEqual(len(negaciones), 2)
+        aleatorio = (negaciones[0].comparacion().suma()
+                     .producto().unaria().primaria().aleatorio())
         self.assertEqual([limite.getText() for limite in aleatorio.limite()], ["1", "6"])
 
     def test_errores_de_estructura(self):
@@ -140,7 +160,7 @@ class ParserTests(unittest.TestCase):
                 self.assertTrue(sintacticos)
 
     def test_restricciones_semanticas_no_se_confunden_con_sintaxis(self):
-        # Estas entradas tienen estructura valida; sus valores/contextos se revisaran despues.
+        # Pasan la sintaxis; la semántica se revisa aparte.
         for codigo in ("mostrar desconocida", "devolver 1", "si 10 entonces\nfin",
                        "asignar dado valor de numero aleatorio entre 3.5 y 1"):
             with self.subTest(codigo=codigo):

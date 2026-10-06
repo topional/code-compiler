@@ -1,4 +1,4 @@
-"""Pruebas de declaraciones, inicialización, tipos y ámbitos."""
+"""Pruebas del analizador semántico."""
 
 import glob
 import os
@@ -59,6 +59,7 @@ class SemanticoTests(unittest.TestCase):
     def test_parametros_y_declaraciones_del_cuerpo_comparten_ambito(self):
         for codigo in (
             "definir sumar con numero dato, numero dato devuelve numero\nfin",
+            "definir sumar con numero dato, texto nombre, numero dato devuelve numero\nfin",
             "definir sumar con numero dato devuelve numero\ncrear variable dato\nfin",
         ):
             with self.subTest(codigo=codigo):
@@ -105,7 +106,8 @@ class SemanticoTests(unittest.TestCase):
 
     def test_variable_sin_inicializar(self):
         for uso in ("mostrar edad", "asignar edad valor de edad + 1",
-                    "mostrar dato(edad)", "mostrar numero aleatorio entre edad y 6"):
+                    "mostrar dato(edad)", "mostrar dato(1, 2, edad)",
+                    "mostrar numero aleatorio entre edad y 6"):
             with self.subTest(uso=uso):
                 errores = self.comprobar("crear variable edad\n" + uso)
                 self.assertEqual(len(errores), 1)
@@ -129,7 +131,9 @@ class SemanticoTests(unittest.TestCase):
         for expresion, operador in (('1 + "hola"', "+"), ('"hola" - 1', "-"),
                                     ("verdadero * 2", "*"), ('1 / "dos"', "/"),
                                     ('-"hola"', "-"), ("no 1", "no"),
-                                    ("1 y verdadero", "y"), ("falso o 2", "o")):
+                                    ("1 y verdadero", "y"), ("falso o 2", "o"),
+                                    ('1 + 2 + "hola"', "+"), ("2 * 3 * falso", "*"),
+                                    ("verdadero y falso y 1", "y"), ("falso o verdadero o 2", "o")):
             with self.subTest(expresion=expresion):
                 errores = self.comprobar("mostrar " + expresion)
                 self.assertEqual(len(errores), 1)
@@ -189,6 +193,10 @@ class SemanticoTests(unittest.TestCase):
         self.assertIn("6:9", errores[0])
 
     def test_parametros_y_tipo_de_resultado_de_funciones(self):
+        self.assertEqual(self.comprobar(
+            "definir sumar con numero primero, numero segundo, numero tercero devuelve numero\n"
+            "mostrar primero\nmostrar segundo\ndevolver primero + segundo + tercero\nfin\n"
+            "mostrar sumar(1, 2, 3)"), [])
         inicio = "definir doble con numero dato devuelve numero\ndevolver dato * 2\nfin\n"
         self.assertEqual(self.comprobar(inicio + "mostrar doble(3) + 1"), [])
         errores = self.comprobar(inicio + 'crear variable nombre\nasignar nombre valor de "Ana"\n'
