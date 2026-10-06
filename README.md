@@ -56,7 +56,7 @@ make test ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
 | Comando | Función |
 | --- | --- |
 | `make generar` | Genera los archivos de ANTLR a partir de las gramáticas `.g4`. |
-| `make test` | Genera lo necesario y ejecuta las 50 pruebas automáticas. |
+| `make test` | Genera lo necesario y ejecuta las 51 pruebas automáticas. |
 | `make probar` | Genera lo necesario y analiza `examples/variables.edu`. |
 | `make probar ARCHIVO=ruta/programa.edu` | Analiza el archivo indicado. |
 
@@ -168,7 +168,7 @@ make probar ARCHIVO=tests/fixtures/invalid/tipo_incompatible.edu
 
 Estas entradas fallan intencionalmente con código 1 y un mensaje en español
 que explica el problema y sugiere cómo corregirlo.
-`make test` ejecuta 50 pruebas: 16 del lexer, 11 del parser y 23 de semántica.
+`make test` ejecuta 51 pruebas: 16 del lexer, 12 del parser y 23 de semántica.
 
 ## Alcance actual
 

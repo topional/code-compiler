@@ -4,10 +4,13 @@ options {
     tokenVocab = EducativoLexer;
 }
 
+// Una alternativa sin símbolos representa epsilon.
 // Una instrucción por línea; la última puede terminar en EOF.
-programa
-    : SALTO_LINEA* (sentencia SALTO_LINEA+)* sentencia? EOF
-    ;
+programa : saltosOpt instrucciones EOF;
+saltosOpt : SALTO_LINEA saltosOpt | ;
+lineas : SALTO_LINEA saltosOpt;
+instrucciones : sentencia restoPrograma | ;
+restoPrograma : lineas instrucciones | ;
 
 sentencia
     : declaracion
@@ -30,28 +33,37 @@ entrada : PREGUNTAR TEXTO Y GUARDAR EN ID;
 
 // El encabezado y las instrucciones del bloque necesitan un salto.
 // Los bloques pueden estar vacíos o anidados.
-bloque : SALTO_LINEA+ (sentencia SALTO_LINEA+)*;
+bloque : lineas instruccionesBloque;
+instruccionesBloque : sentencia lineas instruccionesBloque | ;
 
-condicional : SI expresion ENTONCES bloque (SINO bloque)? FIN;
+condicional : SI expresion ENTONCES bloque alternativa FIN;
+alternativa : SINO bloque | ;
 repeticion : REPETIR expresion VECES bloque FIN;
 mientras : MIENTRAS expresion HACER bloque FIN;
 
-funcion : DEFINIR ID (CON parametros)? DEVUELVE tipo bloque FIN;
-parametros : parametro (COMA parametro)*;
+funcion : DEFINIR ID parametrosOpt DEVUELVE tipo bloque FIN;
+parametrosOpt : CON parametros | ;
+parametros : parametro restoParametros;
+restoParametros : COMA parametro restoParametros | ;
 parametro : tipo ID;
 tipo : TIPO_NUMERO | TIPO_TEXTO | TIPO_LOGICO;
 retorno : DEVOLVER expresion;
-llamada : ID PAREN_IZQ argumentos? PAREN_DER;
-argumentos : expresion (COMA expresion)*;
+llamada : ID PAREN_IZQ argumentosOpt PAREN_DER;
+argumentosOpt : argumentos | ;
+argumentos : expresion restoArgumentos;
+restoArgumentos : COMA expresion restoArgumentos | ;
 motivacion : JUEGO | CALCULADORA;
 
-// Prioridad: o, y, no, comparación, +/-, */ y menos unario.
+// Prioridad: disyunción, conjunción, negación, comparación, suma, producto y unaria.
 // Las operaciones aritméticas se leen de izquierda a derecha.
 expresion : disyuncion;
-disyuncion : conjuncion (O conjuncion)*;
-conjuncion : negacion (Y negacion)*;
+disyuncion : conjuncion restoO;
+restoO : O conjuncion restoO | ;
+conjuncion : negacion restoY;
+restoY : Y negacion restoY | ;
 negacion : NO negacion | comparacion;
-comparacion : suma (operadorComparacion suma)?;
+comparacion : suma comparacionOpt;
+comparacionOpt : operadorComparacion suma | ;
 operadorComparacion
     : ES IGUAL A
     | ES DIFERENTE DE
@@ -60,8 +72,10 @@ operadorComparacion
     | ES MAYOR O IGUAL QUE
     | ES MENOR O IGUAL QUE
     ;
-suma : producto ((SUMA | RESTA) producto)*;
-producto : unaria ((MULT | DIV) unaria)*;
+suma : producto restoSuma;
+restoSuma : SUMA producto restoSuma | RESTA producto restoSuma | ;
+producto : unaria restoProducto;
+restoProducto : MULT unaria restoProducto | DIV unaria restoProducto | ;
 unaria : RESTA unaria | primaria;
 primaria
     : NUMERO
@@ -77,4 +91,4 @@ primaria
 // Límites: números con menos opcional o variables.
 // Falta validar los tipos y el orden del rango.
 aleatorio : TIPO_NUMERO ALEATORIO ENTRE limite Y limite;
-limite : RESTA? NUMERO | ID;
+limite : RESTA NUMERO | NUMERO | ID;
