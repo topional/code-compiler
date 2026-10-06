@@ -1,4 +1,4 @@
-"""Análisis semántico parcial de declaraciones, inicialización y tipos."""
+"""Revisa variables, inicialización y tipos."""
 
 from generated.EducativoParserVisitor import EducativoParserVisitor
 from tabla_simbolos import TablaSimbolos
@@ -7,11 +7,9 @@ ERROR = "error"
 
 
 class AnalizadorSemantico(EducativoParserVisitor):
-    """Cada instancia recorre un programa en orden de fuente.
+    """Recorre el árbol y revisa la semántica.
 
-    Las funciones y bloques crean ámbitos. Los parámetros comparten ámbito
-    con su cuerpo. None representa un tipo aún desconocido; ERROR evita
-    propagar diagnósticos derivados de un error anterior.
+    None indica tipo desconocido; ERROR indica un error previo.
     """
 
     def __init__(self):
@@ -72,7 +70,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
     def visitEntrada(self, ctx):
         simbolo = self.buscar(ctx.ID())
         if simbolo is not None:
-            # La entrada conserva un tipo ya conocido; sin tipo previo es texto.
+            # Sin tipo previo, la entrada es texto.
             simbolo.tipo = simbolo.tipo or "texto"
             simbolo.inicializada = True
 
@@ -112,7 +110,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         tipos = [self.visit(suma) for suma in ctx.suma()]
         if ERROR in tipos:
             return ERROR
-        # Compatibilidad de comparaciones se ampliará en la siguiente etapa.
+        # Falta revisar los tipos de las comparaciones.
         return "logico" if ctx.operadorComparacion() is not None else tipos[0]
 
     def visitSuma(self, ctx):
@@ -145,7 +143,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         tipos = [self.visit(limite) for limite in ctx.limite()]
         if ERROR in tipos:
             return ERROR
-        # Enteros y orden del rango quedan pendientes; sí se detectan lecturas sin valor.
+        # Falta validar enteros y el orden del rango.
         return "numero"
 
     def visitLimite(self, ctx):
@@ -186,7 +184,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         self.visit(ctx.expresion())
         antes = self.tabla.estado()
         self.visit(ctx.bloque())
-        # Un ciclo podría no ejecutarse: sus asignaciones no garantizan un valor.
+        # El ciclo puede ejecutarse cero veces.
         self.combinar(antes, [antes, self.tabla.estado()], ctx.start)
 
     def visitMientras(self, ctx):
@@ -208,7 +206,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         finally:
             self.tabla.cerrar_ambito()
             self.funciones = funciones_exteriores
-            # Definir una función no ejecuta sus asignaciones a variables exteriores.
+            # Definir la función no ejecuta su cuerpo.
             self.tabla.restaurar(antes)
 
     def visitLlamada(self, ctx):
@@ -217,5 +215,5 @@ class AnalizadorSemantico(EducativoParserVisitor):
             tipos = [self.visit(expresion) for expresion in ctx.argumentos().expresion()]
         if ERROR in tipos:
             return ERROR
-        # Firmas y funciones inexistentes quedan para la siguiente etapa.
+        # Falta validar funciones y argumentos.
         return self.funciones.get(ctx.ID().getText())

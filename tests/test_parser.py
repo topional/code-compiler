@@ -1,4 +1,4 @@
-"""Validación de construcciones, estructura del árbol y errores sintácticos."""
+"""Pruebas del parser."""
 
 import glob
 import os
@@ -140,7 +140,7 @@ class ParserTests(unittest.TestCase):
                 self.assertTrue(sintacticos)
 
     def test_restricciones_semanticas_no_se_confunden_con_sintaxis(self):
-        # Estas entradas tienen estructura valida; sus valores/contextos se revisaran despues.
+        # Pasan la sintaxis; la semántica se revisa aparte.
         for codigo in ("mostrar desconocida", "devolver 1", "si 10 entonces\nfin",
                        "asignar dado valor de numero aleatorio entre 3.5 y 1"):
             with self.subTest(codigo=codigo):

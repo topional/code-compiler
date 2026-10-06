@@ -1,4 +1,4 @@
-"""Pruebas de declaraciones, inicialización, tipos y ámbitos."""
+"""Pruebas del analizador semántico."""
 
 import glob
 import os

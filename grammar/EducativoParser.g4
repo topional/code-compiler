@@ -4,7 +4,7 @@ options {
     tokenVocab = EducativoLexer;
 }
 
-// Una instruccion por linea; la ultima puede terminar directamente en EOF.
+// Una instrucción por línea; la última puede terminar en EOF.
 programa
     : SALTO_LINEA* (sentencia SALTO_LINEA+)* sentencia? EOF
     ;
@@ -28,8 +28,8 @@ asignacion : ASIGNAR ID VALOR DE expresion;
 salida : MOSTRAR expresion;
 entrada : PREGUNTAR TEXTO Y GUARDAR EN ID;
 
-// Cada encabezado y cada instruccion del bloque terminan con salto de linea.
-// Se permiten bloques vacios, lineas en blanco y bloques anidados.
+// El encabezado y las instrucciones del bloque necesitan un salto.
+// Los bloques pueden estar vacíos o anidados.
 bloque : SALTO_LINEA+ (sentencia SALTO_LINEA+)*;
 
 condicional : SI expresion ENTONCES bloque (SINO bloque)? FIN;
@@ -45,8 +45,8 @@ llamada : ID PAREN_IZQ argumentos? PAREN_DER;
 argumentos : expresion (COMA expresion)*;
 motivacion : JUEGO | CALCULADORA;
 
-// Precedencia, de menor a mayor: o, y, no, comparacion, +/-, */ y menos unario.
-// Las listas de operadores aritmeticos se interpretaran de izquierda a derecha.
+// Prioridad: o, y, no, comparación, +/-, */ y menos unario.
+// Las operaciones aritméticas se leen de izquierda a derecha.
 expresion : disyuncion;
 disyuncion : conjuncion (O conjuncion)*;
 conjuncion : negacion (Y negacion)*;
@@ -74,7 +74,7 @@ primaria
     | aleatorio
     ;
 
-// Los limites son literales numericos (con signo opcional) o variables.
-// Enteros, tipos y orden del rango se comprobaran en las etapas posteriores.
+// Límites: números con menos opcional o variables.
+// Falta validar los tipos y el orden del rango.
 aleatorio : TIPO_NUMERO ALEATORIO ENTRE limite Y limite;
 limite : RESTA? NUMERO | ID;
