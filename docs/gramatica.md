@@ -16,8 +16,10 @@ no literales. `sentenciaMientras` y `expresionAleatoria` nombran estructuras;
 
 Esta es una gramática libre de contexto: cada producción tiene un solo no
 terminal a la izquierda. Las reglas auxiliares con `ε` desarrollan las listas
-y opciones que en ANTLR se escriben con `*`, `+` o `?`. Las llaves y los nombres
-de tokens de ANTLR pertenecen a la implementación, no a la notación del informe.
+y opciones mediante recursión y alternativas vacías, también en el parser
+ANTLR. No se usan cuantificadores de repetición u opcionalidad en sus reglas.
+Las llaves y los nombres de tokens de ANTLR pertenecen a la implementación,
+no a la notación del informe.
 
 ## Producciones completas
 
@@ -157,25 +159,24 @@ principal de máximo cinco páginas hay que seleccionar y resumir el contenido;
 estos documentos completos son artefactos de apoyo en el repositorio.
 
 Las 68 derivaciones y los 85 ejemplos se conservan como documentación de apoyo.
-`make test` ejecuta 50 pruebas: 27 del lexer/parser y 23 de semántica parcial.
+`make test` ejecuta 51 pruebas: 28 del lexer/parser y 23 de semántica parcial.
 
-La correspondencia de las reglas auxiliares con ANTLR es:
+Las reglas auxiliares conservan los mismos nombres en ANTLR. Las alternativas
+vacías representan `ε`; por ejemplo:
 
-| Producciones documentadas | Forma en ANTLR |
-| --- | --- |
-| `saltosOpt`, `lineas`, `instrucciones`, `restoPrograma` | `SALTO_LINEA* (sentencia SALTO_LINEA+)* sentencia? EOF` en `programa` |
-| `lineas`, `instruccionesBloque` | `SALTO_LINEA+ (sentencia SALTO_LINEA+)*` en `bloque` |
-| `alternativa` | `(SINO bloque)?` |
-| `parametrosOpt`, `restoParametros` | `(CON parametros)?`, `(COMA parametro)*` |
-| `argumentosOpt`, `restoArgumentos` | `argumentos?`, `(COMA expresion)*` |
-| `restoO`, `restoY` | `(O conjuncion)*`, `(Y negacion)*` |
-| `comparacionOpt` | `(operadorComparacion suma)?` |
-| `restoSuma`, `restoProducto` | `((SUMA \| RESTA) producto)*`, `((MULT \| DIV) unaria)*` |
-| `limite → - num \| num \| id` | `RESTA? NUMERO \| ID` |
+```antlr
+alternativa : SINO bloque | ;
+restoSuma : SUMA producto restoSuma | RESTA producto restoSuma | ;
+```
 
-Las alternativas con barras en esta tabla se leen como las de las producciones;
-las reglas de las demás construcciones corresponden directamente, usando los
-tokens del lexer.
+La primera regla permite omitir `sino`. La segunda admite varias sumas o restas,
+terminando con la alternativa vacía. `saltosOpt`, `instrucciones`,
+`instruccionesBloque`, `restoParametros`, `restoArgumentos`, `restoO`, `restoY`
+y `restoProducto` usan la misma idea de recursión y terminación.
+`parametrosOpt`, `argumentosOpt` y `comparacionOpt` permiten omitir una estructura.
+`limite` expresa sus tres alternativas directamente: `RESTA NUMERO`, `NUMERO`
+o `ID`. Los terminales de las producciones se implementan con tokens del lexer;
+el signo de multiplicación sigue siendo un operador del lenguaje.
 
 Las pruebas automáticas aceptan los programas de la carpeta `examples/` y verifican
 rechazo de estructuras incorrectas, bloques anidados, precedencia, comparaciones,

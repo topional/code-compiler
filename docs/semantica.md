@@ -73,7 +73,7 @@ de llamadas o terminación temprana por retornos.
 
 ## Validación y alcance
 
-`make test` pasa 50 pruebas: 16 del lexer, 11 del parser y 23 de semántica.
+`make test` pasa 51 pruebas: 16 del lexer, 12 del parser y 23 de semántica.
 Incluyen cuatro programas completos válidos, los cuatro errores, lectura en
 distintas construcciones, operaciones, inferencia de tipos, parámetros,
 ámbitos, condiciones/ciclos y posiciones y códigos de salida del driver.
