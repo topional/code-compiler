@@ -1,9 +1,9 @@
 # Programa para validar la sintaxis; todavia no se ejecuta.
-definir sumar con numero primero, numero segundo devuelve numero
+definir sumar(numero primero, numero segundo) devuelve numero
     devolver primero + segundo
 fin
 
-definir saludo devuelve texto
+definir saludo() devuelve texto
     devolver "Hola"
 fin
 
@@ -14,7 +14,7 @@ asignar maximo valor de 6
 crear variable dado
 asignar dado valor de numero aleatorio entre minimo y maximo
 crear variable respuesta
-preguntar "Adivina el resultado del dado" y guardar en respuesta
+preguntar "Adivina el resultado del dado" guardar en respuesta
 
 si respuesta es igual a dado entonces
     mostrar saludo()

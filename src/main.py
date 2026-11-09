@@ -29,10 +29,19 @@ class ErroresSintacticos(ErrorListener):
         self.errores.append(f"Error sintáctico en {line}:{column + 1}: {msg}")
 
 
+def mostrar_tokens(tokens, lexer):
+    print(f"{'LÍNEA':<7} {'COLUMNA':<9} {'TOKEN':<15} LEXEMA")
+    for token in tokens.tokens:
+        nombre = "EOF" if token.type == Token.EOF else lexer.symbolicNames[token.type]
+        print(f"{token.line:<7} {token.column + 1:<9} {nombre:<15} {token.text!r}")
+
+
 def main():
     argumentos = argparse.ArgumentParser(description=__doc__)
     argumentos.add_argument("archivo", help="Programa .edu para analizar")
     argumentos.add_argument("--arbol", action="store_true", help="Mostrar el árbol sintáctico")
+    argumentos.add_argument("--etapa", choices=("lexer", "gramatica", "semantica"),
+                            default="semantica", help="Última etapa que se analiza (por defecto: semantica)")
     opciones = argumentos.parse_args()
 
     try:
@@ -53,6 +62,11 @@ def main():
             print(mensaje, file=sys.stderr)
         return 1
 
+    if opciones.etapa == "lexer":
+        mostrar_tokens(tokens, lexer)
+        print("Análisis léxico correcto.")
+        return 0
+
     parser = EducativoParser(tokens)
     errores_sintacticos = ErroresSintacticos()
     parser.removeErrorListeners()
@@ -64,19 +78,18 @@ def main():
             print(mensaje, file=sys.stderr)
         return 1
 
-    semantico = AnalizadorSemantico()
-    semantico.visit(arbol)
-    if semantico.errores:
-        for mensaje in semantico.errores:
-            print(mensaje, file=sys.stderr)
-        return 1
+    if opciones.etapa == "semantica":
+        semantico = AnalizadorSemantico()
+        semantico.visit(arbol)
+        if semantico.errores:
+            for mensaje in semantico.errores:
+                print(mensaje, file=sys.stderr)
+            return 1
 
-    print(f"{'LÍNEA':<7} {'COLUMNA':<9} {'TOKEN':<15} LEXEMA")
-    for token in tokens.tokens:
-        nombre = "EOF" if token.type == Token.EOF else lexer.symbolicNames[token.type]
-        print(f"{token.line:<7} {token.column + 1:<9} {nombre:<15} {token.text!r}")
+    mostrar_tokens(tokens, lexer)
     print("Análisis sintáctico correcto.")
-    print("Análisis semántico parcial correcto.")
+    if opciones.etapa == "semantica":
+        print("Análisis semántico parcial correcto.")
     if opciones.arbol:
         print(arbol.toStringTree(recog=parser))
     return 0

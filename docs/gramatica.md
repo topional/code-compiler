@@ -33,15 +33,15 @@ sentencia → declaracion | asignacion | salida | entrada | condicional | repeti
 declaracion → crear variable id
 asignacion → asignar id valor de expresion
 salida → mostrar expresion
-entrada → preguntar cad y guardar en id
+entrada → preguntar cad guardar en id
 bloque → lineas instruccionesBloque
 instruccionesBloque → sentencia lineas instruccionesBloque | ε
 condicional → si expresion entonces bloque alternativa fin
 alternativa → sino bloque | ε
 repeticion → repetir expresion veces bloque fin
 sentenciaMientras → mientras expresion hacer bloque fin
-funcion → definir id parametrosOpt devuelve tipo bloque fin
-parametrosOpt → con parametros | ε
+funcion → definir id ( parametrosOpt ) devuelve tipo bloque fin
+parametrosOpt → parametros | ε
 parametros → parametro restoParametros
 restoParametros → , parametro restoParametros | ε
 parametro → tipo id
@@ -86,8 +86,9 @@ a la misma gramática; no son lenguajes diferentes.
 - Las declaraciones son `crear variable id`, sin valor inicial. Toda asignación
   utiliza `asignar id valor de expresion`.
 - `preguntar` recibe un texto entre comillas y una variable destino.
-- Los parámetros de funciones tienen tipo y nombre; se separan con comas.
-  Una función sin parámetros omite `con`. La llamada usa paréntesis, incluso
+- Los parámetros de funciones tienen tipo y nombre; van entre paréntesis y se
+  separan con comas, como en `definir doble(numero dato) devuelve numero`.
+  Una función sin parámetros usa `()`. La llamada también usa paréntesis, incluso
   sin argumentos. Toda definición indica el tipo de resultado con `devuelve`.
 - `numero aleatorio entre limite y limite` es una expresión. Los límites son
   variables o números con signo negativo opcional. No se admiten expresiones
@@ -135,7 +136,6 @@ aparecer en inglés; los mensajes pedagógicos personalizados quedan pendientes.
 ```bash
 make probar ARCHIVO=examples/parser_completo.edu
 .venv/bin/python src/main.py examples/variables.edu --arbol
-make test
 ```
 
 ## Alcance de esta etapa
@@ -159,7 +159,9 @@ principal de máximo cinco páginas hay que seleccionar y resumir el contenido;
 estos documentos completos son artefactos de apoyo en el repositorio.
 
 Las 68 derivaciones y los 85 ejemplos se conservan como documentación de apoyo.
-`make test` ejecuta 51 pruebas: 28 del lexer/parser y 23 de semántica parcial.
+Las entradas `.edu` están en `tests/lexer/`, `tests/gramatica/` y `tests/semantica/`.
+Se analizan individualmente con `make probar ARCHIVO=...`.
+Consulta [la guía de entradas](../tests/README.md).
 
 Las reglas auxiliares conservan los mismos nombres en ANTLR. Las alternativas
 vacías representan `ε`; por ejemplo:
@@ -178,6 +180,6 @@ y `restoProducto` usan la misma idea de recursión y terminación.
 o `ID`. Los terminales de las producciones se implementan con tokens del lexer;
 el signo de multiplicación sigue siendo un operador del lenguaje.
 
-Las pruebas automáticas aceptan los programas de la carpeta `examples/` y verifican
-rechazo de estructuras incorrectas, bloques anidados, precedencia, comparaciones,
-separación por líneas, EOF y los códigos de salida del driver.
+Las entradas de prueba agrupan construcciones válidas y errores de estructura.
+Revisa manualmente la salida al analizar cada archivo. Las expresiones de
+precedencia y bloques anidados pueden inspeccionarse con `--arbol`.

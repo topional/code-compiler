@@ -1,0 +1,4 @@
+mostrar 2 + 3 * -4 - 5
+mostrar (2 + 3) * 4
+mostrar puntos es mayor o igual que 10 y no falso o verdadero
+mostrar numero aleatorio entre 1 y 6 es mayor que 3 y verdadero

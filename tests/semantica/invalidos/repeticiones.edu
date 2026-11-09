@@ -1,0 +1,10 @@
+repetir -1 veces
+fin
+repetir 3 / 2 veces
+fin
+repetir "hola" veces
+fin
+crear variable cantidad
+asignar cantidad valor de -2
+repetir cantidad veces
+fin

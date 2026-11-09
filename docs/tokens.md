@@ -100,7 +100,7 @@ mostrar "Hola"
 crear variable nombre
 asignar nombre valor de "Ana"
 mostrar nombre
-preguntar "Edad" y guardar en edad
+preguntar "Edad" guardar en edad
 
 si edad es mayor o igual que 12 entonces
     mostrar "Puedes participar"
@@ -116,7 +116,7 @@ mientras edad es menor que 18 hacer
     asignar edad valor de edad + 1
 fin
 
-definir sumar con numero primero, numero segundo devuelve numero
+definir sumar(numero primero, numero segundo) devuelve numero
     devolver primero + segundo
 fin
 
@@ -182,7 +182,6 @@ Una combinación de tokens válidos en un orden incorrecto será un error sintá
 usar una variable no declarada será un error semántico.
 
 ```bash
-make test
 make probar ARCHIVO=examples/lexer_completo.edu
-make probar ARCHIVO=tests/fixtures/invalid/caracter.edu
+make probar ARCHIVO=tests/lexer/invalidos/caracter.edu
 ```

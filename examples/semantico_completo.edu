@@ -2,7 +2,7 @@
 crear variable puntos
 asignar puntos valor de 0
 
-definir sumar con numero primero, numero segundo devuelve numero
+definir sumar(numero primero, numero segundo) devuelve numero
     crear variable resultado
     asignar resultado valor de primero + segundo
     devolver resultado

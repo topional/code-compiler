@@ -1,0 +1,3 @@
+definir doble con numero dato devuelve numero
+    devolver dato * 2
+fin

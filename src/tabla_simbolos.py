@@ -1,6 +1,7 @@
 """Guarda las variables de cada ámbito."""
 
 from dataclasses import dataclass
+from fractions import Fraction
 
 
 @dataclass
@@ -10,6 +11,7 @@ class Simbolo:
     columna: int
     tipo: str | None = None
     inicializada: bool = False
+    valor_numerico: Fraction | None = None
 
 
 class TablaSimbolos:
@@ -37,12 +39,13 @@ class TablaSimbolos:
         return None
 
     def estado(self):
-        """Guarda tipos e inicialización antes de una rama."""
-        return [(simbolo, simbolo.tipo, simbolo.inicializada)
+        """Guarda tipos, inicialización y constantes antes de una rama."""
+        return [(simbolo, simbolo.tipo, simbolo.inicializada, simbolo.valor_numerico)
                 for ambito in self.ambitos for simbolo in ambito.values()]
 
     @staticmethod
     def restaurar(estado):
-        for simbolo, tipo, inicializada in estado:
+        for simbolo, tipo, inicializada, valor_numerico in estado:
             simbolo.tipo = tipo
             simbolo.inicializada = inicializada
+            simbolo.valor_numerico = valor_numerico

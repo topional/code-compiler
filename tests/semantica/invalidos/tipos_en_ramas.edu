@@ -1,0 +1,6 @@
+crear variable dato
+si verdadero entonces
+    asignar dato valor de 1
+sino
+    asignar dato valor de "hola"
+fin

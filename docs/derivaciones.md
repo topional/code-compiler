@@ -303,51 +303,51 @@ Símbolo inicial: `entrada`.
 ### Ejemplo 1
 
 ```text
-preguntar "Edad" y guardar en edad
+preguntar "Edad" guardar en edad
 ```
 
 ```text
 entrada
-⇒ preguntar cad y guardar en id
+⇒ preguntar cad guardar en id
 ```
 
 ### Ejemplo 2
 
 ```text
-preguntar "Nombre" y guardar en nombre
+preguntar "Nombre" guardar en nombre
 ```
 
 ```text
 entrada
-⇒ preguntar cad y guardar en id
+⇒ preguntar cad guardar en id
 ```
 
 ### Ejemplo 3
 
 ```text
-preguntar "Respuesta" y guardar en respuesta
+preguntar "Respuesta" guardar en respuesta
 ```
 
 ```text
 entrada
-⇒ preguntar cad y guardar en id
+⇒ preguntar cad guardar en id
 ```
 
 ### Ejemplo 4
 
 ```text
-PREGUNTAR "Puntos" Y GUARDAR EN puntos
+PREGUNTAR "Puntos" GUARDAR EN puntos
 ```
 
 ```text
 entrada
-⇒ preguntar cad y guardar en id
+⇒ preguntar cad guardar en id
 ```
 
 Quinto ejemplo para la descripción de la construcción:
 
 ```text
-preguntar "Resultado" y guardar en resultado
+preguntar "Resultado" guardar en resultado
 ```
 
 ## Condicional
@@ -1019,175 +1019,175 @@ Símbolo inicial: `funcion`.
 ### Ejemplo 1
 
 ```text
-definir saludo devuelve texto
+definir saludo() devuelve texto
 devolver "Hola"
 fin
 ```
 
 ```text
 funcion
-⇒ definir id parametrosOpt devuelve tipo bloque fin
-⇒ definir id devuelve tipo bloque fin
-⇒ definir id devuelve texto bloque fin
-⇒ definir id devuelve texto lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl saltosOpt instruccionesBloque fin
-⇒ definir id devuelve texto nl instruccionesBloque fin
-⇒ definir id devuelve texto nl sentencia lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl retorno lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver expresion lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver disyuncion lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver conjuncion restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver negacion restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver comparacion restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver suma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver producto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver cad restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver cad restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver cad comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver cad restoY restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver cad restoO lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver cad lineas instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver cad nl saltosOpt instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver cad nl instruccionesBloque fin
-⇒ definir id devuelve texto nl devolver cad nl fin
+⇒ definir id (parametrosOpt) devuelve tipo bloque fin
+⇒ definir id () devuelve tipo bloque fin
+⇒ definir id () devuelve texto bloque fin
+⇒ definir id () devuelve texto lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl saltosOpt instruccionesBloque fin
+⇒ definir id () devuelve texto nl instruccionesBloque fin
+⇒ definir id () devuelve texto nl sentencia lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl retorno lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver expresion lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver disyuncion lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver conjuncion restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver negacion restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver comparacion restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver suma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver producto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver cad restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver cad restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver cad comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver cad restoY restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver cad restoO lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver cad lineas instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver cad nl saltosOpt instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver cad nl instruccionesBloque fin
+⇒ definir id () devuelve texto nl devolver cad nl fin
 ```
 
 ### Ejemplo 2
 
 ```text
-definir doble con numero dato devuelve numero
+definir doble(numero dato) devuelve numero
 devolver dato * 2
 fin
 ```
 
 ```text
 funcion
-⇒ definir id parametrosOpt devuelve tipo bloque fin
-⇒ definir id con parametros devuelve tipo bloque fin
-⇒ definir id con parametro restoParametros devuelve tipo bloque fin
-⇒ definir id con tipo id restoParametros devuelve tipo bloque fin
-⇒ definir id con numero id restoParametros devuelve tipo bloque fin
-⇒ definir id con numero id devuelve tipo bloque fin
-⇒ definir id con numero id devuelve numero bloque fin
-⇒ definir id con numero id devuelve numero lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl saltosOpt instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl sentencia lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl retorno lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver expresion lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver disyuncion lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver conjuncion restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver negacion restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver comparacion restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver suma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver producto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * num restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * num restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * num comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * num restoY restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * num restoO lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * num lineas instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * num nl saltosOpt instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * num nl instruccionesBloque fin
-⇒ definir id con numero id devuelve numero nl devolver id * num nl fin
+⇒ definir id (parametrosOpt) devuelve tipo bloque fin
+⇒ definir id (parametros) devuelve tipo bloque fin
+⇒ definir id (parametro restoParametros) devuelve tipo bloque fin
+⇒ definir id (tipo id restoParametros) devuelve tipo bloque fin
+⇒ definir id (numero id restoParametros) devuelve tipo bloque fin
+⇒ definir id (numero id) devuelve tipo bloque fin
+⇒ definir id (numero id) devuelve numero bloque fin
+⇒ definir id (numero id) devuelve numero lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl saltosOpt instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl sentencia lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl retorno lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver expresion lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver disyuncion lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver conjuncion restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver negacion restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver comparacion restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver suma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver producto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * num restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * num restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * num comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * num restoY restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * num restoO lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * num lineas instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * num nl saltosOpt instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * num nl instruccionesBloque fin
+⇒ definir id (numero id) devuelve numero nl devolver id * num nl fin
 ```
 
 ### Ejemplo 3
 
 ```text
-definir copiar con texto mensaje devuelve texto
+definir copiar(texto mensaje) devuelve texto
 devolver mensaje
 fin
 ```
 
 ```text
 funcion
-⇒ definir id parametrosOpt devuelve tipo bloque fin
-⇒ definir id con parametros devuelve tipo bloque fin
-⇒ definir id con parametro restoParametros devuelve tipo bloque fin
-⇒ definir id con tipo id restoParametros devuelve tipo bloque fin
-⇒ definir id con texto id restoParametros devuelve tipo bloque fin
-⇒ definir id con texto id devuelve tipo bloque fin
-⇒ definir id con texto id devuelve texto bloque fin
-⇒ definir id con texto id devuelve texto lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl saltosOpt instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl sentencia lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl retorno lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver expresion lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver disyuncion lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver conjuncion restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver negacion restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver comparacion restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver suma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver producto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver id restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver id restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver id comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver id restoY restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver id restoO lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver id lineas instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver id nl saltosOpt instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver id nl instruccionesBloque fin
-⇒ definir id con texto id devuelve texto nl devolver id nl fin
+⇒ definir id (parametrosOpt) devuelve tipo bloque fin
+⇒ definir id (parametros) devuelve tipo bloque fin
+⇒ definir id (parametro restoParametros) devuelve tipo bloque fin
+⇒ definir id (tipo id restoParametros) devuelve tipo bloque fin
+⇒ definir id (texto id restoParametros) devuelve tipo bloque fin
+⇒ definir id (texto id) devuelve tipo bloque fin
+⇒ definir id (texto id) devuelve texto bloque fin
+⇒ definir id (texto id) devuelve texto lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl saltosOpt instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl sentencia lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl retorno lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver expresion lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver disyuncion lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver conjuncion restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver negacion restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver comparacion restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver suma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver producto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver id restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver id restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver id comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver id restoY restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver id restoO lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver id lineas instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver id nl saltosOpt instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver id nl instruccionesBloque fin
+⇒ definir id (texto id) devuelve texto nl devolver id nl fin
 ```
 
 ### Ejemplo 4
 
 ```text
-definir negar con logico estado devuelve logico
+definir negar(logico estado) devuelve logico
 devolver no estado
 fin
 ```
 
 ```text
 funcion
-⇒ definir id parametrosOpt devuelve tipo bloque fin
-⇒ definir id con parametros devuelve tipo bloque fin
-⇒ definir id con parametro restoParametros devuelve tipo bloque fin
-⇒ definir id con tipo id restoParametros devuelve tipo bloque fin
-⇒ definir id con logico id restoParametros devuelve tipo bloque fin
-⇒ definir id con logico id devuelve tipo bloque fin
-⇒ definir id con logico id devuelve logico bloque fin
-⇒ definir id con logico id devuelve logico lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl saltosOpt instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl sentencia lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl retorno lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver expresion lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver disyuncion lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver conjuncion restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver negacion restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no negacion restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no comparacion restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no suma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no producto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no id restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no id restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no id comparacionOpt restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no id restoY restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no id restoO lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no id lineas instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no id nl saltosOpt instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no id nl instruccionesBloque fin
-⇒ definir id con logico id devuelve logico nl devolver no id nl fin
+⇒ definir id (parametrosOpt) devuelve tipo bloque fin
+⇒ definir id (parametros) devuelve tipo bloque fin
+⇒ definir id (parametro restoParametros) devuelve tipo bloque fin
+⇒ definir id (tipo id restoParametros) devuelve tipo bloque fin
+⇒ definir id (logico id restoParametros) devuelve tipo bloque fin
+⇒ definir id (logico id) devuelve tipo bloque fin
+⇒ definir id (logico id) devuelve logico bloque fin
+⇒ definir id (logico id) devuelve logico lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl saltosOpt instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl sentencia lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl retorno lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver expresion lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver disyuncion lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver conjuncion restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver negacion restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no negacion restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no comparacion restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no suma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no producto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no unaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no primaria restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no id restoProducto restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no id restoSuma comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no id comparacionOpt restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no id restoY restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no id restoO lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no id lineas instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no id nl saltosOpt instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no id nl instruccionesBloque fin
+⇒ definir id (logico id) devuelve logico nl devolver no id nl fin
 ```
 
 Quinto ejemplo para la descripción de la construcción:
 
 ```text
-definir sumar con numero primero, numero segundo devuelve numero
+definir sumar(numero primero, numero segundo) devuelve numero
 devolver primero + segundo
 fin
 ```

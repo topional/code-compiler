@@ -1,0 +1,5 @@
+si verdadero entonces
+    crear variable local
+    asignar local valor de 1
+fin
+mostrar local

@@ -37,7 +37,6 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 make generar
-make test
 ```
 
 El runtime de Python y el generador usan la misma versión, 4.13.1. La ruta
@@ -48,7 +47,6 @@ reemplazar las órdenes de Make anteriores por:
 
 ```bash
 make generar ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
-make test ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
 ```
 
 ## Generar y probar
@@ -56,7 +54,6 @@ make test ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
 | Comando | Función |
 | --- | --- |
 | `make generar` | Genera los archivos de ANTLR a partir de las gramáticas `.g4`. |
-| `make test` | Genera lo necesario y ejecuta las 51 pruebas automáticas. |
 | `make probar` | Genera lo necesario y analiza `examples/variables.edu`. |
 | `make probar ARCHIVO=ruta/programa.edu` | Analiza el archivo indicado. |
 
@@ -66,7 +63,6 @@ make probar
 make probar ARCHIVO=examples/lexer_completo.edu
 make probar ARCHIVO=examples/parser_completo.edu
 make probar ARCHIVO=examples/semantico_completo.edu
-make test
 ```
 
 Para ver también el árbol sintáctico:
@@ -75,9 +71,8 @@ Para ver también el árbol sintáctico:
 .venv/bin/python src/main.py examples/variables.edu --arbol
 ```
 
-`make probar` y `make test` usan el Python de `.venv`, incluso si el entorno no
-está activado. Ambos dependen de `generar`: no hace falta ejecutar los tres
-comandos por separado. Make reutiliza los archivos actualizados y regenera los
+`make probar` usa el Python de `.venv`, incluso si el entorno no está
+activado. Depende de `generar`: no hace falta ejecutar ambos comandos por separado. Make reutiliza los archivos actualizados y regenera los
 necesarios cuando cambian las gramáticas.
 
 ### Archivos generados por ANTLR
@@ -96,7 +91,7 @@ src/generated/
 └── EducativoParser.interp
 ```
 
-Ejecutar `make generar` o `make test` antes de ejecutar directamente
+Ejecutar `make generar` antes de ejecutar directamente
 `src/main.py`. Los archivos generados se actualizan desde los `.g4`; los cambios
 del analizador semántico se escriben en `src/semantico.py` y
 `src/tabla_simbolos.py`.
@@ -111,7 +106,7 @@ Ante un error léxico, sintáctico o semántico muestra la posición en stderr y
 código 1; si el archivo no se puede leer, con código 2. Por ejemplo:
 
 ```bash
-make probar ARCHIVO=tests/fixtures/invalid/caracter.edu
+make probar ARCHIVO=tests/lexer/invalidos/caracter.edu
 ```
 
 Esa prueba falla intencionalmente porque `@` no está definido.
@@ -119,8 +114,8 @@ Esa prueba falla intencionalmente porque `@` no está definido.
 Para probar errores sintácticos con tokens válidos:
 
 ```bash
-make probar ARCHIVO=tests/fixtures/invalid/asignacion_sin_valor.edu
-make probar ARCHIVO=tests/fixtures/invalid/condicional_sin_fin.edu
+make probar ARCHIVO=tests/gramatica/invalidos/asignacion_sin_valor.edu
+make probar ARCHIVO=tests/gramatica/invalidos/condicional_sin_fin.edu
 ```
 
 Esas entradas fallan intencionalmente: falta `valor de` en la primera y `fin`
@@ -132,12 +127,20 @@ es la base de `src/semantico.py`, que recorre el árbol en el análisis semánti
 
 ## Análisis semántico del parcial
 
-El enunciado pide verificar por lo menos dos errores semánticos. Se implementan cuatro:
+El enunciado pide verificar por lo menos dos errores semánticos. Se implementan siete clases:
 
 - Uso de una variable no declarada, tanto al leer como al asignar o preguntar.
 - Declaración repetida de una variable en el mismo ámbito, incluidos parámetros.
 - Lectura de una variable sin un valor inicial garantizado.
 - Tipos incompatibles en asignaciones y operaciones aritméticas o lógicas.
+- Condiciones de `si` y `mientras` que no sean lógicas.
+- Cantidades de repeticiones que no sean numéricas, enteras y no negativas.
+- Límites aleatorios que no sean numéricos, enteros y ordenados.
+
+Las restricciones de valores se comprueban cuando pueden determinarse mediante
+literales, aritmética y variables con valores conocidos. `2.0` cuenta como entero;
+se permiten cero repeticiones y límites negativos o iguales en aleatorios.
+Los valores numéricos desconocidos deberán comprobarse durante la futura ejecución.
 
 El visitor de `src/semantico.py` usa la tabla de `src/tabla_simbolos.py`,
 con un ámbito global y ámbitos locales
@@ -160,15 +163,18 @@ ya visitadas usan el tipo declarado en `devuelve`; las llamadas cuyo tipo aún
 no se conoce quedan pendientes de validación completa de funciones.
 
 ```bash
-make probar ARCHIVO=tests/fixtures/invalid/variable_no_declarada.edu
-make probar ARCHIVO=tests/fixtures/invalid/variable_duplicada.edu
-make probar ARCHIVO=tests/fixtures/invalid/variable_sin_inicializar.edu
-make probar ARCHIVO=tests/fixtures/invalid/tipo_incompatible.edu
+make probar ARCHIVO=tests/semantica/invalidos/variable_no_declarada.edu
+make probar ARCHIVO=tests/semantica/invalidos/variable_duplicada.edu
+make probar ARCHIVO=tests/semantica/invalidos/variable_sin_inicializar.edu
+make probar ARCHIVO=tests/semantica/invalidos/tipo_incompatible.edu
 ```
 
 Estas entradas fallan intencionalmente con código 1 y un mensaje en español
 que explica el problema y sugiere cómo corregirlo.
-`make test` ejecuta 51 pruebas: 16 del lexer, 12 del parser y 23 de semántica.
+Las entradas están en `tests/lexer/`, `tests/gramatica/` y `tests/semantica/`,
+separadas en `validos` e `invalidos`. Elige un archivo con `make probar ARCHIVO=...`
+y revisa su salida. Usa `ETAPA=lexer` o `ETAPA=gramatica` para detener el análisis
+en esa etapa. Consulta [la guía de entradas](tests/README.md).
 
 ## Alcance actual
 
@@ -177,8 +183,9 @@ condicionales, ciclos, funciones, tipos, elección aleatoria y la instrucción
 de motivación `juego` y `calculadora`. El parser comprueba su estructura,
 la separación por líneas, los bloques y la precedencia de las expresiones.
 El analizador semántico comprueba declaraciones, inicialización y tipos en
-asignaciones y operaciones. Quedan pendientes las condiciones lógicas, la
-compatibilidad de comparaciones, firmas de funciones, retornos y restricciones
-de los rangos aleatorios. La inicialización se analiza de forma conservadora,
-sin evaluar constantes ni los efectos de llamadas a funciones. Los programas no se ejecutan. Para el
+asignaciones, operaciones, condiciones, repeticiones y rangos aleatorios.
+Quedan pendientes la compatibilidad de comparaciones, firmas de funciones,
+retornos y restricciones sobre valores desconocidos. La inicialización se analiza
+de forma conservadora, sin descartar ramas por condiciones constantes ni modelar
+los efectos de llamadas a funciones. Los programas no se ejecutan. Para el
 segundo avance se deberá ampliar la semántica a por lo menos seis errores.

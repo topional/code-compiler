@@ -1,0 +1,5 @@
+crear variable edad
+si verdadero entonces
+    asignar edad valor de 10
+fin
+mostrar edad

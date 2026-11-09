@@ -1,5 +1,7 @@
 """Revisa variables, inicialización y tipos."""
 
+from fractions import Fraction
+
 from generated.EducativoParserVisitor import EducativoParserVisitor
 from tabla_simbolos import TablaSimbolos
 
@@ -80,6 +82,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         if simbolo.tipo is None:
             simbolo.tipo = tipo
         simbolo.inicializada = True
+        simbolo.valor_numerico = self.numero_constante(ctx.expresion()) if tipo == "numero" else None
 
     def visitEntrada(self, ctx):
         simbolo = self.buscar(ctx.ID())
@@ -87,6 +90,61 @@ class AnalizadorSemantico(EducativoParserVisitor):
             # Sin tipo previo, la entrada es texto.
             simbolo.tipo = simbolo.tipo or "texto"
             simbolo.inicializada = True
+            simbolo.valor_numerico = None
+
+    def numero_constante(self, ctx):
+        """Calcula solo números conocidos; no ejecuta llamadas ni aleatorios."""
+        regla = ctx.parser.ruleNames[ctx.getRuleIndex()]
+        if regla in ("primaria", "limite"):
+            if ctx.NUMERO() is not None:
+                valor = Fraction(ctx.NUMERO().getText())
+                return -valor if regla == "limite" and ctx.RESTA() is not None else valor
+            if ctx.ID() is not None:
+                simbolo = self.tabla.buscar(ctx.ID().getText())
+                return simbolo.valor_numerico if simbolo is not None else None
+            if regla == "primaria" and ctx.expresion() is not None:
+                return self.numero_constante(ctx.expresion())
+            return None
+        if regla == "unaria" and ctx.RESTA() is not None:
+            valor = self.numero_constante(ctx.unaria())
+            return -valor if valor is not None else None
+        if regla in ("suma", "producto"):
+            valor = self.numero_constante(ctx.getChild(0))
+            resto = ctx.getChild(1)
+            while resto.getChildCount() != 0:
+                derecho = self.numero_constante(resto.getChild(1))
+                if valor is None or derecho is None:
+                    return None
+                operador = resto.getChild(0).getText()
+                if operador == "+":
+                    valor += derecho
+                elif operador == "-":
+                    valor -= derecho
+                elif operador == "*":
+                    valor *= derecho
+                elif derecho != 0:
+                    valor /= derecho
+                else:
+                    return None
+                resto = resto.getChild(2)
+            return valor
+        if ctx.getChildCount() == 1:
+            return self.numero_constante(ctx.getChild(0))
+        if regla in ("disyuncion", "conjuncion", "comparacion"):
+            if ctx.getChild(1).getChildCount() == 0:
+                return self.numero_constante(ctx.getChild(0))
+        return None
+
+    def exigir_tipo(self, ctx, tipo, esperado, descripcion):
+        if tipo not in (None, ERROR, esperado):
+            return self.error(ctx.start, f"{descripcion} debe ser de tipo {esperado}, "
+                              f"pero recibió {tipo}.")
+        return tipo
+
+    def olvidar_constantes(self):
+        for ambito in self.tabla.ambitos:
+            for simbolo in ambito.values():
+                simbolo.valor_numerico = None
 
     def visitExpresion(self, ctx):
         return self.visit(ctx.disyuncion())
@@ -159,10 +217,21 @@ class AnalizadorSemantico(EducativoParserVisitor):
         return self.visit(ctx.aleatorio())
 
     def visitAleatorio(self, ctx):
-        tipos = [self.visit(limite) for limite in ctx.limite()]
-        if ERROR in tipos:
+        limites = ctx.limite()
+        tipos = [self.visit(limite) for limite in limites]
+        valores = [self.numero_constante(limite) for limite in limites]
+        invalido = ERROR in tipos
+        for limite, tipo, valor in zip(limites, tipos, valores):
+            if self.exigir_tipo(limite, tipo, "numero", "el límite del aleatorio") == ERROR:
+                invalido = True
+            elif valor is not None and valor.denominator != 1:
+                self.error(limite.start, "el límite del aleatorio debe ser entero.")
+                invalido = True
+        if not invalido and all(valor is not None for valor in valores) and valores[0] > valores[1]:
+            self.error(ctx.start, "el límite mínimo del aleatorio no puede ser mayor que el máximo.")
+            invalido = True
+        if invalido:
             return ERROR
-        # Falta validar enteros y el orden del rango.
         return "numero"
 
     def visitLimite(self, ctx):
@@ -178,7 +247,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
             self.funciones = funciones_exteriores
 
     def combinar(self, antes, caminos, token):
-        for i, (simbolo, tipo_previo, _) in enumerate(antes):
+        for i, (simbolo, tipo_previo, _, _) in enumerate(antes):
             tipos = {camino[i][1] for camino in caminos if camino[i][1] is not None}
             if len(tipos) > 1:
                 self.error(token, f"las ramas asignan tipos incompatibles a '{simbolo.nombre}': "
@@ -186,9 +255,12 @@ class AnalizadorSemantico(EducativoParserVisitor):
             simbolo.tipo = tipo_previo or next((camino[i][1] for camino in caminos
                                                if camino[i][1] is not None), None)
             simbolo.inicializada = all(camino[i][2] for camino in caminos)
+            valores = {camino[i][3] for camino in caminos}
+            simbolo.valor_numerico = valores.pop() if len(valores) == 1 else None
 
     def visitCondicional(self, ctx):
-        self.visit(ctx.expresion())
+        condicion = ctx.expresion()
+        self.exigir_tipo(condicion, self.visit(condicion), "logico", "la condición de 'si'")
         antes = self.tabla.estado()
         caminos = []
         bloques = [ctx.bloque()]
@@ -204,22 +276,34 @@ class AnalizadorSemantico(EducativoParserVisitor):
         self.combinar(antes, caminos, ctx.start)
 
     def ciclo(self, ctx):
-        self.visit(ctx.expresion())
         antes = self.tabla.estado()
+        # Un ciclo puede cambiar los valores en iteraciones posteriores.
+        self.olvidar_constantes()
         self.visit(ctx.bloque())
         # El ciclo puede ejecutarse cero veces.
         self.combinar(antes, [antes, self.tabla.estado()], ctx.start)
 
     def visitMientras(self, ctx):
+        self.olvidar_constantes()
+        condicion = ctx.expresion()
+        self.exigir_tipo(condicion, self.visit(condicion), "logico", "la condición de 'mientras'")
         self.ciclo(ctx)
 
     def visitRepeticion(self, ctx):
+        cantidad = ctx.expresion()
+        tipo = self.exigir_tipo(cantidad, self.visit(cantidad), "numero", "la cantidad de repeticiones")
+        if tipo == "numero":
+            valor = self.numero_constante(cantidad)
+            if valor is not None and (valor.denominator != 1 or valor < 0):
+                self.error(cantidad.start, "la cantidad de repeticiones debe ser un entero no negativo.")
         self.ciclo(ctx)
 
     def visitFuncion(self, ctx):
         self.funciones[ctx.ID().getText()] = ctx.tipo().getText().lower()
         funciones_exteriores = self.funciones.copy()
         antes = self.tabla.estado()
+        # Los valores exteriores pueden cambiar antes de que se llame a la función.
+        self.olvidar_constantes()
         self.tabla.abrir_ambito()
         try:
             parametros = ctx.parametrosOpt().parametros()
@@ -239,6 +323,8 @@ class AnalizadorSemantico(EducativoParserVisitor):
             self.tabla.restaurar(antes)
 
     def visitLlamada(self, ctx):
+        # Una llamada podría modificar variables exteriores.
+        self.olvidar_constantes()
         tipos = []
         argumentos = ctx.argumentosOpt().argumentos()
         if argumentos is not None:

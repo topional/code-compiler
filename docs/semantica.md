@@ -3,7 +3,7 @@
 ## Requisito del trabajo parcial
 
 El enunciado pide describir e implementar por lo menos dos errores semánticos
-para el parcial y probar varias entradas. Esta versión detecta cuatro clases.
+para el parcial y probar varias entradas. Esta versión detecta siete clases.
 Para el segundo avance se requiere un analizador completo con al menos seis.
 Este texto está preparado para incorporar al informe; debe maquetarse con los
 demás apartados dentro de cinco páginas más carátula.
@@ -16,6 +16,9 @@ demás apartados dentro de cinco páginas más carátula.
 | Declaración duplicada | Dos líneas `crear variable edad` | El nombre ya existe en ese ámbito. Para cambiar su valor usar `asignar`. |
 | Variable sin inicializar | `crear variable edad` seguido de `mostrar edad` | La declaración no entrega un valor. Asignar un valor antes de leerla. |
 | Tipos incompatibles | Asignar `10` a `edad` y después `"hola"` | La primera asignación fija `numero`; las siguientes deben respetarlo. También se rechaza `1 + "hola"`. |
+| Condición no lógica | `si 10 entonces` | Tanto `si` como `mientras` requieren una expresión de tipo `logico`. |
+| Cantidad de repeticiones inválida | `repetir 2.5 veces` | La cantidad debe ser numérica, entera y no negativa; se permite cero. |
+| Rango aleatorio inválido | `numero aleatorio entre 6 y 1` | Los límites deben ser números enteros, con mínimo menor o igual al máximo; se permiten negativos. |
 
 Los mensajes incluyen línea y columna desde 1, la causa y una sugerencia de
 corrección. Para los ejemplos de prueba se obtienen estos diagnósticos:
@@ -33,8 +36,8 @@ código 1. Si no encuentra errores muestra `Análisis semántico parcial correct
 
 ## Tabla de símbolos y recorrido
 
-`src/tabla_simbolos.py` almacena nombre, posición de declaración, tipo e
-inicialización de cada variable. Mantiene un diccionario por ámbito y permite
+`src/tabla_simbolos.py` almacena nombre, posición de declaración, tipo,
+inicialización y valor numérico conocido de cada variable. Mantiene un diccionario por ámbito y permite
 registrar variables, buscar desde el ámbito actual hacia los exteriores,
 abrir/cerrar ámbitos y capturar/restaurar el estado para analizar ramas.
 `src/semantico.py` hereda del visitor generado por ANTLR4: consulta y actualiza
@@ -58,8 +61,8 @@ operadores `+`, `-`, `*`, `/` y menos unario requieren números; `no`, `y`, `o`
 requieren valores lógicos. No se admite concatenación de texto con `+`. Las
 comparaciones producen `logico`, pero su compatibilidad de operandos todavía
 no se verifica. Las expresiones aleatorias producen `numero`; se verifican los
-usos de variables de sus límites, aunque sus restricciones completas siguen
-pendientes. Una llamada a una función ya visitada usa su tipo de resultado
+usos y tipos de variables de sus límites, y se exige que los valores conocidos
+sean enteros y estén ordenados. Una llamada a una función ya visitada usa su tipo de resultado
 declarado; funciones sin tipo conocido se dejan pendientes y no provocan
 rechazos adicionales por tipo.
 
@@ -68,32 +71,41 @@ la variable está inicializada en todas las ramas. Sin `sino`, también consider
 el camino que no entra al bloque. Detecta tipos incompatibles asignados en ramas
 diferentes. Un ciclo podría ejecutarse cero veces; no garantiza inicialización
 posterior. Definir una función no ejecuta su cuerpo ni inicializa variables
-exteriores. El análisis es conservador: no evalúa constantes ni modela efectos
-de llamadas o terminación temprana por retornos.
+exteriores. El análisis conserva constantes numéricas calculadas con literales,
+aritmética y asignaciones, usando fracciones exactas para evitar errores de
+redondeo. Por ejemplo, `0.1 * 10` se reconoce como entero; `2.0` también.
+Tras un condicional solo conserva un valor si coincide en todos los caminos.
+No usa condiciones constantes para descartar ramas ni modela retornos tempranos.
+
+Para evitar asumir valores que podrían cambiar, se descartan constantes al
+analizar cuerpos de ciclos, al entrar en funciones y en llamadas. `preguntar`
+también descarta el valor previo de la variable. Si una cantidad o un límite es
+numérico pero su valor es desconocido, la comprobación de entero, signo u orden
+queda pendiente para la futura ejecución. No se rechaza únicamente por desconocer
+el valor. Esto no garantiza que todos los rangos y cantidades sean válidos al ejecutar.
 
 ## Validación y alcance
 
-`make test` pasa 51 pruebas: 16 del lexer, 12 del parser y 23 de semántica.
-Incluyen cuatro programas completos válidos, los cuatro errores, lectura en
+Las pruebas del parser y de semántica incluyen programas completos válidos, errores, lectura en
 distintas construcciones, operaciones, inferencia de tipos, parámetros,
 ámbitos, condiciones/ciclos y posiciones y códigos de salida del driver.
 
 Desde `compiladores/lenguaje-educativo`:
 
 ```bash
-make test
 make probar ARCHIVO=examples/semantico_completo.edu
-make probar ARCHIVO=tests/fixtures/invalid/variable_no_declarada.edu
-make probar ARCHIVO=tests/fixtures/invalid/variable_duplicada.edu
-make probar ARCHIVO=tests/fixtures/invalid/variable_sin_inicializar.edu
-make probar ARCHIVO=tests/fixtures/invalid/tipo_incompatible.edu
+make probar ARCHIVO=tests/semantica/invalidos/variable_no_declarada.edu
+make probar ARCHIVO=tests/semantica/invalidos/variable_duplicada.edu
+make probar ARCHIVO=tests/semantica/invalidos/variable_sin_inicializar.edu
+make probar ARCHIVO=tests/semantica/invalidos/tipo_incompatible.edu
 ```
 
 Las cuatro últimas entradas fallan intencionalmente. Las pruebas están en
-`tests/test_semantico.py`; `src/main.py` conecta lexer, parser y visitor.
+`tests/semantica/`, separadas en entradas válidas e inválidas; `src/main.py`
+conecta lexer, parser y visitor.
 
-Quedan pendientes condiciones obligatoriamente lógicas, compatibilidad de
-comparaciones, comprobación completa de funciones/argumentos/retornos y tipos,
-enteros y orden de los rangos aleatorios. Los programas todavía no se ejecutan.
+Quedan pendientes compatibilidad de comparaciones, comprobación completa de
+funciones/argumentos/retornos y comprobaciones de valores desconocidos durante
+la ejecución. Los programas todavía no se ejecutan.
 Este documento debe incorporarse al informe: su existencia en la carpeta local
 no acredita la entrega del informe.

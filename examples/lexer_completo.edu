@@ -1,13 +1,13 @@
 # Ejemplo para reconocer el vocabulario completo del lenguaje.
-definir sumar con numero primero, numero segundo devuelve numero
+definir sumar(numero primero, numero segundo) devuelve numero
     devolver primero + segundo
 fin
 
-definir copiar con texto mensaje devuelve texto
+definir copiar(texto mensaje) devuelve texto
     devolver mensaje
 fin
 
-definir negar con logico estado devuelve logico
+definir negar(logico estado) devuelve logico
     devolver no estado
 fin
 
@@ -24,8 +24,8 @@ asignar computadora valor de 0
 crear variable año
 asignar año valor de 2026
 
-preguntar "¿Cómo te llamas?" y guardar en nombre
-preguntar "Elige un número del 1 al 3" y guardar en opcion
+preguntar "¿Cómo te llamas?" guardar en nombre
+preguntar "Elige un número del 1 al 3" guardar en opcion
 asignar computadora valor de numero aleatorio entre 1 y 3
 
 si opcion es igual a computadora entonces

@@ -1,0 +1,16 @@
+crear variable cantidad
+si verdadero entonces
+    asignar cantidad valor de 2
+sino
+    asignar cantidad valor de 2
+fin
+repetir cantidad veces
+fin
+preguntar "Cantidad" guardar en cantidad
+repetir cantidad veces
+fin
+definir repetirDato(numero vecesDato) devuelve numero
+    repetir vecesDato veces
+    fin
+    devolver 1
+fin

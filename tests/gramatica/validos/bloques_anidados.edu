@@ -1,0 +1,11 @@
+si verdadero entonces
+    si falso entonces
+        mostrar 1
+    sino
+        mostrar 2
+    fin
+sino
+    repetir 2 veces
+        mostrar 3
+    fin
+fin

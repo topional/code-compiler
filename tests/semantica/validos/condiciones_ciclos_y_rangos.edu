@@ -1,0 +1,17 @@
+crear variable cantidad
+asignar cantidad valor de 3
+si cantidad es mayor que 0 y no falso entonces
+    mostrar cantidad
+fin
+mientras falso hacer
+    mostrar 1
+fin
+repetir cantidad veces
+fin
+repetir 0 veces
+fin
+repetir 0.1 * 10 veces
+fin
+mostrar numero aleatorio entre -3 y 6
+mostrar numero aleatorio entre 2 y 2
+mostrar numero aleatorio entre 1.0 y 6.0
