@@ -2,8 +2,9 @@ ANTLR_JAR ?= /usr/local/lib/antlr-4.13.1-complete.jar
 PYTHON ?= .venv/bin/python
 ARCHIVO ?= examples/calculadora.edu
 ETAPA ?= semantica
+GRUPO ?= todos
 
-.PHONY: generar probar
+.PHONY: generar probar test
 
 generar: src/generated/EducativoLexer.py src/generated/EducativoParser.py src/generated/EducativoParserVisitor.py
 
@@ -16,3 +17,6 @@ src/generated/EducativoParser.py src/generated/EducativoParserVisitor.py &: gram
 
 probar: generar
 	$(PYTHON) src/main.py "$(ARCHIVO)" --etapa "$(ETAPA)"
+
+test: generar
+	bash scripts/probar_entradas.sh "$(PYTHON)" "$(GRUPO)"

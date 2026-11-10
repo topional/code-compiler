@@ -56,6 +56,9 @@ make generar ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
 | `make generar` | Genera los archivos de ANTLR a partir de las gramáticas `.g4`. |
 | `make probar` | Genera lo necesario y analiza `examples/calculadora.edu`. |
 | `make probar ARCHIVO=ruta/programa.edu` | Analiza el archivo indicado. |
+| `make test` | Comprueba automáticamente las entradas de gramática y semántica. |
+| `make test GRUPO=gramatica` | Comprueba solo las entradas de gramática. |
+| `make test GRUPO=semantica` | Comprueba solo las entradas de semántica. |
 
 ```bash
 make generar
@@ -73,6 +76,11 @@ Para ver también el árbol sintáctico:
 `make probar` usa el Python de `.venv`, incluso si el entorno no está
 activado. Depende de `generar`: no hace falta ejecutar ambos comandos por separado. Make reutiliza los archivos actualizados y regenera los
 necesarios cuando cambian las gramáticas.
+
+La automatización usa un único script Bash y los archivos `.edu` de `tests/`.
+Comprueba que los válidos sean aceptados y los inválidos produzcan errores de
+su etapa. No compara mensajes exactos ni incluye automáticamente la carpeta del
+lexer. Consulta [la guía de pruebas](tests/README.md).
 
 ### Archivos generados por ANTLR
 
