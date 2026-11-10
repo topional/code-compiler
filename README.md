@@ -28,9 +28,16 @@ lecturas sin inicializar y tipos incompatibles en asignaciones y operaciones.
 
 ## Preparación
 
-Se necesita Python 3.10 o posterior, Java, GNU Make 4.3 o posterior y el generador
-de ANTLR 4.13.1. Ejecutar las órdenes desde la carpeta `lenguaje-educativo`.
-En una máquina nueva, después de clonar el repositorio:
+Se necesita Python 3.10 o posterior, Java, GNU Make 4.3 o posterior, Bash y el
+generador de ANTLR 4.13.1. Ejecutar las órdenes desde la raíz del repositorio,
+donde están `Makefile` y `requirements.txt`.
+
+El runtime de Python y el generador usan la misma versión, 4.13.1. El archivo
+JAR del generador debe estar disponible antes de ejecutar `make generar`:
+`pip` instala el runtime de Python, pero no descarga el generador. La ruta
+predeterminada del JAR es `/usr/local/lib/antlr-4.13.1-complete.jar`.
+
+Después de clonar el repositorio, preparar el entorno y generar los analizadores:
 
 ```bash
 python3 -m venv .venv
@@ -39,15 +46,13 @@ python -m pip install -r requirements.txt
 make generar
 ```
 
-El runtime de Python y el generador usan la misma versión, 4.13.1. La ruta
-predeterminada del generador es `/usr/local/lib/antlr-4.13.1-complete.jar`.
-El archivo JAR debe estar instalado antes de ejecutar Make: `pip` instala el
-runtime de Python, pero no descarga el generador. Si el JAR está en otro lugar,
-reemplazar las órdenes de Make anteriores por:
+Si el JAR está en otro lugar, indicar su ruta al ejecutar Make:
 
 ```bash
 make generar ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
 ```
+
+La variable `ANTLR_JAR` también se puede usar con `make probar` y `make test`.
 
 ## Generar y probar
 
@@ -67,20 +72,21 @@ make probar ARCHIVO=examples/calculadora.edu
 make probar ARCHIVO=examples/piedra_papel_tijera.edu
 ```
 
-Para ver también el árbol sintáctico:
+Para ver también el árbol de análisis sintáctico en texto, con paréntesis:
 
 ```bash
 .venv/bin/python src/main.py examples/calculadora.edu --arbol
 ```
 
 `make probar` usa el Python de `.venv`, incluso si el entorno no está
-activado. Depende de `generar`: no hace falta ejecutar ambos comandos por separado. Make reutiliza los archivos actualizados y regenera los
-necesarios cuando cambian las gramáticas.
+activado. Depende de `generar`: no hace falta ejecutar ambos comandos por
+separado. Make reutiliza los archivos actualizados y regenera los necesarios
+cuando cambian las gramáticas.
 
 La automatización usa un único script Bash y los archivos `.edu` de `tests/`.
 Comprueba que los válidos sean aceptados y los inválidos produzcan errores de
-su etapa. No compara mensajes exactos ni incluye automáticamente la carpeta del
-lexer. Consulta [la guía de pruebas](tests/README.md).
+su etapa. No compara mensajes exactos. Las entradas del lexer se revisan
+manualmente. Consulta [la guía de pruebas](tests/README.md).
 
 ### Archivos generados por ANTLR
 
@@ -105,12 +111,17 @@ del analizador semántico se escriben en `src/semantico.py` y
 
 ### Flujo del driver
 
-El driver lee el archivo, ejecuta el lexer y luego llama a `parser.programa()`.
-La lectura utiliza `FileStream` de ANTLR, como el ejemplo de clase.
-Si no hay errores, recorre el árbol con `AnalizadorSemantico`. Muestra los tokens,
-`Análisis sintáctico correcto.` y `Análisis semántico correcto.`.
-Ante un error léxico, sintáctico o semántico muestra la posición en stderr y termina con
-código 1; si el archivo no se puede leer, con código 2. Por ejemplo:
+`src/main.py` coordina el análisis. Lee el archivo con `FileStream` de ANTLR,
+ejecuta el lexer y llama a `parser.programa()` para construir el árbol
+sintáctico. Si ambas etapas terminan sin errores, recorre el árbol con
+`AnalizadorSemantico`. Por defecto, completa las tres etapas y muestra los
+tokens, `Análisis sintáctico correcto.` y `Análisis semántico correcto.`.
+Con `--etapa lexer` o `--etapa gramatica` se detiene al terminar esa etapa;
+en Make se selecciona con `ETAPA=lexer` o `ETAPA=gramatica`.
+
+Ante un error léxico, sintáctico o semántico muestra la posición en stderr,
+detiene las etapas posteriores y termina con código 1; si el archivo no se
+puede leer, con código 2. Por ejemplo:
 
 ```bash
 make probar ARCHIVO=tests/lexer/invalidos/caracter.edu
@@ -134,7 +145,7 @@ es la base de `src/semantico.py`, que recorre el árbol en el análisis semánti
 
 ## Análisis semántico
 
-El enunciado pide verificar por lo menos dos errores semánticos. Se implementan las siguientes clases:
+El analizador semántico detecta los siguientes errores:
 
 - Uso de una variable no declarada, tanto al leer como al asignar o preguntar.
 - Declaración repetida de una variable en el mismo ámbito, incluidos parámetros.
@@ -159,7 +170,7 @@ mayúsculas. Las declaraciones se procesan en orden de fuente, también dentro
 de funciones: solo ven declaraciones exteriores anteriores a su definición.
 La primera asignación válida determina el tipo (`numero`, `texto` o `logico`);
 las siguientes deben respetarlo. Enteros y decimales comparten `numero`. Los
-parámetros tienen tipo conocido y valor al entrar en la función. Una entrada
+parámetros se consideran inicializados y tienen el tipo declarado. Una entrada
 con `preguntar` inicializa la variable: conserva su tipo si ya se conoce y, si
 no, establece `texto`. La conversión de la entrada se implementará al ejecutar.
 
@@ -167,7 +178,10 @@ Los operadores aritméticos requieren números, y `no`, `y`, `o` requieren
 lógicos. `+` no concatena textos. Tras un `si`, una variable se considera
 inicializada solo si lo está en todos los caminos. Los ciclos podrían no
 ejecutarse; sus asignaciones no garantizan inicialización posterior. Definir
-una función tampoco ejecuta su cuerpo. Las funciones deben declararse antes de utilizarlas; se permite la recursión. Se validan su firma, argumentos y tipo de retorno, y se exige un retorno en todos los caminos. La comprobación de retorno es conservadora: un ciclo no garantiza que su cuerpo se ejecute.
+una función tampoco ejecuta su cuerpo. Las funciones deben declararse antes
+de utilizarlas; se permite la recursión. Se validan su firma, argumentos y tipo
+de retorno, y se exige un retorno en todos los caminos. La comprobación de
+retorno es conservadora: un ciclo no garantiza que su cuerpo se ejecute.
 
 ```bash
 make probar ARCHIVO=tests/semantica/invalidos/variable_no_declarada.edu
@@ -176,10 +190,10 @@ make probar ARCHIVO=tests/semantica/invalidos/variable_sin_inicializar.edu
 make probar ARCHIVO=tests/semantica/invalidos/tipo_incompatible.edu
 ```
 
-Estas entradas fallan intencionalmente con código 1 y un mensaje en español
-que explica el problema y sugiere cómo corregirlo.
+Estas entradas fallan intencionalmente con código 1 y diagnósticos en español
+que indican la posición y describen el problema.
 Las entradas `tests/semantica/invalidos/comparaciones.edu` y
-`tests/semantica/invalidos/funciones_y_retornos.edu` permiten revisar las nuevas
+`tests/semantica/invalidos/funciones_y_retornos.edu` permiten revisar las
 comprobaciones; `tests/semantica/validos/funciones_y_comparaciones.edu` muestra un caso válido.
 
 Las entradas están en `tests/lexer/`, `tests/gramatica/` y `tests/semantica/`,
@@ -190,9 +204,12 @@ en esa etapa. Consulta [la guía de entradas](tests/README.md).
 ## Alcance actual
 
 El lexer reconoce variables, entrada/salida, operaciones, lógica, comparaciones,
-condicionales, ciclos, funciones, tipos, elección aleatoria y la instrucción
-de motivación `juego` y `calculadora`. El parser comprueba su estructura,
-la separación por líneas, los bloques y la precedencia de las expresiones.
+condicionales, ciclos, funciones, tipos, elección aleatoria y las palabras
+reservadas `juego` y `calculadora`. El parser acepta estas dos últimas como
+instrucciones sin argumentos. La calculadora y el juego de `examples/` están
+escritos con variables, entrada/salida y condicionales. El parser comprueba
+la estructura, la separación por líneas, los bloques y la precedencia de las
+expresiones.
 El analizador semántico comprueba declaraciones, inicialización y tipos en
 asignaciones, operaciones, comparaciones, condiciones, repeticiones, rangos y funciones.
 Las restricciones sobre valores desconocidos deben verificarse en la futura ejecución.
@@ -201,3 +218,7 @@ al llamar a la función. Después de la llamada, solo da por inicializadas las v
 que lo están en todos los caminos de retorno. El análisis conserva ambos caminos de
 un condicional y no presupone nuevas inicializaciones en una llamada recursiva activa.
 Los programas no se ejecutan todavía.
+
+Se prevé incorporar un generador de código intermedio LLVM IR (`.ll`). Este
+componente todavía no está implementado; el alcance previsto termina en el
+archivo `.ll`, sin generar un ejecutable nativo.
