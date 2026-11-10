@@ -1,7 +1,7 @@
 # Lenguaje educativo
 
 Proyecto de un lenguaje textual en español para facilitar la transición desde
-Scratch. La versión actual implementa el análisis léxico, sintáctico y semántico parcial
+Scratch. La versión actual implementa el análisis léxico, sintáctico y semántico
 con ANTLR4 y Python.
 
 La sintaxis básica separa la declaración de la asignación:
@@ -54,21 +54,20 @@ make generar ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
 | Comando | Función |
 | --- | --- |
 | `make generar` | Genera los archivos de ANTLR a partir de las gramáticas `.g4`. |
-| `make probar` | Genera lo necesario y analiza `examples/variables.edu`. |
+| `make probar` | Genera lo necesario y analiza `examples/calculadora.edu`. |
 | `make probar ARCHIVO=ruta/programa.edu` | Analiza el archivo indicado. |
 
 ```bash
 make generar
 make probar
-make probar ARCHIVO=examples/lexer_completo.edu
-make probar ARCHIVO=examples/parser_completo.edu
-make probar ARCHIVO=examples/semantico_completo.edu
+make probar ARCHIVO=examples/calculadora.edu
+make probar ARCHIVO=examples/piedra_papel_tijera.edu
 ```
 
 Para ver también el árbol sintáctico:
 
 ```bash
-.venv/bin/python src/main.py examples/variables.edu --arbol
+.venv/bin/python src/main.py examples/calculadora.edu --arbol
 ```
 
 `make probar` usa el Python de `.venv`, incluso si el entorno no está
@@ -101,7 +100,7 @@ del analizador semántico se escriben en `src/semantico.py` y
 El driver lee el archivo, ejecuta el lexer y luego llama a `parser.programa()`.
 La lectura utiliza `FileStream` de ANTLR, como el ejemplo de clase.
 Si no hay errores, recorre el árbol con `AnalizadorSemantico`. Muestra los tokens,
-`Análisis sintáctico correcto.` y `Análisis semántico parcial correcto.`.
+`Análisis sintáctico correcto.` y `Análisis semántico correcto.`.
 Ante un error léxico, sintáctico o semántico muestra la posición en stderr y termina con
 código 1; si el archivo no se puede leer, con código 2. Por ejemplo:
 
@@ -125,9 +124,9 @@ en la segunda. Los mensajes específicos de ANTLR pueden aparecer en inglés.
 ANTLR genera `EducativoParser.py` y `EducativoParserVisitor.py`; este último
 es la base de `src/semantico.py`, que recorre el árbol en el análisis semántico.
 
-## Análisis semántico del parcial
+## Análisis semántico
 
-El enunciado pide verificar por lo menos dos errores semánticos. Se implementan siete clases:
+El enunciado pide verificar por lo menos dos errores semánticos. Se implementan las siguientes clases:
 
 - Uso de una variable no declarada, tanto al leer como al asignar o preguntar.
 - Declaración repetida de una variable en el mismo ámbito, incluidos parámetros.
@@ -136,6 +135,8 @@ El enunciado pide verificar por lo menos dos errores semánticos. Se implementan
 - Condiciones de `si` y `mientras` que no sean lógicas.
 - Cantidades de repeticiones que no sean numéricas, enteras y no negativas.
 - Límites aleatorios que no sean numéricos, enteros y ordenados.
+- Comparaciones entre tipos incompatibles o comparaciones de orden no numéricas.
+- Funciones no declaradas o duplicadas, argumentos incorrectos y retornos inválidos o ausentes.
 
 Las restricciones de valores se comprueban cuando pueden determinarse mediante
 literales, aritmética y variables con valores conocidos. `2.0` cuenta como entero;
@@ -158,9 +159,7 @@ Los operadores aritméticos requieren números, y `no`, `y`, `o` requieren
 lógicos. `+` no concatena textos. Tras un `si`, una variable se considera
 inicializada solo si lo está en todos los caminos. Los ciclos podrían no
 ejecutarse; sus asignaciones no garantizan inicialización posterior. Definir
-una función tampoco ejecuta su cuerpo. Los resultados de llamadas a funciones
-ya visitadas usan el tipo declarado en `devuelve`; las llamadas cuyo tipo aún
-no se conoce quedan pendientes de validación completa de funciones.
+una función tampoco ejecuta su cuerpo. Las funciones deben declararse antes de utilizarlas; se permite la recursión. Se validan su firma, argumentos y tipo de retorno, y se exige un retorno en todos los caminos. La comprobación de retorno es conservadora: un ciclo no garantiza que su cuerpo se ejecute.
 
 ```bash
 make probar ARCHIVO=tests/semantica/invalidos/variable_no_declarada.edu
@@ -171,6 +170,10 @@ make probar ARCHIVO=tests/semantica/invalidos/tipo_incompatible.edu
 
 Estas entradas fallan intencionalmente con código 1 y un mensaje en español
 que explica el problema y sugiere cómo corregirlo.
+Las entradas `tests/semantica/invalidos/comparaciones.edu` y
+`tests/semantica/invalidos/funciones_y_retornos.edu` permiten revisar las nuevas
+comprobaciones; `tests/semantica/validos/funciones_y_comparaciones.edu` muestra un caso válido.
+
 Las entradas están en `tests/lexer/`, `tests/gramatica/` y `tests/semantica/`,
 separadas en `validos` e `invalidos`. Elige un archivo con `make probar ARCHIVO=...`
 y revisa su salida. Usa `ETAPA=lexer` o `ETAPA=gramatica` para detener el análisis
@@ -183,9 +186,10 @@ condicionales, ciclos, funciones, tipos, elección aleatoria y la instrucción
 de motivación `juego` y `calculadora`. El parser comprueba su estructura,
 la separación por líneas, los bloques y la precedencia de las expresiones.
 El analizador semántico comprueba declaraciones, inicialización y tipos en
-asignaciones, operaciones, condiciones, repeticiones y rangos aleatorios.
-Quedan pendientes la compatibilidad de comparaciones, firmas de funciones,
-retornos y restricciones sobre valores desconocidos. La inicialización se analiza
-de forma conservadora, sin descartar ramas por condiciones constantes ni modelar
-los efectos de llamadas a funciones. Los programas no se ejecutan. Para el
-segundo avance se deberá ampliar la semántica a por lo menos seis errores.
+asignaciones, operaciones, comparaciones, condiciones, repeticiones, rangos y funciones.
+Las restricciones sobre valores desconocidos deben verificarse en la futura ejecución.
+El analizador comprueba las lecturas de variables exteriores con el estado que tienen
+al llamar a la función. Después de la llamada, solo da por inicializadas las variables
+que lo están en todos los caminos de retorno. El análisis conserva ambos caminos de
+un condicional y no presupone nuevas inicializaciones en una llamada recursiva activa.
+Los programas no se ejecutan todavía.

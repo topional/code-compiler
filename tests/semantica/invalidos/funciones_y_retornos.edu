@@ -1,0 +1,7 @@
+definir doble(numero dato) devuelve numero
+    devolver dato * 2
+fin
+mostrar desconocida()
+mostrar doble()
+mostrar doble("hola")
+devolver 1

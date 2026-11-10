@@ -14,6 +14,7 @@ asignar maximo valor de 6
 crear variable dado
 asignar dado valor de numero aleatorio entre minimo y maximo
 crear variable respuesta
+asignar respuesta valor de 0
 preguntar "Adivina el resultado del dado" guardar en respuesta
 
 si respuesta es igual a dado entonces

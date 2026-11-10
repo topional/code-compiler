@@ -1,0 +1,39 @@
+# Una partida: 1 = piedra, 2 = papel, 3 = tijera.
+crear variable jugador
+asignar jugador valor de 0
+
+crear variable computadora
+asignar computadora valor de numero aleatorio entre 1 y 3
+
+mostrar "Piedra, papel o tijera"
+mostrar "1: Piedra"
+mostrar "2: Papel"
+mostrar "3: Tijera"
+
+preguntar "Elige una opcion" guardar en jugador
+
+si jugador es igual a 1 o jugador es igual a 2 o jugador es igual a 3 entonces
+    mostrar "La computadora eligio:"
+
+    si computadora es igual a 1 entonces
+        mostrar "Piedra"
+    sino
+        si computadora es igual a 2 entonces
+            mostrar "Papel"
+        sino
+            mostrar "Tijera"
+        fin
+    fin
+
+    si jugador es igual a computadora entonces
+        mostrar "Empate"
+    sino
+        si (jugador es igual a 1 y computadora es igual a 3) o (jugador es igual a 2 y computadora es igual a 1) o (jugador es igual a 3 y computadora es igual a 2) entonces
+            mostrar "Ganaste"
+        sino
+            mostrar "Perdiste"
+        fin
+    fin
+sino
+    mostrar "Opcion invalida. Debes elegir 1, 2 o 3"
+fin

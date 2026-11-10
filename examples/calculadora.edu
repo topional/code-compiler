@@ -1,0 +1,44 @@
+# Calculadora de una operacion con dos numeros.
+crear variable opcion
+asignar opcion valor de 0
+
+crear variable primero
+asignar primero valor de 0
+
+crear variable segundo
+asignar segundo valor de 0
+
+mostrar "Calculadora"
+mostrar "1: Suma"
+mostrar "2: Resta"
+mostrar "3: Multiplicacion"
+mostrar "4: Division"
+
+preguntar "Elige una operacion" guardar en opcion
+
+si opcion es igual a 1 o opcion es igual a 2 o opcion es igual a 3 o opcion es igual a 4 entonces
+    preguntar "Escribe el primer numero" guardar en primero
+    preguntar "Escribe el segundo numero" guardar en segundo
+
+    mostrar "Resultado:"
+
+    si opcion es igual a 1 entonces
+        mostrar primero + segundo
+    sino
+        si opcion es igual a 2 entonces
+            mostrar primero - segundo
+        sino
+            si opcion es igual a 3 entonces
+                mostrar primero * segundo
+            sino
+                si segundo es igual a 0 entonces
+                    mostrar "No se puede dividir entre cero"
+                sino
+                    mostrar primero / segundo
+                fin
+            fin
+        fin
+    fin
+sino
+    mostrar "Opcion invalida. Debes elegir 1, 2, 3 o 4"
+fin

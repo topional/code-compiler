@@ -134,8 +134,8 @@ Los errores indican línea y columna desde 1. Los detalles de ANTLR pueden
 aparecer en inglés; los mensajes pedagógicos personalizados quedan pendientes.
 
 ```bash
-make probar ARCHIVO=examples/parser_completo.edu
-.venv/bin/python src/main.py examples/variables.edu --arbol
+make probar ARCHIVO=examples/piedra_papel_tijera.edu
+.venv/bin/python src/main.py examples/calculadora.edu --arbol
 ```
 
 ## Alcance de esta etapa

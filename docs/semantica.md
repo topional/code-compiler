@@ -1,9 +1,9 @@
-# Análisis semántico parcial
+# Análisis semántico
 
 ## Requisito del trabajo parcial
 
 El enunciado pide describir e implementar por lo menos dos errores semánticos
-para el parcial y probar varias entradas. Esta versión detecta siete clases.
+para el parcial y probar varias entradas. Esta versión incluye esas siete clases y validaciones de comparaciones y funciones.
 Para el segundo avance se requiere un analizador completo con al menos seis.
 Este texto está preparado para incorporar al informe; debe maquetarse con los
 demás apartados dentro de cinco páginas más carátula.
@@ -19,6 +19,10 @@ demás apartados dentro de cinco páginas más carátula.
 | Condición no lógica | `si 10 entonces` | Tanto `si` como `mientras` requieren una expresión de tipo `logico`. |
 | Cantidad de repeticiones inválida | `repetir 2.5 veces` | La cantidad debe ser numérica, entera y no negativa; se permite cero. |
 | Rango aleatorio inválido | `numero aleatorio entre 6 y 1` | Los límites deben ser números enteros, con mínimo menor o igual al máximo; se permiten negativos. |
+| Comparación incompatible | `mostrar 1 es igual a "hola"` | Igualdad y desigualdad requieren operandos del mismo tipo; las comparaciones de orden requieren números. |
+| Llamada inválida | `mostrar doble("hola")` con parámetro numérico | La función debe estar declarada y recibir la cantidad y los tipos de argumentos correspondientes. |
+| Retorno inválido | `devolver 1` fuera de una función | El retorno debe estar dentro de una función y su tipo debe coincidir con el declarado. |
+| Falta de retorno | Función numérica sin `devolver` | Toda función debe devolver un valor en todos los caminos; los ciclos no garantizan un retorno. |
 
 Los mensajes incluyen línea y columna desde 1, la causa y una sugerencia de
 corrección. Para los ejemplos de prueba se obtienen estos diagnósticos:
@@ -32,7 +36,7 @@ Error semántico en 3:9: no se puede asignar un valor de tipo texto a 'edad', qu
 
 Estos programas son válidos para el lexer y el parser. El error se detecta al
 recorrer el árbol; el driver muestra los diagnósticos en stderr y termina con
-código 1. Si no encuentra errores muestra `Análisis semántico parcial correcto.`
+código 1. Si no encuentra errores muestra `Análisis semántico correcto.`
 
 ## Tabla de símbolos y recorrido
 
@@ -59,12 +63,9 @@ conocido debe implementarse en la futura ejecución.
 Las expresiones propagan sus tipos según la precedencia del parser. Los
 operadores `+`, `-`, `*`, `/` y menos unario requieren números; `no`, `y`, `o`
 requieren valores lógicos. No se admite concatenación de texto con `+`. Las
-comparaciones producen `logico`, pero su compatibilidad de operandos todavía
-no se verifica. Las expresiones aleatorias producen `numero`; se verifican los
-usos y tipos de variables de sus límites, y se exige que los valores conocidos
-sean enteros y estén ordenados. Una llamada a una función ya visitada usa su tipo de resultado
-declarado; funciones sin tipo conocido se dejan pendientes y no provocan
-rechazos adicionales por tipo.
+comparaciones producen `logico`. La igualdad y desigualdad requieren operandos del mismo tipo; las comparaciones de orden requieren números. Las expresiones aleatorias producen `numero`; se validan sus límites cuando son conocidos.
+
+Las funciones deben declararse antes de su uso y pueden llamarse recursivamente. Se verifica la duplicación en el mismo ámbito, existencia, cantidad y tipos de argumentos, uso de `devolver` dentro de una función, compatibilidad del retorno y retorno garantizado en todos los caminos. Las funciones anidadas tienen ámbito local. Las lecturas exteriores se validan con el estado que tienen las variables al hacer la llamada, respetando los nombres visibles en la definición. Una llamada solo garantiza la inicialización exterior si todos sus caminos de retorno la garantizan.
 
 Para inicialización, un `si` combina ambos caminos: solo garantiza un valor si
 la variable está inicializada en todas las ramas. Sin `sino`, también considera
@@ -75,11 +76,16 @@ exteriores. El análisis conserva constantes numéricas calculadas con literales
 aritmética y asignaciones, usando fracciones exactas para evitar errores de
 redondeo. Por ejemplo, `0.1 * 10` se reconoce como entero; `2.0` también.
 Tras un condicional solo conserva un valor si coincide en todos los caminos.
-No usa condiciones constantes para descartar ramas ni modela retornos tempranos.
+No usa condiciones constantes para descartar ramas. En un condicional, una rama
+que devuelve en todos sus caminos no contribuye al estado posterior; solo se
+combinan los caminos que pueden continuar. El análisis sigue siendo conservador
+para ciclos y no elimina código inalcanzable.
 
 Para evitar asumir valores que podrían cambiar, se descartan constantes al
-analizar cuerpos de ciclos, al entrar en funciones y en llamadas. `preguntar`
-también descarta el valor previo de la variable. Si una cantidad o un límite es
+analizar ciclos, al comprobar una definición y al encontrar una llamada recursiva
+activa. En ese último caso tampoco se infieren nuevas inicializaciones. En las
+demás llamadas se conservan las constantes que coinciden en todos los retornos.
+`preguntar` descarta el valor previo de la variable. Si una cantidad o un límite es
 numérico pero su valor es desconocido, la comprobación de entero, signo u orden
 queda pendiente para la futura ejecución. No se rechaza únicamente por desconocer
 el valor. Esto no garantiza que todos los rangos y cantidades sean válidos al ejecutar.
@@ -93,7 +99,7 @@ distintas construcciones, operaciones, inferencia de tipos, parámetros,
 Desde `compiladores/lenguaje-educativo`:
 
 ```bash
-make probar ARCHIVO=examples/semantico_completo.edu
+make probar ARCHIVO=examples/calculadora.edu
 make probar ARCHIVO=tests/semantica/invalidos/variable_no_declarada.edu
 make probar ARCHIVO=tests/semantica/invalidos/variable_duplicada.edu
 make probar ARCHIVO=tests/semantica/invalidos/variable_sin_inicializar.edu
@@ -104,8 +110,4 @@ Las cuatro últimas entradas fallan intencionalmente. Las pruebas están en
 `tests/semantica/`, separadas en entradas válidas e inválidas; `src/main.py`
 conecta lexer, parser y visitor.
 
-Quedan pendientes compatibilidad de comparaciones, comprobación completa de
-funciones/argumentos/retornos y comprobaciones de valores desconocidos durante
-la ejecución. Los programas todavía no se ejecutan.
-Este documento debe incorporarse al informe: su existencia en la carpeta local
-no acredita la entrega del informe.
+Las restricciones de valores desconocidos requieren comprobaciones durante la futura ejecución. Los programas todavía no se ejecutan.

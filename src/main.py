@@ -89,7 +89,7 @@ def main():
     mostrar_tokens(tokens, lexer)
     print("Análisis sintáctico correcto.")
     if opciones.etapa == "semantica":
-        print("Análisis semántico parcial correcto.")
+        print("Análisis semántico correcto.")
     if opciones.arbol:
         print(arbol.toStringTree(recog=parser))
     return 0

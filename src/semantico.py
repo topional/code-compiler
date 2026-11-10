@@ -1,11 +1,29 @@
 """Revisa variables, inicialización y tipos."""
 
+from dataclasses import dataclass
 from fractions import Fraction
 
 from generated.EducativoParserVisitor import EducativoParserVisitor
 from tabla_simbolos import TablaSimbolos
 
 ERROR = "error"
+
+
+@dataclass(eq=False)
+class Funcion:
+    parametros: list
+    retorno: str
+    cuerpo: object
+    variables_visibles: list
+    funciones_visibles: list
+
+
+@dataclass
+class MarcoFuncion:
+    funcion: Funcion
+    exteriores: list
+    salidas: list
+    comprobar_definicion: bool
 
 
 class AnalizadorSemantico(EducativoParserVisitor):
@@ -17,12 +35,15 @@ class AnalizadorSemantico(EducativoParserVisitor):
     def __init__(self):
         self.tabla = TablaSimbolos()
         self.errores = []
-        self.funciones = {}
+        self.funciones = [{}]
+        self.marcos = []
+        self.diagnosticos = set()
 
     def error(self, token, mensaje):
-        self.errores.append(
-            f"Error semántico en {token.line}:{token.column + 1}: {mensaje}"
-        )
+        diagnostico = f"Error semántico en {token.line}:{token.column + 1}: {mensaje}"
+        if diagnostico not in self.diagnosticos:
+            self.diagnosticos.add(diagnostico)
+            self.errores.append(diagnostico)
         return ERROR
 
     def declarar(self, nodo, tipo=None, inicializada=False):
@@ -63,7 +84,11 @@ class AnalizadorSemantico(EducativoParserVisitor):
 
     def visitInstruccionesBloque(self, ctx):
         while ctx.sentencia() is not None:
-            self.visit(ctx.sentencia())
+            sentencia = ctx.sentencia()
+            self.visit(sentencia)
+            if (self.marcos and not self.marcos[-1].comprobar_definicion
+                    and self.sentencia_termina(sentencia)):
+                break
             ctx = ctx.instruccionesBloque()
 
     def visitDeclaracion(self, ctx):
@@ -187,8 +212,17 @@ class AnalizadorSemantico(EducativoParserVisitor):
             tipos.append(self.visit(alternativa.suma()))
         if ERROR in tipos:
             return ERROR
-        # Falta revisar los tipos de las comparaciones.
-        return "logico" if alternativa.operadorComparacion() is not None else tipos[0]
+        operador = alternativa.operadorComparacion()
+        if operador is None:
+            return tipos[0]
+        if None in tipos:
+            return "logico"
+        if operador.MAYOR() is None and operador.MENOR() is None:
+            if tipos[0] != tipos[1]:
+                return self.error(operador.start, f"no se pueden comparar valores de tipo {tipos[0]} y {tipos[1]}.")
+        elif tipos != ["numero", "numero"]:
+            return self.error(operador.start, "las comparaciones de orden requieren operandos de tipo numero.")
+        return "logico"
 
     def visitSuma(self, ctx):
         return self.cadena(ctx.producto(), ctx.restoSuma(), "numero")
@@ -238,13 +272,13 @@ class AnalizadorSemantico(EducativoParserVisitor):
         return self.leer(ctx.ID()) if ctx.ID() is not None else "numero"
 
     def visitBloque(self, ctx):
-        funciones_exteriores = self.funciones.copy()
+        self.funciones.append({})
         self.tabla.abrir_ambito()
         try:
             return self.visit(ctx.instruccionesBloque())
         finally:
             self.tabla.cerrar_ambito()
-            self.funciones = funciones_exteriores
+            self.funciones.pop()
 
     def combinar(self, antes, caminos, token):
         for i, (simbolo, tipo_previo, _, _) in enumerate(antes):
@@ -270,10 +304,15 @@ class AnalizadorSemantico(EducativoParserVisitor):
         for bloque in bloques:
             self.tabla.restaurar(antes)
             self.visit(bloque)
-            caminos.append(self.tabla.estado())
+            # Una rama que siempre retorna no llega a la siguiente instrucción.
+            if not self.retorno_garantizado(bloque.instruccionesBloque()):
+                caminos.append(self.tabla.estado())
         if alternativa is None:
             caminos.append(antes)
-        self.combinar(antes, caminos, ctx.start)
+        if caminos:
+            self.combinar(antes, caminos, ctx.start)
+        else:
+            self.tabla.restaurar(antes)
 
     def ciclo(self, ctx):
         antes = self.tabla.estado()
@@ -281,7 +320,10 @@ class AnalizadorSemantico(EducativoParserVisitor):
         self.olvidar_constantes()
         self.visit(ctx.bloque())
         # El ciclo puede ejecutarse cero veces.
-        self.combinar(antes, [antes, self.tabla.estado()], ctx.start)
+        if self.retorno_garantizado(ctx.bloque().instruccionesBloque()):
+            self.tabla.restaurar(antes)
+        else:
+            self.combinar(antes, [antes, self.tabla.estado()], ctx.start)
 
     def visitMientras(self, ctx):
         self.olvidar_constantes()
@@ -299,32 +341,83 @@ class AnalizadorSemantico(EducativoParserVisitor):
         self.ciclo(ctx)
 
     def visitFuncion(self, ctx):
-        self.funciones[ctx.ID().getText()] = ctx.tipo().getText().lower()
-        funciones_exteriores = self.funciones.copy()
+        nombre = ctx.ID().getText()
+        parametros = ctx.parametrosOpt().parametros()
+        declarados = []
+        if parametros is not None:
+            declarados.append(parametros.parametro())
+            resto = parametros.restoParametros()
+            while resto.parametro() is not None:
+                declarados.append(resto.parametro())
+                resto = resto.restoParametros()
+        tipo_retorno = ctx.tipo().getText().lower()
+        cuerpo = ctx.bloque().instruccionesBloque()
+        funcion = Funcion(declarados, tipo_retorno, cuerpo,
+                          [ambito.copy() for ambito in self.tabla.ambitos], [])
+        if nombre in self.funciones[-1]:
+            self.error(ctx.ID().getSymbol(), f"la función '{nombre}' ya está declarada en este ámbito.")
+        else:
+            self.funciones[-1][nombre] = funcion
+        funcion.funciones_visibles = [ambito.copy() for ambito in self.funciones]
+        if not self.retorno_garantizado(cuerpo):
+            self.error(ctx.ID().getSymbol(), f"la función '{nombre}' debe devolver un valor en todos los caminos.")
+        self.analizar_funcion(funcion, ctx.start, comprobar_definicion=True)
+
+    def analizar_funcion(self, funcion, token, comprobar_definicion=False):
+        variables_llamador = self.tabla.ambitos
+        funciones_llamador = self.funciones
+        # Las copias conservan los símbolos originales y congelan su visibilidad léxica.
+        self.tabla.ambitos = [*funcion.variables_visibles, {}]
+        self.funciones = [*funcion.funciones_visibles, {}]
         antes = self.tabla.estado()
-        # Los valores exteriores pueden cambiar antes de que se llame a la función.
-        self.olvidar_constantes()
-        self.tabla.abrir_ambito()
+        marco = MarcoFuncion(funcion, [entrada[0] for entrada in antes], [], comprobar_definicion)
+        self.marcos.append(marco)
         try:
-            parametros = ctx.parametrosOpt().parametros()
-            if parametros is not None:
-                parametro = parametros.parametro()
-                resto = parametros.restoParametros()
-                while parametro is not None:
-                    self.declarar(parametro.ID(), parametro.tipo().getText().lower(), True)
-                    parametro = resto.parametro()
-                    resto = resto.restoParametros()
-            # Parámetros y cuerpo comparten el mismo ámbito.
-            return self.visit(ctx.bloque().instruccionesBloque())
+            if comprobar_definicion:
+                # La inicialización exterior se exige en la llamada, cuando se conoce su estado.
+                for simbolo in marco.exteriores:
+                    simbolo.inicializada = True
+                    simbolo.valor_numerico = None
+            for parametro in funcion.parametros:
+                self.declarar(parametro.ID(), parametro.tipo().getText().lower(), True)
+            self.visit(funcion.cuerpo)
         finally:
-            self.tabla.cerrar_ambito()
-            self.funciones = funciones_exteriores
-            # Definir la función no ejecuta su cuerpo.
+            self.marcos.pop()
+            self.tabla.ambitos = variables_llamador
+            self.funciones = funciones_llamador
             self.tabla.restaurar(antes)
+        if marco.salidas and not comprobar_definicion:
+            if not self.retorno_garantizado(funcion.cuerpo):
+                marco.salidas.append(antes)
+            self.combinar(antes, marco.salidas, token)
+
+    def sentencia_termina(self, sentencia):
+        if sentencia.retorno() is not None:
+            return True
+        condicional = sentencia.condicional()
+        if condicional is not None and condicional.alternativa().bloque() is not None:
+            return (self.retorno_garantizado(condicional.bloque().instruccionesBloque()) and
+                    self.retorno_garantizado(condicional.alternativa().bloque().instruccionesBloque()))
+        return False
+
+    def retorno_garantizado(self, instrucciones):
+        while instrucciones.sentencia() is not None:
+            if self.sentencia_termina(instrucciones.sentencia()):
+                return True
+            instrucciones = instrucciones.instruccionesBloque()
+        return False
+
+    def visitRetorno(self, ctx):
+        tipo = self.visit(ctx.expresion())
+        if not self.marcos:
+            return self.error(ctx.start, "'devolver' solo puede usarse dentro de una función.")
+        marco = self.marcos[-1]
+        self.exigir_tipo(ctx.expresion(), tipo, marco.funcion.retorno, "el valor devuelto")
+        if not marco.comprobar_definicion:
+            marco.salidas.append([(s, s.tipo, s.inicializada, s.valor_numerico)
+                                   for s in marco.exteriores])
 
     def visitLlamada(self, ctx):
-        # Una llamada podría modificar variables exteriores.
-        self.olvidar_constantes()
         tipos = []
         argumentos = ctx.argumentosOpt().argumentos()
         if argumentos is not None:
@@ -336,5 +429,22 @@ class AnalizadorSemantico(EducativoParserVisitor):
                 resto = resto.restoArgumentos()
         if ERROR in tipos:
             return ERROR
-        # Falta validar funciones y argumentos.
-        return self.funciones.get(ctx.ID().getText())
+        nombre = ctx.ID().getText()
+        firma = next((ambito[nombre] for ambito in reversed(self.funciones) if nombre in ambito), None)
+        if firma is None:
+            return self.error(ctx.ID().getSymbol(), f"la función '{nombre}' no está declarada.")
+        esperados = [p.tipo().getText().lower() for p in firma.parametros]
+        if len(tipos) != len(esperados):
+            return self.error(ctx.ID().getSymbol(), f"la función '{nombre}' espera {len(esperados)} argumentos, pero recibió {len(tipos)}.")
+        for posicion, (tipo, esperado) in enumerate(zip(tipos, esperados), 1):
+            if tipo is not None and tipo != esperado:
+                self.error(ctx.ID().getSymbol(), f"el argumento {posicion} de '{nombre}' debe ser de tipo {esperado}, pero recibió {tipo}.")
+                return ERROR
+        if any(marco.funcion is firma for marco in self.marcos):
+            # Un ciclo de llamadas no prueba inicialización nueva ni conserva constantes.
+            for ambito in firma.variables_visibles:
+                for simbolo in ambito.values():
+                    simbolo.valor_numerico = None
+        else:
+            self.analizar_funcion(firma, ctx.start)
+        return firma.retorno

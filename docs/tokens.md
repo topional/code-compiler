@@ -182,6 +182,6 @@ Una combinación de tokens válidos en un orden incorrecto será un error sintá
 usar una variable no declarada será un error semántico.
 
 ```bash
-make probar ARCHIVO=examples/lexer_completo.edu
+make probar ARCHIVO=examples/calculadora.edu
 make probar ARCHIVO=tests/lexer/invalidos/caracter.edu
 ```

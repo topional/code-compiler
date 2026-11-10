@@ -1,0 +1,5 @@
+definir doble(numero dato) devuelve numero
+    devolver dato * 2
+fin
+mostrar doble(4) es igual a 8
+mostrar "a" es diferente de "b"
