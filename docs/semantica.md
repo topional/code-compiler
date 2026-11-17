@@ -1,14 +1,9 @@
 # Análisis semántico
 
-## Requisito del trabajo parcial
+El analizador semántico recorre el árbol construido por el parser y comprueba
+declaraciones, ámbitos, inicialización, tipos, comparaciones y funciones.
 
-El enunciado pide describir e implementar por lo menos dos errores semánticos
-para el parcial y probar varias entradas. Esta versión incluye esas siete clases y validaciones de comparaciones y funciones.
-Para el segundo avance se requiere un analizador completo con al menos seis.
-Este texto está preparado para incorporar al informe; debe maquetarse con los
-demás apartados dentro de cinco páginas más carátula.
-
-## Errores y explicación para el informe
+## Errores detectados
 
 | Error | Ejemplo | Explicación y corrección |
 | --- | --- | --- |
@@ -20,12 +15,18 @@ demás apartados dentro de cinco páginas más carátula.
 | Cantidad de repeticiones inválida | `repetir 2.5 veces` | La cantidad debe ser numérica, entera y no negativa; se permite cero. |
 | Rango aleatorio inválido | `numero aleatorio entre 6 y 1` | Los límites deben ser números enteros, con mínimo menor o igual al máximo; se permiten negativos. |
 | Comparación incompatible | `mostrar 1 es igual a "hola"` | Igualdad y desigualdad requieren operandos del mismo tipo; las comparaciones de orden requieren números. |
-| Llamada inválida | `mostrar doble("hola")` con parámetro numérico | La función debe estar declarada y recibir la cantidad y los tipos de argumentos correspondientes. |
-| Retorno inválido | `devolver 1` fuera de una función | El retorno debe estar dentro de una función y su tipo debe coincidir con el declarado. |
+| Función no declarada | `mostrar doble(3)` sin definición visible | La función debe estar definida antes de la llamada. |
+| Función duplicada | Dos definiciones de `doble` en el mismo ámbito | Cada función debe tener un nombre único en su ámbito. |
+| Cantidad incorrecta de argumentos | `doble()` con un parámetro declarado | La cantidad de argumentos debe coincidir con la cantidad de parámetros. |
+| Tipo incorrecto de argumento | `mostrar doble("hola")` con parámetro numérico | Cada argumento debe tener el tipo de su parámetro correspondiente. |
+| Retorno fuera de una función | `devolver 1` en el programa principal | El retorno debe estar dentro de una función. |
+| Tipo de retorno incompatible | `devolver "uno"` en una función que devuelve `numero` | La expresión devuelta debe tener el tipo declarado en la definición. |
 | Falta de retorno | Función numérica sin `devolver` | Toda función debe devolver un valor en todos los caminos; los ciclos no garantizan un retorno. |
 
-Los mensajes incluyen línea y columna desde 1, la causa y una sugerencia de
-corrección. Para los ejemplos de prueba se obtienen estos diagnósticos:
+Los mensajes incluyen línea y columna desde 1 y describen el problema. Algunos
+también sugieren una corrección. Para las entradas de variables no declaradas,
+duplicadas, sin inicializar y con asignaciones incompatibles se obtienen estos
+diagnósticos:
 
 ```text
 Error semántico en 1:9: la variable 'edad' no está declarada. Declárala antes con 'crear variable edad'.
@@ -34,7 +35,9 @@ Error semántico en 2:9: la variable 'edad' se usa sin inicializar (declarada en
 Error semántico en 3:9: no se puede asignar un valor de tipo texto a 'edad', que tiene tipo numero. Asigna un valor de tipo numero.
 ```
 
-Estos programas son válidos para el lexer y el parser. El error se detecta al
+Los fragmentos de la tabla deben completarse con sus bloques y definiciones
+cuando corresponda. Las entradas de `tests/semantica/invalidos/` son válidas
+para el lexer y el parser. El error se detecta al
 recorrer el árbol; el driver muestra los diagnósticos en stderr y termina con
 código 1. Si no encuentra errores muestra `Análisis semántico correcto.`
 
@@ -92,11 +95,11 @@ el valor. Esto no garantiza que todos los rangos y cantidades sean válidos al e
 
 ## Validación y alcance
 
-Las pruebas del parser y de semántica incluyen programas completos válidos, errores, lectura en
-distintas construcciones, operaciones, inferencia de tipos, parámetros,
-ámbitos, condiciones/ciclos y posiciones y códigos de salida del driver.
+Las entradas de semántica incluyen programas completos válidos y errores de
+variables, operaciones, inferencia de tipos, parámetros, ámbitos, condiciones,
+ciclos, comparaciones y retornos.
 
-Desde `compiladores/lenguaje-educativo`:
+Desde la raíz del repositorio:
 
 ```bash
 make probar ARCHIVO=examples/calculadora.edu
@@ -109,5 +112,16 @@ make probar ARCHIVO=tests/semantica/invalidos/tipo_incompatible.edu
 Las cuatro últimas entradas fallan intencionalmente. Las pruebas están en
 `tests/semantica/`, separadas en entradas válidas e inválidas; `src/main.py`
 conecta lexer, parser y visitor.
+
+Para comprobar automáticamente las entradas de semántica:
+
+```bash
+make test GRUPO=semantica
+```
+
+`make test` comprueba gramática y semántica. El script verifica aceptación y
+rechazo por etapa mediante el código de salida y los diagnósticos. La revisión
+de mensajes exactos, posiciones y categorías concretas se realiza al inspeccionar
+cada entrada. Consulta [la guía de pruebas](../tests/README.md).
 
 Las restricciones de valores desconocidos requieren comprobaciones durante la futura ejecución. Los programas todavía no se ejecutan.

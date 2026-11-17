@@ -1,6 +1,6 @@
 # Léxico del lenguaje educativo
 
-Esta es la versión inicial completa del vocabulario léxico. El lexer reconoce
+Este documento describe el vocabulario léxico actual. El lexer reconoce
 tokens; las formas de instrucciones descritas aquí se implementan en el parser.
 El lexer no comprueba el orden de los tokens, los tipos ni la ejecución.
 El parser comprueba el orden según [la gramática](gramatica.md).
@@ -54,6 +54,8 @@ Las palabras reservadas se documentan en minúsculas y sin tildes, pero se recon
 sin distinguir mayúsculas: `mostrar`, `Mostrar` y `MOSTRAR` son MOSTRAR. La opción
 `caseInsensitive = true` conserva el lexema original. No se pueden usar como nombres.
 Las palabras cortas `a`, `y` y `o` también están reservadas.
+`CON` se reconoce como palabra reservada, aunque actualmente no se utiliza en
+ninguna regla del parser.
 
 ## Otros tokens
 
@@ -142,13 +144,14 @@ En el análisis semántico, la primera asignación válida determina
 si la variable contiene un número, texto o lógico. Usarla antes de darle un
 valor es un error de variable no inicializada. Las asignaciones posteriores
 deben respetar su tipo. Los enteros y decimales comparten el tipo `numero`.
-`mostrar` admitirá variables, expresiones y valores directos como `10` o `"Hola"`.
-El análisis semántico parcial verifica tipos en asignaciones/operaciones,
-inicialización, variables no declaradas y declaraciones duplicadas; véase
+`mostrar` admite variables, expresiones y valores directos como `10` o `"Hola"`.
+El análisis semántico verifica declaraciones, inicialización, tipos,
+comparaciones, condiciones, repeticiones, límites aleatorios y funciones; véase
 [semantica.md](semantica.md). La ejecución todavía no está implementada.
 
 Los parámetros y resultados de funciones usan `numero`,
-`texto` y `logico`. Las funciones sin parámetros podrán omitir `con ...`.
+`texto` y `logico`. Toda definición usa paréntesis para los parámetros y una
+función sin parámetros usa `()`, como en `definir saludo() devuelve texto`.
 `devuelve` indica el tipo de resultado y `devolver` entrega el resultado.
 
 La elección aleatoria usa una sola forma: `numero aleatorio entre LIMITE y LIMITE`.
@@ -157,22 +160,24 @@ Se utiliza como valor de una asignación:
 ```text
 crear variable dado
 asignar dado valor de numero aleatorio entre 1 y 6
+crear variable minimo
+asignar minimo valor de 1
+crear variable maximo
+asignar maximo valor de 6
 asignar dado valor de numero aleatorio entre minimo y maximo
 ```
 
-Los límites podrán ser números enteros o variables que contengan enteros.
-El rango incluirá ambos extremos y el límite inicial deberá ser menor o igual
-al final. La variable destino deberá estar declarada y admitir un valor numérico.
-El parser comprueba la estructura; el análisis semántico y la ejecución
-comprobarán los valores y tipos según estén disponibles. Por ahora, el lexer
-reconoce las palabras y valores y el parser valida su orden; no comprueban esas restricciones ni generan
-números aleatorios. `elegir` deja de ser una palabra reservada.
+El parser acepta números, números negativos o identificadores como límites.
+El semántico exige tipo numérico y, cuando conoce los valores, comprueba que
+sean enteros y que el mínimo sea menor o igual al máximo. La variable destino
+debe estar declarada y admitir un valor numérico. El rango previsto incluye
+ambos extremos. La generación de aleatorios y los controles de valores
+desconocidos se implementarán durante la ejecución.
 
-`juego` y `calculadora` serán instrucciones de motivación incorporadas que
-mostrarán un minijuego y una calculadora, respectivamente. El lenguaje también
-permite escribir calculadoras y juegos sencillos usando las construcciones
-generales. El comportamiento de esas instrucciones y la operación aleatoria
-se implementarán en el entorno de ejecución; por ahora se valida su sintaxis.
+`juego` y `calculadora` son palabras reservadas que el parser acepta como
+instrucciones sin argumentos. Su comportamiento de ejecución sigue por definir.
+Los programas `examples/calculadora.edu` y `examples/piedra_papel_tijera.edu`
+usan variables, entrada/salida y condicionales para expresar esos programas.
 
 ## Errores léxicos y pruebas
 
@@ -183,5 +188,10 @@ usar una variable no declarada será un error semántico.
 
 ```bash
 make probar ARCHIVO=examples/calculadora.edu
-make probar ARCHIVO=tests/lexer/invalidos/caracter.edu
+make probar ETAPA=lexer ARCHIVO=tests/lexer/validos/palabras_y_nombres.edu
+make probar ETAPA=lexer ARCHIVO=tests/lexer/invalidos/caracter.edu
 ```
+
+Las entradas del lexer se revisan manualmente, comprobando tipos de token,
+lexemas, posiciones y errores. `make test` automatiza las entradas de gramática
+y semántica. Consulta [la guía de pruebas](../tests/README.md).

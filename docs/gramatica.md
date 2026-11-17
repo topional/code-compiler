@@ -2,10 +2,9 @@
 
 ## Notación y componentes
 
-Se sigue la forma de las diapositivas de clase: `→` define una producción,
+`→` define una producción,
 `|` separa alternativas, `ε` representa la cadena vacía y `⇒` indica un paso
-de derivación. Referencias: `Ambiguedades.pdf`, diapositivas 4, 9, 10 y 16;
-libro *Compilers: Principles, Techniques, and Tools*, secciones 2.2 y 4.2.2.
+de derivación.
 
 Los **no terminales** son los nombres situados a la izquierda de las flechas.
 Los **terminales** son las palabras y signos del lenguaje y las categorías
@@ -19,7 +18,7 @@ terminal a la izquierda. Las reglas auxiliares con `ε` desarrollan las listas
 y opciones mediante recursión y alternativas vacías, también en el parser
 ANTLR. No se usan cuantificadores de repetición u opcionalidad en sus reglas.
 Las llaves y los nombres de tokens de ANTLR pertenecen a la implementación,
-no a la notación del informe.
+no a las producciones presentadas aquí.
 
 ## Producciones completas
 
@@ -114,9 +113,10 @@ De mayor a menor prioridad:
 | 7 | Conjunción: `y` |
 | 8 | Disyunción: `o` |
 
-Las listas de suma/resta y multiplicación/división se interpretarán de izquierda
- a derecha: `10 - 3 - 2` corresponde a `(10 - 3) - 2`. La gramática registra los
-operandos en orden; todavía no realiza operaciones ni genera un AST para ejecutar.
+Las listas de suma/resta y multiplicación/división se recorren de izquierda
+a derecha en el análisis semántico. Al calcular valores numéricos conocidos,
+`10 - 3 - 2` corresponde a `(10 - 3) - 2`. La futura generación debe conservar
+esa interpretación. El parser construye el árbol de análisis de ANTLR.
 `no edad es mayor que 10` agrupa `no (edad es mayor que 10)`.
 
 ## Implementación y driver
@@ -129,34 +129,34 @@ Los tokens siguen siendo `MIENTRAS` y `ALEATORIO`; la sintaxis escrita se conser
 
 `make generar` genera el lexer, el parser y el visitor base. El driver
 `src/main.py` llena el flujo de tokens, detiene el análisis si hay errores
-léxicos y llama a `parser.programa()`. Con `--arbol` muestra el árbol sintáctico.
+léxicos y llama a `parser.programa()`. Con `--arbol` muestra el árbol sintáctico
+en texto con paréntesis después de completar la etapa seleccionada sin errores.
 Los errores indican línea y columna desde 1. Los detalles de ANTLR pueden
-aparecer en inglés; los mensajes pedagógicos personalizados quedan pendientes.
+aparecer en inglés. El driver agrega el tipo de error y su ubicación. Los
+diagnósticos semánticos se construyen en Python y están escritos en español.
 
 ```bash
 make probar ARCHIVO=examples/piedra_papel_tijera.edu
 .venv/bin/python src/main.py examples/calculadora.edu --arbol
 ```
 
-## Alcance de esta etapa
+## Alcance actual
 
 El parser valida la estructura, no los tipos ni el significado. Por ejemplo,
 `mostrar desconocida`, `si 10 entonces` con su bloque, y un rango decimal o
-invertido son sintácticamente válidos; su rechazo corresponde a la semántica
- o ejecución. El análisis semántico parcial del driver comprueba declaraciones,
-inicialización y tipos de asignaciones/operaciones, como se explica en
-[semantica.md](semantica.md). Quedan pendientes argumentos de funciones,
-retorno dentro de una función, compatibilidad de comparaciones,
-condiciones lógicas y límites enteros ordenados. `juego` y `calculadora` aún no
-abren interfaces ni ejecutan programas.
+invertido son sintácticamente válidos. El análisis semántico comprueba
+declaraciones, inicialización, tipos, condiciones lógicas, comparaciones,
+repeticiones, límites aleatorios, argumentos y retornos de funciones, como se
+explica en [semantica.md](semantica.md). Las restricciones sobre valores que
+dependen de entradas o aleatorios requieren controles durante la futura
+ejecución. `juego` y `calculadora` son instrucciones reconocidas sin
+comportamiento de ejecución implementado. Los programas todavía se analizan.
 
-## Ejemplos y validación para el informe
+## Ejemplos y validación
 
 [derivaciones.md](derivaciones.md) contiene cuatro ejemplos desarrollados por
 familia de construcciones y un quinto ejemplo para la descripción del lenguaje.
-Las reglas auxiliares se desarrollan dentro de esas derivaciones. Para el informe
-principal de máximo cinco páginas hay que seleccionar y resumir el contenido;
-estos documentos completos son artefactos de apoyo en el repositorio.
+Las reglas auxiliares se desarrollan dentro de esas derivaciones.
 
 Las 68 derivaciones y los 85 ejemplos se conservan como documentación de apoyo.
 Las entradas `.edu` están en `tests/lexer/`, `tests/gramatica/` y `tests/semantica/`.
@@ -181,5 +181,12 @@ o `ID`. Los terminales de las producciones se implementan con tokens del lexer;
 el signo de multiplicación sigue siendo un operador del lenguaje.
 
 Las entradas de prueba agrupan construcciones válidas y errores de estructura.
-Revisa manualmente la salida al analizar cada archivo. Las expresiones de
-precedencia y bloques anidados pueden inspeccionarse con `--arbol`.
+Para comprobar automáticamente las entradas de gramática:
+
+```bash
+make test GRUPO=gramatica
+```
+
+`make test` comprueba gramática y semántica. El script verifica aceptación y
+rechazo por etapa. Las expresiones de precedencia y los bloques anidados pueden
+inspeccionarse con `--etapa gramatica --arbol` al ejecutar `src/main.py`.
