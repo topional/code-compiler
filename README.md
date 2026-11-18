@@ -2,7 +2,8 @@
 
 Proyecto de un lenguaje textual en español para facilitar la transición desde
 Scratch. La versión actual implementa el análisis léxico, sintáctico y semántico
-con ANTLR4 y Python.
+con ANTLR4 y Python, y la generación de código de tres direcciones para
+variables, aritmética y salida.
 
 La sintaxis básica separa la declaración de la asignación:
 
@@ -219,6 +220,10 @@ que lo están en todos los caminos de retorno. El análisis conserva ambos camin
 un condicional y no presupone nuevas inicializaciones en una llamada recursiva activa.
 Los programas no se ejecutan todavía.
 
-Se prevé incorporar un generador de código intermedio LLVM IR (`.ll`). Este
-componente todavía no está implementado; el alcance previsto termina en el
-archivo `.ll`, sin generar un ejecutable nativo.
+`src/generador.py` recorre el árbol mediante el visitor generado por ANTLR y
+construye una lista de instrucciones de tres direcciones. Admite declaraciones,
+asignaciones, números, textos, variables, operaciones aritméticas, signo negativo,
+paréntesis y salida. La etapa `intermedio` realiza primero el análisis completo
+y construye las instrucciones en memoria. Termina con código 0 y sin salida
+en consola cuando la generación es correcta. Las construcciones no soportadas
+producen un diagnóstico con ubicación y código de salida 1.

@@ -1,4 +1,4 @@
-"""Analiza un archivo .edu."""
+"""Analiza un archivo .edu y permite generar código de tres direcciones."""
 
 import argparse
 import sys
@@ -8,6 +8,7 @@ from antlr4.error.ErrorListener import ErrorListener
 
 from generated.EducativoLexer import EducativoLexer
 from generated.EducativoParser import EducativoParser
+from generador import ErrorGeneracion, GeneradorCodigo
 from semantico import AnalizadorSemantico
 
 
@@ -40,7 +41,7 @@ def main():
     argumentos = argparse.ArgumentParser(description=__doc__)
     argumentos.add_argument("archivo", help="Programa .edu para analizar")
     argumentos.add_argument("--arbol", action="store_true", help="Mostrar el árbol sintáctico")
-    argumentos.add_argument("--etapa", choices=("lexer", "gramatica", "semantica"),
+    argumentos.add_argument("--etapa", choices=("lexer", "gramatica", "semantica", "intermedio"),
                             default="semantica", help="Última etapa que se analiza (por defecto: semantica)")
     opciones = argumentos.parse_args()
 
@@ -78,13 +79,22 @@ def main():
             print(mensaje, file=sys.stderr)
         return 1
 
-    if opciones.etapa == "semantica":
+    if opciones.etapa in ("semantica", "intermedio"):
         semantico = AnalizadorSemantico()
         semantico.visit(arbol)
         if semantico.errores:
             for mensaje in semantico.errores:
                 print(mensaje, file=sys.stderr)
             return 1
+
+    if opciones.etapa == "intermedio":
+        generador = GeneradorCodigo()
+        try:
+            generador.visit(arbol)
+        except ErrorGeneracion as error:
+            print(error, file=sys.stderr)
+            return 1
+        return 0
 
     mostrar_tokens(tokens, lexer)
     print("Análisis sintáctico correcto.")

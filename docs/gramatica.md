@@ -115,8 +115,8 @@ De mayor a menor prioridad:
 
 Las listas de suma/resta y multiplicación/división se recorren de izquierda
 a derecha en el análisis semántico. Al calcular valores numéricos conocidos,
-`10 - 3 - 2` corresponde a `(10 - 3) - 2`. La futura generación debe conservar
-esa interpretación. El parser construye el árbol de análisis de ANTLR.
+`10 - 3 - 2` corresponde a `(10 - 3) - 2`. El generador de tres direcciones
+conserva esa interpretación. El parser construye el árbol de análisis de ANTLR.
 `no edad es mayor que 10` agrupa `no (edad es mayor que 10)`.
 
 ## Implementación y driver
