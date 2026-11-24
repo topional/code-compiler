@@ -88,7 +88,7 @@ def main():
             return 1
 
     if opciones.etapa == "intermedio":
-        generador = GeneradorCodigo()
+        generador = GeneradorCodigo(tipos_entrada=semantico.tipos_entrada)
         try:
             generador.visit(arbol)
         except ErrorGeneracion as error:

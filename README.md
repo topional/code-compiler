@@ -2,8 +2,8 @@
 
 Proyecto de un lenguaje textual en español para facilitar la transición desde
 Scratch. La versión actual implementa el análisis léxico, sintáctico y semántico
-con ANTLR4 y Python, y la generación de código de tres direcciones para
-variables, aritmética y salida.
+con ANTLR4 y Python, y la generación de código intermedio de tres direcciones
+mediante un builder propio para las construcciones de su gramática.
 
 La sintaxis básica separa la declaración de la asignación:
 
@@ -221,9 +221,23 @@ un condicional y no presupone nuevas inicializaciones en una llamada recursiva a
 Los programas no se ejecutan todavía.
 
 `src/generador.py` recorre el árbol mediante el visitor generado por ANTLR y
-construye una lista de instrucciones de tres direcciones. Admite declaraciones,
-asignaciones, números, textos, variables, operaciones aritméticas, signo negativo,
-paréntesis y salida. La etapa `intermedio` realiza primero el análisis completo
-y construye las instrucciones en memoria. Termina con código 0 y sin salida
-en consola cuando la generación es correcta. Las construcciones no soportadas
-producen un diagnóstico con ubicación y código de salida 1.
+solicita a `Builder`, definido en `src/builder.py`, la construcción del código
+intermedio. El builder guarda una lista de objetos `Instruccion`, definidos en
+`src/instruccion.py`, con operación, argumentos, destino y posición de origen.
+También conserva metadatos de tipo y nombre cuando corresponden.
+
+El generador admite variables, entrada/salida, números, textos, valores lógicos,
+aritmética, lógica, comparaciones, condicionales, ciclos, aleatorios, funciones,
+parámetros, llamadas, recursión y retornos. Traduce `juego` y `calculadora` como
+marcadores sin comportamiento de juego o calculadora incorporado. Los ámbitos
+usan identificadores internos distintos para permitir nombres repetidos en
+bloques diferentes. Las funciones conservan enlaces léxicos y sus cuerpos se
+omiten en el flujo principal mediante saltos.
+
+La etapa `intermedio` realiza primero el análisis completo y construye las
+instrucciones en memoria. Termina con código 0 y sin salida en consola cuando
+la generación es correcta, incluso con `--arbol`. No guarda un archivo ni
+implementa un intérprete. Los errores de análisis se notifican antes de generar.
+
+Consulta [la representación intermedia](docs/intermedio.md) para conocer las
+instrucciones, sus campos y el contrato de ejecución.

@@ -38,6 +38,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         self.funciones = [{}]
         self.marcos = []
         self.diagnosticos = set()
+        self.tipos_entrada = {}
 
     def error(self, token, mensaje):
         diagnostico = f"Error semántico en {token.line}:{token.column + 1}: {mensaje}"
@@ -114,6 +115,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         if simbolo is not None:
             # Sin tipo previo, la entrada es texto.
             simbolo.tipo = simbolo.tipo or "texto"
+            self.tipos_entrada[ctx] = simbolo.tipo
             simbolo.inicializada = True
             simbolo.valor_numerico = None
 

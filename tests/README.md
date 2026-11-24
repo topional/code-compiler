@@ -57,5 +57,18 @@ Una entrada válida para el lexer o la gramática puede fallar en una etapa post
 Por ejemplo, `gramatica/validos/precedencia_y_logica.edu` usa `puntos` sin declarar:
 su estructura es válida, pero su semántica no.
 
-La aplicación analiza los programas. La ejecución de sus instrucciones sigue
-pendiente de implementación.
+## Generación de código intermedio
+
+Las entradas semánticamente válidas también pueden pasarse al generador:
+
+```bash
+make probar ETAPA=intermedio ARCHIVO=tests/semantica/validos/funciones_y_comparaciones.edu
+make probar ETAPA=intermedio ARCHIVO=examples/calculadora.edu
+```
+
+La etapa analiza primero y construye instrucciones estructuradas en memoria.
+En éxito termina con código 0 y no imprime tokens, árbol ni código intermedio.
+`make test` sigue comprobando únicamente gramática y semántica; no valida la
+generación. Consulta [el contrato del código intermedio](../docs/intermedio.md).
+
+La ejecución de los programas sigue pendiente de implementación.
