@@ -4,7 +4,9 @@ from dataclasses import dataclass
 from fractions import Fraction
 
 from generated.EducativoParserVisitor import EducativoParserVisitor
-from tabla_simbolos import TablaSimbolos
+
+from .diagnostico import Diagnostico
+from .tabla_simbolos import TablaSimbolos
 
 ERROR = "error"
 
@@ -41,7 +43,7 @@ class AnalizadorSemantico(EducativoParserVisitor):
         self.tipos_entrada = {}
 
     def error(self, token, mensaje):
-        diagnostico = f"Error semántico en {token.line}:{token.column + 1}: {mensaje}"
+        diagnostico = Diagnostico.desde_token("semantica", mensaje, token)
         if diagnostico not in self.diagnosticos:
             self.diagnosticos.add(diagnostico)
             self.errores.append(diagnostico)
@@ -124,7 +126,12 @@ class AnalizadorSemantico(EducativoParserVisitor):
         regla = ctx.parser.ruleNames[ctx.getRuleIndex()]
         if regla in ("primaria", "limite"):
             if ctx.NUMERO() is not None:
-                valor = Fraction(ctx.NUMERO().getText())
+                numero = ctx.NUMERO()
+                try:
+                    valor = Fraction(numero.getText())
+                except ValueError:
+                    self.error(numero.getSymbol(), "el literal numérico supera el tamaño admitido.")
+                    return None
                 return -valor if regla == "limite" and ctx.RESTA() is not None else valor
             if ctx.ID() is not None:
                 simbolo = self.tabla.buscar(ctx.ID().getText())

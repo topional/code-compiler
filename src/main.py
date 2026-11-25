@@ -3,35 +3,13 @@
 import argparse
 import json
 import sys
-from dataclasses import asdict
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from antlr4 import CommonTokenStream, FileStream, Token
-from antlr4.error.ErrorListener import ErrorListener
+from antlr4 import Token
 
-from generated.EducativoLexer import EducativoLexer
-from generated.EducativoParser import EducativoParser
-from generador import ErrorGeneracion, GeneradorCodigo
-from semantico import AnalizadorSemantico
-
-
-class ErroresLexicos(ErrorListener):
-    def __init__(self):
-        super().__init__()
-        self.errores = []
-
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        self.errores.append(f"Error léxico en {line}:{column + 1}: {msg}")
-
-
-class ErroresSintacticos(ErrorListener):
-    def __init__(self):
-        super().__init__()
-        self.errores = []
-
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        self.errores.append(f"Error sintáctico en {line}:{column + 1}: {msg}")
+from lenguaje.compilador import PREFIJOS, compilar
+from lenguaje.intermedio import serializar_intermedio
 
 
 def mostrar_tokens(tokens, lexer):
@@ -46,7 +24,7 @@ def exportar_intermedio(entrada, salida, instrucciones):
             or (salida.exists() and salida.samefile(entrada))):
         raise ValueError("la salida no puede sobrescribir un programa .edu ni el archivo de entrada.")
 
-    datos = {"version": 1, "instrucciones": [asdict(i) for i in instrucciones]}
+    datos = serializar_intermedio(instrucciones)
     temporal = None
     try:
         with NamedTemporaryFile(mode="w", encoding="utf-8", newline="\n",
@@ -65,7 +43,7 @@ def main():
     argumentos = argparse.ArgumentParser(description=__doc__)
     argumentos.add_argument("archivo", help="Programa .edu para analizar")
     argumentos.add_argument("--arbol", action="store_true", help="Mostrar el árbol sintáctico")
-    argumentos.add_argument("--etapa", choices=("lexer", "gramatica", "semantica", "intermedio"),
+    argumentos.add_argument("--etapa", choices=PREFIJOS,
                             default="semantica", help="Última etapa que se analiza (por defecto: semantica)")
     argumentos.add_argument("--salida", type=Path, help="Guardar el código intermedio en un archivo JSON")
     opciones = argumentos.parse_args()
@@ -73,68 +51,36 @@ def main():
         argumentos.error("--salida requiere --etapa intermedio")
 
     try:
-        entrada = FileStream(opciones.archivo, encoding="utf-8")
+        entrada = Path(opciones.archivo).read_bytes().decode("utf-8")
     except (OSError, UnicodeError) as error:
         argumentos.error(f"No se pudo leer el archivo: {error}")
 
-    lexer = EducativoLexer(entrada)
-    errores = ErroresLexicos()
-    lexer.removeErrorListeners()
-    lexer.addErrorListener(errores)
-
-    tokens = CommonTokenStream(lexer)
-    tokens.fill()
-
-    if errores.errores:
-        for mensaje in errores.errores:
-            print(mensaje, file=sys.stderr)
+    resultado = compilar(entrada, etapa=opciones.etapa)
+    if resultado.diagnosticos:
+        for diagnostico in resultado.diagnosticos:
+            print(diagnostico.en_terminal(PREFIJOS[diagnostico.etapa]), file=sys.stderr)
         return 1
 
     if opciones.etapa == "lexer":
-        mostrar_tokens(tokens, lexer)
+        mostrar_tokens(resultado.tokens, resultado.lexer)
         print("Análisis léxico correcto.")
         return 0
 
-    parser = EducativoParser(tokens)
-    errores_sintacticos = ErroresSintacticos()
-    parser.removeErrorListeners()
-    parser.addErrorListener(errores_sintacticos)
-    arbol = parser.programa()
-
-    if errores_sintacticos.errores:
-        for mensaje in errores_sintacticos.errores:
-            print(mensaje, file=sys.stderr)
-        return 1
-
-    if opciones.etapa in ("semantica", "intermedio"):
-        semantico = AnalizadorSemantico()
-        semantico.visit(arbol)
-        if semantico.errores:
-            for mensaje in semantico.errores:
-                print(mensaje, file=sys.stderr)
-            return 1
-
     if opciones.etapa == "intermedio":
-        generador = GeneradorCodigo(tipos_entrada=semantico.tipos_entrada)
-        try:
-            instrucciones = generador.visit(arbol)
-        except ErrorGeneracion as error:
-            print(error, file=sys.stderr)
-            return 1
         if opciones.salida is not None:
             try:
-                exportar_intermedio(Path(opciones.archivo), opciones.salida, instrucciones)
+                exportar_intermedio(Path(opciones.archivo), opciones.salida, resultado.instrucciones)
             except (OSError, ValueError, RuntimeError) as error:
                 print(f"No se pudo guardar el código intermedio: {error}", file=sys.stderr)
                 return 1
         return 0
 
-    mostrar_tokens(tokens, lexer)
+    mostrar_tokens(resultado.tokens, resultado.lexer)
     print("Análisis sintáctico correcto.")
     if opciones.etapa == "semantica":
         print("Análisis semántico correcto.")
     if opciones.arbol:
-        print(arbol.toStringTree(recog=parser))
+        print(resultado.arbol.toStringTree(recog=resultado.parser))
     return 0
 
 

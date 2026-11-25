@@ -43,11 +43,11 @@ código 1. Si no encuentra errores muestra `Análisis semántico correcto.`
 
 ## Tabla de símbolos y recorrido
 
-`src/tabla_simbolos.py` almacena nombre, posición de declaración, tipo,
+`src/lenguaje/tabla_simbolos.py` almacena nombre, posición de declaración, tipo,
 inicialización y valor numérico conocido de cada variable. Mantiene un diccionario por ámbito y permite
 registrar variables, buscar desde el ámbito actual hacia los exteriores,
 abrir/cerrar ámbitos y capturar/restaurar el estado para analizar ramas.
-`src/semantico.py` hereda del visitor generado por ANTLR4: consulta y actualiza
+`src/lenguaje/semantico.py` hereda del visitor generado por ANTLR4: consulta y actualiza
 la tabla mientras recorre el árbol y genera los mensajes de error.
 
 Hay un ámbito global y ámbitos locales para funciones y bloques. Los parámetros

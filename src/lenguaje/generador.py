@@ -1,15 +1,15 @@
 """Traduce el árbol validado a código intermedio mediante un builder propio."""
 
-from builder import Builder
 from generated.EducativoParserVisitor import EducativoParserVisitor
+
+from .builder import Builder
+from .diagnostico import Diagnostico
 
 
 class ErrorGeneracion(Exception):
     def __init__(self, ctx, construccion):
-        token = ctx.start
-        super().__init__(
-            f"Error de generación en {token.line}:{token.column + 1}: {construccion}"
-        )
+        self.diagnostico = Diagnostico.desde_token("intermedio", construccion, ctx.start)
+        super().__init__(self.diagnostico.en_terminal("Error de generación"))
 
 
 class GeneradorCodigo(EducativoParserVisitor):
