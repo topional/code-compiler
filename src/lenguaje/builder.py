@@ -1,6 +1,6 @@
 """Construye código intermedio estructurado; no ejecuta instrucciones."""
 
-from instruccion import Instruccion
+from .instruccion import Instruccion
 
 
 class Builder:

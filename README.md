@@ -102,6 +102,14 @@ El intérprete abre el JSON y ejecuta el programa. `mostrar` imprime el valor y
 `preguntar` vuelve a solicitarlo si la entrada no corresponde al tipo esperado.
 Los errores de ejecución incluyen la línea y la columna cuando están disponibles.
 
+### API para el editor
+
+`POST /compilar` analiza texto `.edu` y devuelve el mismo JSON de versión 1 que
+exporta la terminal. El WebSocket `/ejecutar` ejecuta ese JSON e intercambia
+preguntas y respuestas con el editor. `src/web/` contiene la API y la supervisión
+de subprocesos. `src/lenguaje/` contiene el compilador y el intérprete que usan
+la API y la terminal. Consulta [el contrato y el despliegue](docs/api.md).
+
 ### Archivos generados por ANTLR
 
 `make generar` utiliza `grammar/EducativoLexer.g4` y
@@ -120,15 +128,15 @@ src/generated/
 
 Ejecutar `make generar` antes de ejecutar directamente
 `src/main.py`. Los archivos generados se actualizan desde los `.g4`; los cambios
-del analizador semántico se escriben en `src/semantico.py` y
-`src/tabla_simbolos.py`.
+del analizador semántico se escriben en `src/lenguaje/semantico.py` y
+`src/lenguaje/tabla_simbolos.py`.
 
 ### Flujo del driver
 
-`src/main.py` coordina el análisis. Lee el archivo con `FileStream` de ANTLR,
-ejecuta el lexer y llama a `parser.programa()` para construir el árbol
-sintáctico. Si ambas etapas terminan sin errores, recorre el árbol con
-`AnalizadorSemantico`. Por defecto, completa las tres etapas y muestra los
+`src/main.py` lee el archivo UTF-8 y pasa el texto a `src/lenguaje/compilador.py`.
+El compilador ejecuta el lexer, llama a `parser.programa()` para construir el árbol
+sintáctico y, si ambas etapas terminan sin errores, recorre el árbol con
+`AnalizadorSemantico`. Por defecto, la terminal completa las tres etapas y muestra los
 tokens, `Análisis sintáctico correcto.` y `Análisis semántico correcto.`.
 Con `--etapa lexer` o `--etapa gramatica` se detiene al terminar esa etapa;
 en Make se selecciona con `ETAPA=lexer` o `ETAPA=gramatica`.
@@ -154,8 +162,8 @@ Esas entradas fallan intencionalmente: falta `valor de` en la primera y `fin`
 en la segunda. Los mensajes específicos de ANTLR pueden aparecer en inglés.
 
 `grammar/EducativoParser.g4` reutiliza el vocabulario de `EducativoLexer.g4`.
-ANTLR genera `EducativoParser.py` y `EducativoParserVisitor.py`; este último
-es la base de `src/semantico.py`, que recorre el árbol en el análisis semántico.
+ANTLR genera `EducativoParser.py` y `EducativoParserVisitor.py`. El analizador
+en `src/lenguaje/semantico.py` usa el visitor para recorrer el árbol.
 
 ## Análisis semántico
 
@@ -176,7 +184,7 @@ literales, aritmética y variables con valores conocidos. `2.0` cuenta como ente
 se permiten cero repeticiones y límites negativos o iguales en aleatorios.
 El intérprete comprueba los valores numéricos desconocidos durante la ejecución.
 
-El visitor de `src/semantico.py` usa la tabla de `src/tabla_simbolos.py`,
+El visitor de `src/lenguaje/semantico.py` usa la tabla de `src/lenguaje/tabla_simbolos.py`,
 con un ámbito global y ámbitos locales
 para funciones y bloques. Los parámetros comparten ámbito con el cuerpo de la
 función. Se permite ocultar una variable exterior; los nombres distinguen
@@ -231,10 +239,10 @@ al llamar a la función. Después de la llamada, solo da por inicializadas las v
 que lo están en todos los caminos de retorno. El análisis conserva ambos caminos de
 un condicional y no presupone nuevas inicializaciones en una llamada recursiva activa.
 
-`src/generador.py` recorre el árbol mediante el visitor generado por ANTLR y
-solicita a `Builder`, definido en `src/builder.py`, la construcción del código
+`src/lenguaje/generador.py` recorre el árbol mediante el visitor de ANTLR y usa
+`Builder`, definido en `src/lenguaje/builder.py`, para construir el código
 intermedio. El builder guarda una lista de objetos `Instruccion`, definidos en
-`src/instruccion.py`, con operación, argumentos, destino y posición de origen.
+`src/lenguaje/instruccion.py`, con operación, argumentos, destino y posición.
 También conserva metadatos de tipo y nombre cuando corresponden.
 
 El generador admite variables, entrada/salida, números, textos, valores lógicos,

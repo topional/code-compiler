@@ -76,3 +76,10 @@ python -m unittest discover -s tests
 Estas pruebas cubren el JSON exportado, la ejecución en procesos separados,
 la recursión, los ámbitos, los ciclos, la entrada y los diagnósticos.
 Consulta [el contrato del código intermedio](../docs/intermedio.md).
+
+## API pública
+
+`python -m unittest discover -s tests` también ejecuta las pruebas HTTP y
+WebSocket con las dependencias de `requirements.txt`. Verifican el contrato con
+el editor, los límites y la limpieza de subprocesos. La comprobación de los
+límites del kernel se ejecuta en Linux.
