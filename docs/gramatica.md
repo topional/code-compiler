@@ -148,9 +148,8 @@ invertido son sintácticamente válidos. El análisis semántico comprueba
 declaraciones, inicialización, tipos, condiciones lógicas, comparaciones,
 repeticiones, límites aleatorios, argumentos y retornos de funciones, como se
 explica en [semantica.md](semantica.md). Las restricciones sobre valores que
-dependen de entradas o aleatorios requieren controles durante la futura
-ejecución. `juego` y `calculadora` son instrucciones reconocidas sin
-comportamiento de ejecución implementado. Los programas todavía se analizan.
+dependen de entradas o aleatorios se comprueban en el intérprete.
+`juego` y `calculadora` son marcadores informativos durante la ejecución.
 
 ## Ejemplos y validación
 
