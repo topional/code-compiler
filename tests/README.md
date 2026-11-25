@@ -57,18 +57,29 @@ Una entrada válida para el lexer o la gramática puede fallar en una etapa post
 Por ejemplo, `gramatica/validos/precedencia_y_logica.edu` usa `puntos` sin declarar:
 su estructura es válida, pero su semántica no.
 
-## Generación de código intermedio
+## Exportación y ejecución de código intermedio
 
-Las entradas semánticamente válidas también pueden pasarse al generador:
+Las entradas semánticamente válidas pueden exportarse y ejecutarse.
 
 ```bash
-make probar ETAPA=intermedio ARCHIVO=tests/semantica/validos/funciones_y_comparaciones.edu
-make probar ETAPA=intermedio ARCHIVO=examples/calculadora.edu
+python src/main.py examples/calculadora.edu --etapa intermedio --salida calculadora.ir.json
+python src/interprete.py calculadora.ir.json
 ```
 
-La etapa analiza primero y construye instrucciones estructuradas en memoria.
-En éxito termina con código 0 y no imprime tokens, árbol ni código intermedio.
-`make test` sigue comprobando únicamente gramática y semántica; no valida la
-generación. Consulta [el contrato del código intermedio](../docs/intermedio.md).
+Después de `make generar`, ejecuta las pruebas de integración con el Python
+que tiene instalado el runtime de ANTLR.
 
-La ejecución de los programas sigue pendiente de implementación.
+```bash
+python -m unittest discover -s tests
+```
+
+Estas pruebas cubren el JSON exportado, la ejecución en procesos separados,
+la recursión, los ámbitos, los ciclos, la entrada y los diagnósticos.
+Consulta [el contrato del código intermedio](../docs/intermedio.md).
+
+## API pública
+
+`python -m unittest discover -s tests` también ejecuta las pruebas HTTP y
+WebSocket con las dependencias de `requirements.txt`. Verifican el contrato con
+el editor, los límites y la limpieza de subprocesos. La comprobación de los
+límites del kernel se ejecuta en Linux.

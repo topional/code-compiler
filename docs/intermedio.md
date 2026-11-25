@@ -2,9 +2,8 @@
 
 El generador traduce el árbol de ANTLR después del análisis semántico.
 `GeneradorCodigo` resuelve los nombres y recorre el árbol; `Builder` construye
-objetos `Instruccion` y administra temporales y etiquetas. Los programas todavía
-no se ejecutan: este documento establece el contrato de las instrucciones para
-su posterior interpretación o traducción.
+objetos `Instruccion` y administra temporales y etiquetas. El intérprete
+ejecuta esas instrucciones y también puede cargarlas desde un archivo JSON.
 
 ## Datos y nombres
 
@@ -21,7 +20,7 @@ que las origina. No se alteran las gramáticas ni los archivos generados por ANT
 Los operandos son cadenas que representan literales o referencias:
 
 - Números: conservan su escritura decimal; los límites pueden incluir un signo.
-- Textos: conservan comillas y escapes; se interpretarán al ejecutar.
+- Textos: conservan comillas y escapes; se interpretan al ejecutar.
 - Lógicos: `verdadero` y `falso`, normalizados a minúsculas.
 - Temporales: `%tN`, únicos dentro de una generación.
 - Variables: `%vN_nombre`, con identidad distinta para cada declaración.
@@ -30,7 +29,7 @@ Los operandos son cadenas que representan literales o referencias:
 
 Los identificadores internos evitan colisiones con nombres del programa y
 permiten ocultar variables y funciones de ámbitos exteriores. El intérprete
-futuro deberá mantener instancias diferentes de los parámetros, variables
+mantiene instancias diferentes de los parámetros, variables
 locales y temporales en cada llamada, también en llamadas recursivas.
 
 ## Instrucciones
@@ -107,28 +106,32 @@ necesita ejecutar los `cerrar_ambito` que aparecen después en el flujo lineal.
 
 El semántico conserva en `tipos_entrada` el tipo validado de cada `preguntar`.
 El driver entrega ese mapa al generador, que lo guarda en el campo `tipo` de
-la instrucción. Sin tipo previo, la entrada es `texto`. La conversión y los
-mensajes de entrada inválida quedan a cargo del futuro intérprete. Al utilizar
-el generador directamente sin ese mapa, `automatico` indica conservar el tipo
-actual de la variable o usar texto si todavía no tiene uno.
+la instrucción. Sin tipo previo, la entrada es `texto`. El intérprete acepta
+`verdadero` y `falso` sin distinguir mayúsculas, y lee los números como
+fracciones exactas. `mostrar` presenta los enteros como `120` y otros números
+como `3/2`. Al utilizar el generador directamente sin el mapa de tipos,
+`automatico` indica conservar el tipo actual de la variable o usar texto si
+todavía no tiene uno.
 
-El intérprete deberá comprobar divisiones por cero, cantidades de repetición
+El intérprete comprueba divisiones por cero, cantidades de repetición
 enteras y no negativas, y límites aleatorios enteros y ordenados. El intervalo
 aleatorio incluye ambos extremos. Las comprobaciones semánticas de constantes
 no sustituyen estas comprobaciones para valores desconocidos.
 
 ## Uso y validación
 
-La etapa sigue siendo silenciosa y conserva sus instrucciones en memoria:
+La etapa `intermedio` exporta las instrucciones con `--salida`.
 
 ```bash
-make probar ETAPA=intermedio ARCHIVO=examples/calculadora.edu
-make probar ETAPA=intermedio ARCHIVO=examples/piedra_papel_tijera.edu
+python src/main.py examples/calculadora.edu --etapa intermedio --salida calculadora.ir.json
+python src/interprete.py calculadora.ir.json
 ```
 
-El driver analiza léxico, sintaxis y semántica antes de crear el generador.
-Los errores anteriores impiden generar. No se implementan ejecución, exportación
-de archivos, una interfaz web ni traducción a LLVM o Python.
+El JSON contiene `version` con valor `1` e `instrucciones` con los campos de
+`Instruccion`, en UTF-8. El driver guarda el archivo al terminar correctamente
+la compilación. La salida no puede apuntar al archivo de entrada ni a un `.edu`.
 
-`make test` conserva las comprobaciones de gramática y semántica. No comprueba
-permanentemente la estructura o el comportamiento del código intermedio.
+El motor `ejecutar(instrucciones, leer=..., escribir=...)` recibe dos funciones.
+`leer(mensaje)` devuelve una cadena y `escribir(texto)` recibe resultados y
+avisos de entrada inválida. `cargar_intermedio(ruta)` lee el archivo JSON y
+devuelve la lista de instrucciones.

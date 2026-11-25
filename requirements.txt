@@ -1,1 +1,6 @@
 antlr4-python3-runtime==4.13.1
+fastapi>=0.115,<1
+pydantic>=2.9,<3
+uvicorn>=0.54,<1
+websockets>=13,<17
+httpx>=0.28,<1

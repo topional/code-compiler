@@ -2,8 +2,8 @@
 
 Proyecto de un lenguaje textual en español para facilitar la transición desde
 Scratch. La versión actual implementa el análisis léxico, sintáctico y semántico
-con ANTLR4 y Python, y la generación de código intermedio de tres direcciones
-mediante un builder propio para las construcciones de su gramática.
+con ANTLR4 y Python, y genera y ejecuta código intermedio de tres direcciones
+para las construcciones de su gramática.
 
 La sintaxis básica separa la declaración de la asignación:
 
@@ -84,10 +84,31 @@ activado. Depende de `generar`: no hace falta ejecutar ambos comandos por
 separado. Make reutiliza los archivos actualizados y regenera los necesarios
 cuando cambian las gramáticas.
 
-La automatización usa un único script Bash y los archivos `.edu` de `tests/`.
-Comprueba que los válidos sean aceptados y los inválidos produzcan errores de
-su etapa. No compara mensajes exactos. Las entradas del lexer se revisan
-manualmente. Consulta [la guía de pruebas](tests/README.md).
+El script Bash de `make test` comprueba que las entradas `.edu` válidas se
+acepten y las inválidas produzcan errores de su etapa. Las entradas del lexer
+se revisan manualmente. Las pruebas de integración del intérprete se ejecutan
+con `python -m unittest discover -s tests`. Consulta [la guía de pruebas](tests/README.md).
+
+### Exportar y ejecutar un programa
+
+```bash
+python src/main.py examples/calculadora.edu --etapa intermedio --salida calculadora.ir.json
+python src/interprete.py calculadora.ir.json
+```
+
+El compilador guarda las instrucciones y sus posiciones de origen en un JSON
+UTF-8 de versión 1 si el análisis y la generación terminan correctamente.
+El intérprete abre el JSON y ejecuta el programa. `mostrar` imprime el valor y
+`preguntar` vuelve a solicitarlo si la entrada no corresponde al tipo esperado.
+Los errores de ejecución incluyen la línea y la columna cuando están disponibles.
+
+### API para el editor
+
+`POST /compilar` analiza texto `.edu` y devuelve el mismo JSON de versión 1 que
+exporta la terminal. El WebSocket `/ejecutar` ejecuta ese JSON e intercambia
+preguntas y respuestas con el editor. `src/web/` contiene la API y la supervisión
+de subprocesos. `src/lenguaje/` contiene el compilador y el intérprete que usan
+la API y la terminal. Consulta [el contrato y el despliegue](docs/api.md).
 
 ### Archivos generados por ANTLR
 
@@ -107,15 +128,15 @@ src/generated/
 
 Ejecutar `make generar` antes de ejecutar directamente
 `src/main.py`. Los archivos generados se actualizan desde los `.g4`; los cambios
-del analizador semántico se escriben en `src/semantico.py` y
-`src/tabla_simbolos.py`.
+del analizador semántico se escriben en `src/lenguaje/semantico.py` y
+`src/lenguaje/tabla_simbolos.py`.
 
 ### Flujo del driver
 
-`src/main.py` coordina el análisis. Lee el archivo con `FileStream` de ANTLR,
-ejecuta el lexer y llama a `parser.programa()` para construir el árbol
-sintáctico. Si ambas etapas terminan sin errores, recorre el árbol con
-`AnalizadorSemantico`. Por defecto, completa las tres etapas y muestra los
+`src/main.py` lee el archivo UTF-8 y pasa el texto a `src/lenguaje/compilador.py`.
+El compilador ejecuta el lexer, llama a `parser.programa()` para construir el árbol
+sintáctico y, si ambas etapas terminan sin errores, recorre el árbol con
+`AnalizadorSemantico`. Por defecto, la terminal completa las tres etapas y muestra los
 tokens, `Análisis sintáctico correcto.` y `Análisis semántico correcto.`.
 Con `--etapa lexer` o `--etapa gramatica` se detiene al terminar esa etapa;
 en Make se selecciona con `ETAPA=lexer` o `ETAPA=gramatica`.
@@ -141,8 +162,8 @@ Esas entradas fallan intencionalmente: falta `valor de` en la primera y `fin`
 en la segunda. Los mensajes específicos de ANTLR pueden aparecer en inglés.
 
 `grammar/EducativoParser.g4` reutiliza el vocabulario de `EducativoLexer.g4`.
-ANTLR genera `EducativoParser.py` y `EducativoParserVisitor.py`; este último
-es la base de `src/semantico.py`, que recorre el árbol en el análisis semántico.
+ANTLR genera `EducativoParser.py` y `EducativoParserVisitor.py`. El analizador
+en `src/lenguaje/semantico.py` usa el visitor para recorrer el árbol.
 
 ## Análisis semántico
 
@@ -161,9 +182,9 @@ El analizador semántico detecta los siguientes errores:
 Las restricciones de valores se comprueban cuando pueden determinarse mediante
 literales, aritmética y variables con valores conocidos. `2.0` cuenta como entero;
 se permiten cero repeticiones y límites negativos o iguales en aleatorios.
-Los valores numéricos desconocidos deberán comprobarse durante la futura ejecución.
+El intérprete comprueba los valores numéricos desconocidos durante la ejecución.
 
-El visitor de `src/semantico.py` usa la tabla de `src/tabla_simbolos.py`,
+El visitor de `src/lenguaje/semantico.py` usa la tabla de `src/lenguaje/tabla_simbolos.py`,
 con un ámbito global y ámbitos locales
 para funciones y bloques. Los parámetros comparten ámbito con el cuerpo de la
 función. Se permite ocultar una variable exterior; los nombres distinguen
@@ -173,7 +194,7 @@ La primera asignación válida determina el tipo (`numero`, `texto` o `logico`);
 las siguientes deben respetarlo. Enteros y decimales comparten `numero`. Los
 parámetros se consideran inicializados y tienen el tipo declarado. Una entrada
 con `preguntar` inicializa la variable: conserva su tipo si ya se conoce y, si
-no, establece `texto`. La conversión de la entrada se implementará al ejecutar.
+no, establece `texto`. El intérprete convierte la entrada al tipo establecido.
 
 Los operadores aritméticos requieren números, y `no`, `y`, `o` requieren
 lógicos. `+` no concatena textos. Tras un `si`, una variable se considera
@@ -213,17 +234,15 @@ la estructura, la separación por líneas, los bloques y la precedencia de las
 expresiones.
 El analizador semántico comprueba declaraciones, inicialización y tipos en
 asignaciones, operaciones, comparaciones, condiciones, repeticiones, rangos y funciones.
-Las restricciones sobre valores desconocidos deben verificarse en la futura ejecución.
 El analizador comprueba las lecturas de variables exteriores con el estado que tienen
 al llamar a la función. Después de la llamada, solo da por inicializadas las variables
 que lo están en todos los caminos de retorno. El análisis conserva ambos caminos de
 un condicional y no presupone nuevas inicializaciones en una llamada recursiva activa.
-Los programas no se ejecutan todavía.
 
-`src/generador.py` recorre el árbol mediante el visitor generado por ANTLR y
-solicita a `Builder`, definido en `src/builder.py`, la construcción del código
+`src/lenguaje/generador.py` recorre el árbol mediante el visitor de ANTLR y usa
+`Builder`, definido en `src/lenguaje/builder.py`, para construir el código
 intermedio. El builder guarda una lista de objetos `Instruccion`, definidos en
-`src/instruccion.py`, con operación, argumentos, destino y posición de origen.
+`src/lenguaje/instruccion.py`, con operación, argumentos, destino y posición.
 También conserva metadatos de tipo y nombre cuando corresponden.
 
 El generador admite variables, entrada/salida, números, textos, valores lógicos,
@@ -236,8 +255,8 @@ omiten en el flujo principal mediante saltos.
 
 La etapa `intermedio` realiza primero el análisis completo y construye las
 instrucciones en memoria. Termina con código 0 y sin salida en consola cuando
-la generación es correcta, incluso con `--arbol`. No guarda un archivo ni
-implementa un intérprete. Los errores de análisis se notifican antes de generar.
+la generación es correcta, incluso con `--arbol`. Con `--salida` exporta el
+JSON para `src/interprete.py`.
 
 Consulta [la representación intermedia](docs/intermedio.md) para conocer las
 instrucciones, sus campos y el contrato de ejecución.

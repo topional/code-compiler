@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: code-compiler-api
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /openapi.json
+    envVars:
+      - key: EDU_ORIGENES
+        sync: false

@@ -127,10 +127,10 @@ corresponden, respectivamente, a las reglas ANTLR `mientras` y `aleatorio`.
 Los tokens siguen siendo `MIENTRAS` y `ALEATORIO`; la sintaxis escrita se conserva:
 `asignar dado valor de numero aleatorio entre 1 y 6`.
 
-`make generar` genera el lexer, el parser y el visitor base. El driver
-`src/main.py` llena el flujo de tokens, detiene el análisis si hay errores
-léxicos y llama a `parser.programa()`. Con `--arbol` muestra el árbol sintáctico
-en texto con paréntesis después de completar la etapa seleccionada sin errores.
+`make generar` genera el lexer, el parser y el visitor base. El compilador en
+`src/lenguaje/compilador.py` llena el flujo de tokens, detiene el análisis si hay
+errores léxicos y llama a `parser.programa()`. Con `--arbol`, `src/main.py`
+muestra el árbol sintáctico en texto con paréntesis si la etapa termina sin errores.
 Los errores indican línea y columna desde 1. Los detalles de ANTLR pueden
 aparecer en inglés. El driver agrega el tipo de error y su ubicación. Los
 diagnósticos semánticos se construyen en Python y están escritos en español.
@@ -148,9 +148,8 @@ invertido son sintácticamente válidos. El análisis semántico comprueba
 declaraciones, inicialización, tipos, condiciones lógicas, comparaciones,
 repeticiones, límites aleatorios, argumentos y retornos de funciones, como se
 explica en [semantica.md](semantica.md). Las restricciones sobre valores que
-dependen de entradas o aleatorios requieren controles durante la futura
-ejecución. `juego` y `calculadora` son instrucciones reconocidas sin
-comportamiento de ejecución implementado. Los programas todavía se analizan.
+dependen de entradas o aleatorios se comprueban en el intérprete.
+`juego` y `calculadora` son marcadores informativos durante la ejecución.
 
 ## Ejemplos y validación
 

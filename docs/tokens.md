@@ -147,7 +147,7 @@ deben respetar su tipo. Los enteros y decimales comparten el tipo `numero`.
 `mostrar` admite variables, expresiones y valores directos como `10` o `"Hola"`.
 El análisis semántico verifica declaraciones, inicialización, tipos,
 comparaciones, condiciones, repeticiones, límites aleatorios y funciones; véase
-[semantica.md](semantica.md). La ejecución todavía no está implementada.
+[semantica.md](semantica.md).
 
 Los parámetros y resultados de funciones usan `numero`,
 `texto` y `logico`. Toda definición usa paréntesis para los parámetros y una
