@@ -7,6 +7,7 @@ import os
 import signal
 from collections import Counter, deque
 from dataclasses import asdict
+from ipaddress import ip_address
 from time import monotonic
 from typing import Any, Literal
 
@@ -76,6 +77,13 @@ class TasaPorIP:
 
 
 def ip_de(conexion):
+    if os.getenv("RENDER") == "true":
+        valores = conexion.headers.getlist("cf-connecting-ip")
+        if len(valores) == 1 and "%" not in valores[0]:
+            try:
+                return str(ip_address(valores[0].strip(" \t")))
+            except ValueError:
+                pass
     return conexion.client.host if conexion.client else "desconocida"
 
 

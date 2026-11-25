@@ -68,14 +68,50 @@ debe caber en 1 MiB. El servidor WebSocket puede cerrar con código `1009` antes
 de que el mensaje llegue a la aplicación si supera ese tamaño. El supervisor
 recoge el subproceso al finalizar, al vencer un plazo o al detectar la desconexión.
 
-## Despliegue inicial en Linux
+## Orígenes del editor
+
+`EDU_ORIGENES` admite una lista de orígenes exactos separados por comas para
+HTTP (CORS) y WebSocket. Incluye el esquema y el puerto si corresponde, como en
+`https://editor.example.com,http://localhost:5173`. Con el valor vacío se
+rechazan las solicitudes con `Origin`. Los clientes directos que omiten
+`Origin` pueden usar la API anónima.
+
+## Despliegue en Render
+
+Cuando `main` incluya la API y los archivos de Docker, crea un Blueprint de
+Render con `render.yaml`. El Blueprint define el servicio web Free
+`code-compiler-api` y comprueba su salud en `/openapi.json`. Introduce el
+origen real del editor en `EDU_ORIGENES` al crear el Blueprint. [Referencia de Blueprints](https://render.com/docs/blueprint-spec)
+
+Render establece `RENDER=true`. En ese entorno, la API usa una única dirección
+IPv4 o IPv6 válida de `CF-Connecting-IP` para aplicar los límites. Si falta la
+cabecera o su valor es inválido, usa la IP de la conexión. El contenedor
+desactiva el procesamiento de cabeceras de proxy de Uvicorn. [Variables de Render](https://render.com/docs/environment-variables) · [IP del cliente en Render](https://render.com/articles/host-pocketbase-on-render)
+
+Para comprobar la imagen localmente con un puerto configurable, ejecuta desde
+la raíz del repositorio los siguientes comandos.
+
+```bash
+docker build -t code-compiler-api .
+docker run --rm -p 127.0.0.1:8000:8000 -e PORT=8000 \
+  -e EDU_ORIGENES=http://localhost:5173 code-compiler-api
+```
+
+Comprueba `/openapi.json`, compila `mostrar 42` y ejecuta el resultado por
+WebSocket. Repite el intento HTTP y la apertura de WebSocket con otro origen
+y comprueba que ambos devuelven `403`.
+
+Antes de compartir la URL pública, prueba `https://<servicio>.onrender.com/compilar`
+y `wss://<servicio>.onrender.com/ejecutar` desde el origen real del editor.
+Para comprobar los cupos por IP, mantén una ejecución esperando una respuesta
+y abre otra desde una conexión con una IP pública distinta. Ambas deben poder
+ejecutarse a la vez. Otra apertura desde la primera IP debe recibir `429`.
+[WebSockets en Render](https://render.com/docs/websocket)
+
+## Despliegue manual en Linux
 
 Instala `requirements.txt` y ejecuta `make generar` según el [README](../README.md).
 Inicia un proceso ASGI como usuario sin privilegios desde la raíz del repo.
-Configura los orígenes del editor, incluidos esquema y puerto si corresponde,
-en `EDU_ORIGENES` como lista separada por comas. El valor vacío deja sin acceso
-a los editores de otros orígenes. Los clientes directos que omiten `Origin`
-pueden usar la API anónima.
 
 ```bash
 EDU_ORIGENES=https://editor.example.com python -m uvicorn web.api:app --app-dir src \

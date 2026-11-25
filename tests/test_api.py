@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import subprocess
 import sys
 import unittest
@@ -13,6 +14,7 @@ from textwrap import dedent
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from starlette.requests import HTTPConnection
 from starlette.testclient import WebSocketDenialResponse
 
 
@@ -33,6 +35,35 @@ def iniciar(websocket, intermedio):
 
 def responder(websocket, texto):
     websocket.send_json({"tipo": "respuesta", "texto": texto})
+
+
+class PruebasIP(unittest.TestCase):
+    def test_seleccion_de_ip(self):
+        conexion = ("192.0.2.10", 50000)
+        casos = (
+            ("true", [b" 198.51.100.1 "], conexion, "198.51.100.1"),
+            ("true", [b"2001:0db8:0000::1"], conexion, "2001:db8::1"),
+            ("true", [], conexion, conexion[0]),
+            ("true", [b""], conexion, conexion[0]),
+            ("true", [b"no-es-una-ip"], conexion, conexion[0]),
+            ("true", [b"198.51.100.1:443"], conexion, conexion[0]),
+            ("true", [b"fe80::1%eth0"], conexion, conexion[0]),
+            ("true", [b"198.51.100.1, 198.51.100.2"], conexion, conexion[0]),
+            ("true", [b"198.51.100.1", b"198.51.100.1"], conexion, conexion[0]),
+            ("true", [], None, "desconocida"),
+            ("false", [b"198.51.100.1"], conexion, conexion[0]),
+            (None, [b"198.51.100.1"], conexion, conexion[0]),
+        )
+        for render, valores, cliente, esperada in casos:
+            with self.subTest(render=render, valores=valores), patch.dict(os.environ):
+                if render is None:
+                    os.environ.pop("RENDER", None)
+                else:
+                    os.environ["RENDER"] = render
+                cabeceras = [(b"cf-connecting-ip", valor) for valor in valores]
+                cabeceras.append((b"x-forwarded-for", b"203.0.113.1"))
+                peticion = HTTPConnection({"type": "http", "headers": cabeceras, "client": cliente})
+                self.assertEqual(api.ip_de(peticion), esperada)
 
 
 class PruebasAPI(unittest.TestCase):
