@@ -60,8 +60,8 @@ fuente, también al comprobar variables exteriores dentro de funciones.
 La primera asignación válida infiere `numero`, `texto` o `logico`. Enteros y
 decimales comparten `numero`. Una asignación con errores no inicializa la
 variable. La entrada `preguntar` la inicializa: conserva un tipo ya conocido o
-establece `texto` si no tiene tipo previo. La conversión de la entrada al tipo
-conocido debe implementarse en la futura ejecución.
+establece `texto` si no tiene tipo previo. El intérprete convierte la entrada
+al tipo establecido.
 
 Las expresiones propagan sus tipos según la precedencia del parser. Los
 operadores `+`, `-`, `*`, `/` y menos unario requieren números; `no`, `y`, `o`
@@ -89,9 +89,8 @@ analizar ciclos, al comprobar una definición y al encontrar una llamada recursi
 activa. En ese último caso tampoco se infieren nuevas inicializaciones. En las
 demás llamadas se conservan las constantes que coinciden en todos los retornos.
 `preguntar` descarta el valor previo de la variable. Si una cantidad o un límite es
-numérico pero su valor es desconocido, la comprobación de entero, signo u orden
-queda pendiente para la futura ejecución. No se rechaza únicamente por desconocer
-el valor. Esto no garantiza que todos los rangos y cantidades sean válidos al ejecutar.
+numérico pero su valor es desconocido, el intérprete comprueba que sea entero
+y verifica el signo o el orden según corresponda.
 
 ## Validación y alcance
 
@@ -124,4 +123,4 @@ rechazo por etapa mediante el código de salida y los diagnósticos. La revisió
 de mensajes exactos, posiciones y categorías concretas se realiza al inspeccionar
 cada entrada. Consulta [la guía de pruebas](../tests/README.md).
 
-Las restricciones de valores desconocidos requieren comprobaciones durante la futura ejecución. Los programas todavía no se ejecutan.
+Consulta [la representación intermedia](intermedio.md) para ejecutar los programas.

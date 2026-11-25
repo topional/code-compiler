@@ -2,8 +2,8 @@
 
 Proyecto de un lenguaje textual en español para facilitar la transición desde
 Scratch. La versión actual implementa el análisis léxico, sintáctico y semántico
-con ANTLR4 y Python, y la generación de código intermedio de tres direcciones
-mediante un builder propio para las construcciones de su gramática.
+con ANTLR4 y Python, y genera y ejecuta código intermedio de tres direcciones
+para las construcciones de su gramática.
 
 La sintaxis básica separa la declaración de la asignación:
 
@@ -84,10 +84,23 @@ activado. Depende de `generar`: no hace falta ejecutar ambos comandos por
 separado. Make reutiliza los archivos actualizados y regenera los necesarios
 cuando cambian las gramáticas.
 
-La automatización usa un único script Bash y los archivos `.edu` de `tests/`.
-Comprueba que los válidos sean aceptados y los inválidos produzcan errores de
-su etapa. No compara mensajes exactos. Las entradas del lexer se revisan
-manualmente. Consulta [la guía de pruebas](tests/README.md).
+El script Bash de `make test` comprueba que las entradas `.edu` válidas se
+acepten y las inválidas produzcan errores de su etapa. Las entradas del lexer
+se revisan manualmente. Las pruebas de integración del intérprete se ejecutan
+con `python -m unittest discover -s tests`. Consulta [la guía de pruebas](tests/README.md).
+
+### Exportar y ejecutar un programa
+
+```bash
+python src/main.py examples/calculadora.edu --etapa intermedio --salida calculadora.ir.json
+python src/interprete.py calculadora.ir.json
+```
+
+El compilador guarda las instrucciones y sus posiciones de origen en un JSON
+UTF-8 de versión 1 si el análisis y la generación terminan correctamente.
+El intérprete abre el JSON y ejecuta el programa. `mostrar` imprime el valor y
+`preguntar` vuelve a solicitarlo si la entrada no corresponde al tipo esperado.
+Los errores de ejecución incluyen la línea y la columna cuando están disponibles.
 
 ### Archivos generados por ANTLR
 
@@ -161,7 +174,7 @@ El analizador semántico detecta los siguientes errores:
 Las restricciones de valores se comprueban cuando pueden determinarse mediante
 literales, aritmética y variables con valores conocidos. `2.0` cuenta como entero;
 se permiten cero repeticiones y límites negativos o iguales en aleatorios.
-Los valores numéricos desconocidos deberán comprobarse durante la futura ejecución.
+El intérprete comprueba los valores numéricos desconocidos durante la ejecución.
 
 El visitor de `src/semantico.py` usa la tabla de `src/tabla_simbolos.py`,
 con un ámbito global y ámbitos locales
@@ -173,7 +186,7 @@ La primera asignación válida determina el tipo (`numero`, `texto` o `logico`);
 las siguientes deben respetarlo. Enteros y decimales comparten `numero`. Los
 parámetros se consideran inicializados y tienen el tipo declarado. Una entrada
 con `preguntar` inicializa la variable: conserva su tipo si ya se conoce y, si
-no, establece `texto`. La conversión de la entrada se implementará al ejecutar.
+no, establece `texto`. El intérprete convierte la entrada al tipo establecido.
 
 Los operadores aritméticos requieren números, y `no`, `y`, `o` requieren
 lógicos. `+` no concatena textos. Tras un `si`, una variable se considera
@@ -213,12 +226,10 @@ la estructura, la separación por líneas, los bloques y la precedencia de las
 expresiones.
 El analizador semántico comprueba declaraciones, inicialización y tipos en
 asignaciones, operaciones, comparaciones, condiciones, repeticiones, rangos y funciones.
-Las restricciones sobre valores desconocidos deben verificarse en la futura ejecución.
 El analizador comprueba las lecturas de variables exteriores con el estado que tienen
 al llamar a la función. Después de la llamada, solo da por inicializadas las variables
 que lo están en todos los caminos de retorno. El análisis conserva ambos caminos de
 un condicional y no presupone nuevas inicializaciones en una llamada recursiva activa.
-Los programas no se ejecutan todavía.
 
 `src/generador.py` recorre el árbol mediante el visitor generado por ANTLR y
 solicita a `Builder`, definido en `src/builder.py`, la construcción del código
@@ -236,8 +247,8 @@ omiten en el flujo principal mediante saltos.
 
 La etapa `intermedio` realiza primero el análisis completo y construye las
 instrucciones en memoria. Termina con código 0 y sin salida en consola cuando
-la generación es correcta, incluso con `--arbol`. No guarda un archivo ni
-implementa un intérprete. Los errores de análisis se notifican antes de generar.
+la generación es correcta, incluso con `--arbol`. Con `--salida` exporta el
+JSON para `src/interprete.py`.
 
 Consulta [la representación intermedia](docs/intermedio.md) para conocer las
 instrucciones, sus campos y el contrato de ejecución.
