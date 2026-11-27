@@ -483,15 +483,11 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   {(
                     [
                       { id: 'koi', label: 'Estanque Koi', hint: 'Toque: ondas de agua que atraen a los peces Koi' },
-                      { id: 'bosque', label: 'Bosque', hint: 'Toque: cohete y fuegos artificiales sobre la cabaña alpina' },
-                      { id: 'acuario', label: 'Acuario', hint: 'Toque: pulso bioluminiscente y vórtice de burbujas' },
                       { id: 'luciernagas', label: 'Luciérnagas', hint: 'Toque: suelta un farol flotante que atrae al enjambre' },
                       { id: 'cosmos', label: 'Cosmos', hint: 'Toque: lente gravitacional y meteoros curvados' },
                       { id: 'vector', label: 'Vector 3D', hint: 'Toque: pulso sísmico 3D sobre la malla de montañas' },
                       { id: 'lluvia', label: 'Lluvia Neón', hint: 'Toque: salpicadura y gotas resbalando por el cristal' },
                       { id: 'acropolis', label: 'Acrópolis', hint: 'Toque: estrella fugaz dorada sobre el Partenón' },
-                      { id: 'bahia', label: 'Bahía Láser', hint: 'Toque: convergencia de rayos láser desde los Supertrees' },
-                      { id: 'puente', label: 'Puente Costa', hint: 'Toque: pulso de luz en los cables y bandada de aves' },
                     ] as const
                   ).map((s) => (
                     <button

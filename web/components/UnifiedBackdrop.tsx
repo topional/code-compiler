@@ -3,8 +3,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { obtenerTema, TEMAS_VALIDOS, type TemaId } from '../data/temas';
 import {
   crearEstadoNaturaleza,
-  dibujarAcuarioMedusas,
-  dibujarBosqueAlpino,
   dibujarEstanqueKoi,
   dibujarPraderaLuciernagas,
   registrarToqueNaturaleza,
@@ -12,11 +10,9 @@ import {
 import {
   crearEstadoHorizonte,
   dibujarAcropolisEstelar,
-  dibujarBahiaLaser,
   dibujarCosmos,
   dibujarLluviaNeon,
   dibujarMontanasVector,
-  dibujarPuenteCosta,
   registrarToqueHorizonte,
 } from './worlds/skylineWorlds';
 import { hexARgb, type ModoFondoContinuo, type WorldTap } from './worlds/types';
@@ -35,17 +31,13 @@ const INTERACTIVE_SKIP_SELECTOR =
 /**
  * Lienzo vivo ÚNICO, CONTINUO e INTERACTIVO detrás de toda la página (`position: fixed; inset: 0`).
  * Cero línea divisoria entre portada y contenido inferior.
- * Diez mundos programados a código con arquitectura modular, capas de profundidad y toque exclusivo:
+ * Seis mundos programados a código con arquitectura modular, capas de profundidad y toque exclusivo:
  *  1. koi         → Estanque Koi con 3 peces articulados, nenúfares con loto y ondas que los atraen.
- *  2. bosque      → Bosque Alpino con luna única detallada, cabaña iluminada, nieve y fuegos artificiales.
- *  3. acuario     → Acuario Abisal con rayos de luz, bosque de algas, medusas anatómicas y vórtice.
- *  4. luciernagas → Pradera con arco Torii, luciérnagas Boids con estelas y faroles flotantes.
- *  5. cosmos      → Galaxia espiral + Agujero Negro Gargantua con lente gravitacional y meteoros.
- *  6. vector      → Montañas 3D en malla wireframe cruzada con sol retro y sonar sísmico 3D.
- *  7. lluvia      → Metrópolis neón de 2 capas con cables de datos y gotas en cristal.
- *  8. acropolis   → Partenón griego bajo Vía Láctea, constelaciones doradas y estrella fugaz.
- *  9. bahia       → Bahía futurista con Supertrees, reflejos en agua y convergencia láser.
- * 10. puente      → Puente colgante costero con niebla, olas, aves marinas y pulso de luz en cables.
+ *  2. luciernagas → Pradera con arco Torii, luciérnagas Boids con estelas y faroles flotantes.
+ *  3. cosmos      → Galaxia espiral + Agujero Negro Gargantua con lente gravitacional y meteoros.
+ *  4. vector      → Montañas 3D en malla wireframe cruzada con sol retro y sonar sísmico 3D.
+ *  5. lluvia      → Metrópolis neón de 2 capas con cables de datos y gotas en cristal.
+ *  6. acropolis   → Partenón griego bajo Vía Láctea, constelaciones doradas y estrella fugaz.
  */
 export const UnifiedBackdrop: React.FC<UnifiedBackdropProps> = ({
   tema,
@@ -133,14 +125,6 @@ export const UnifiedBackdrop: React.FC<UnifiedBackdropProps> = ({
           podarTaps(2.6);
           dibujarEstanqueKoi(ctx, ancho, alto, tiempo, pal, taps, natureState, mouse, desactivarAnimacion);
           break;
-        case 'bosque':
-          podarTaps(2.4);
-          dibujarBosqueAlpino(ctx, ancho, alto, tiempo, pal, taps, natureState, desactivarAnimacion);
-          break;
-        case 'acuario':
-          podarTaps(2.5);
-          dibujarAcuarioMedusas(ctx, ancho, alto, tiempo, pal, taps, natureState, desactivarAnimacion);
-          break;
         case 'luciernagas':
           podarTaps(3.2);
           dibujarPraderaLuciernagas(ctx, ancho, alto, tiempo, pal, taps, natureState, mouse, desactivarAnimacion);
@@ -160,14 +144,6 @@ export const UnifiedBackdrop: React.FC<UnifiedBackdropProps> = ({
         case 'acropolis':
           podarTaps(2.5);
           dibujarAcropolisEstelar(ctx, ancho, alto, tiempo, pal, taps, skylineState);
-          break;
-        case 'bahia':
-          podarTaps(2.4);
-          dibujarBahiaLaser(ctx, ancho, alto, tiempo, pal, taps);
-          break;
-        case 'puente':
-          podarTaps(2.6);
-          dibujarPuenteCosta(ctx, ancho, alto, tiempo, pal, taps, skylineState, desactivarAnimacion);
           break;
       }
     };

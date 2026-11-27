@@ -1,14 +1,10 @@
 export type ModoFondoContinuo =
   | 'koi'
-  | 'bosque'
-  | 'acuario'
   | 'luciernagas'
   | 'cosmos'
   | 'vector'
   | 'lluvia'
-  | 'acropolis'
-  | 'bahia'
-  | 'puente';
+  | 'acropolis';
 
 export interface WorldPalette {
   bgR: number;
