@@ -486,14 +486,9 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       { id: 'halftone', label: 'Halftone', hint: 'Toque: onda risográfica' },
                       { id: 'braille', label: 'Braille', hint: 'Toque: red de constelación' },
                       { id: 'mosaico', label: 'Mosaico', hint: 'Toque: cascada de teselas' },
-                      { id: 'circuito', label: 'Circuito', hint: 'Toque: pulso eléctrico PCB' },
                       { id: 'tablero', label: 'Tablero', hint: 'Toque: volteo mecánico de símbolos' },
                       { id: 'plano', label: 'Plano', hint: 'Toque: compás técnico (X, Y)' },
-                      { id: 'panal', label: 'Panal', hint: 'Toque: reacción en cadena hexagonal' },
-                      { id: 'cristal', label: 'Cristal', hint: 'Toque: refracción de prismas' },
-                      { id: 'aurora', label: 'Aurora', hint: 'Toque: destello nebuloso y brasas' },
                       { id: 'plotter', label: 'Plotter', hint: 'Toque: sello topográfico' },
-                      { id: 'estelas', label: 'Estelas', hint: 'Toque: vórtice de chispas' },
                     ] as const
                   ).map((s) => (
                     <button
