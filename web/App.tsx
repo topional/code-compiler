@@ -21,6 +21,7 @@ import {
   Pause,
   Play,
   Plus,
+  RotateCcw,
   Rows2,
   Search,
   Send,
@@ -36,11 +37,10 @@ import {
   Zap,
 } from 'lucide-react';
 
-import { ChispaMascota } from './components/ChispaLogo';
 import { CodeHelperModal } from './components/CodeHelperModal';
 import { CommandPalette } from './components/CommandPalette';
 import { EduEditor, type EduEditorHandle } from './components/EduEditor';
-import { GameStage2D } from './components/GameStage2D';
+import { GameStage2D, type EscenaJuego2D } from './components/GameStage2D';
 import { LandingHome } from './components/LandingHome';
 import { ContainerOverlayScrollbar } from './components/OverlayScrollbar';
 import {
@@ -203,7 +203,10 @@ export function App() {
   const [tiempoUltEjec, setTiempoUltEjec] = useState<number | null>(null);
   const [preguntaPendiente, setPreguntaPendiente] = useState<PreguntaPendiente | null>(null);
   const [textoRespuesta, setTextoRespuesta] = useState('');
+  const [comandoTerminal, setComandoTerminal] = useState('');
+  const [runSeq, setRunSeq] = useState(0);
   const [historial, setHistorial] = useState<InstantaneaCodigo[]>([]);
+  const pendingAutoPlayRef = useRef(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const pasoResolverRef = useRef<((continuar: boolean) => void) | null>(null);
@@ -360,6 +363,7 @@ export function App() {
 
   const iniciarEjecucion = async (pasoAPaso: boolean, silencioso = false) => {
     detenerEjecucion();
+    setRunSeq((n) => n + 1);
     setSalidas([]);
     setVariables([]);
     setPilaLlamadas(['programa']);
@@ -453,10 +457,19 @@ export function App() {
     }
   };
 
-  // Auto-run inmediato al abrir o cambiar de pestaña sin `preguntar`, y debounce 450 ms al escribir
+  // Auto-run inmediato al elegir un juego directo o en pestañas sin `preguntar`, y debounce 450 ms al escribir
   const primeraCargaRef = useRef(true);
   useEffect(() => {
-    if (!autoRun || tienePreguntar || compilacion.diagnosticos.length > 0) return;
+    if (compilacion.diagnosticos.length > 0) {
+      pendingAutoPlayRef.current = false;
+      return;
+    }
+    if (pendingAutoPlayRef.current) {
+      pendingAutoPlayRef.current = false;
+      void iniciarEjecucion(false, false);
+      return;
+    }
+    if (!autoRun || tienePreguntar) return;
     if (primeraCargaRef.current) {
       primeraCargaRef.current = false;
       void iniciarEjecucion(false, true);
@@ -468,6 +481,34 @@ export function App() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pestanaActual.id, pestanaActual.codigo, autoRun, tienePreguntar]);
+
+  const seleccionarJuegoDirecto = (juego: EscenaJuego2D) => {
+    const mapa: Record<EscenaJuego2D, { nombre: string; codigo: string }> = {
+      rpg: { nombre: 'duelo_rpg', codigo: EJEMPLOS_EDU[0].codigo },
+      aventura: { nombre: 'dado', codigo: CODIGO_HERO_DEFAULT },
+      torneo: { nombre: 'torneo', codigo: EJEMPLOS_EDU[1].codigo },
+      cohete: { nombre: 'cohete', codigo: EJEMPLOS_EDU[2].codigo },
+      boveda: { nombre: 'adivina_numero', codigo: EJEMPLOS_EDU[3].codigo },
+      chispa: {
+        nombre: 'mi_mundo',
+        codigo: `# ¡Mundo libre Chispa! Escribe lo que quieras probar
+crear variable heroe
+asignar heroe valor de "Chispa"
+crear variable energia
+asignar energia valor de 100
+mostrar "¡Bienvenido a tu mundo libre!"
+mostrar heroe`,
+      },
+    };
+    const meta = mapa[juego];
+    const yaActiva = pestanaActual.nombre.replace(/\.edu$/i, '') === meta.nombre;
+    if (yaActiva) {
+      void iniciarEjecucion(false);
+      return;
+    }
+    pendingAutoPlayRef.current = true;
+    abrirNuevaPestana(meta.nombre, meta.codigo);
+  };
 
   const avanzarUnPaso = () => {
     if (pasoResolverRef.current) {
@@ -562,11 +603,6 @@ export function App() {
     resolver(val);
   };
 
-  const enviarRespuesta = (e: React.FormEvent) => {
-    e.preventDefault();
-    enviarValorRespuesta(textoRespuesta);
-  };
-
   const opcionesRapidasPregunta = useMemo(() => {
     if (!preguntaPendiente) return [];
     const msg = preguntaPendiente.mensaje.toLowerCase();
@@ -628,24 +664,6 @@ export function App() {
   };
 
   const historialPestana = historial.filter((h) => h.pestanaId === pestanaActual.id);
-  const ultimaSalida = salidas.at(-1);
-
-  const estadoMascota: 'feliz' | 'pensando' | 'celebrando' | 'alerta' =
-    todosDiagnosticos.length > 0
-      ? 'alerta'
-      : estadoEjec !== 'inactivo'
-        ? 'pensando'
-        : salidas.length > 0
-          ? 'celebrando'
-          : 'feliz';
-
-  const textoBurbujaChispa = preguntaPendiente
-    ? `¿${preguntaPendiente.mensaje.replace(/^¿|\?$/g, '')}?`
-    : todosDiagnosticos.length > 0
-      ? `Encontré ${todosDiagnosticos.length} detalle(s) — haz clic en un aviso para ver la pista`
-      : ultimaSalida
-        ? ultimaSalida.texto
-        : 'Escribe tu código o usa Ayudante y los bloques de la izquierda';
 
   const modalesCompartidos = (
     <>
@@ -1009,79 +1027,156 @@ export function App() {
               />
             </section>
 
-            {/* PANEL SALIDA ANCLADA POR LÍNEA + ESCENARIO CHISPA + MEMORIA */}
+            {/* PANEL DERECHO UNIFICADO: ESCENARIO 2D + TERMINAL INTERACTIVA PERSISTENTE + CAJITAS */}
             <section
               className={`wb-pane wb-output-pane ${vistaMovil === 'salida' ? '' : 'mobile-hidden'}`}
-              aria-label="Salida, escenario y memoria"
+              aria-label="Escenario 2D, terminal interactiva y cajitas"
             >
-              <div className="wb-pane-header">
-                <span className="wb-pane-title">
-                  <Terminal size={14} aria-hidden="true" />
-                  Salida
-                  {lineaActiva && <span className="pill-mini">L{lineaActiva}</span>}
-                </span>
-
-                <div className="ide-actions">
-                  <label htmlFor="wb-speed" className="sr-only">
-                    Velocidad de ejecución
-                  </label>
-                  <select
-                    id="wb-speed"
-                    className="ide-icon-btn"
-                    style={{
-                      border: '1px solid var(--border-subtle)',
-                      background: 'var(--bg-surface-alt)',
-                      padding: '0 6px',
-                    }}
-                    value={String(velocidadMs)}
-                    onChange={(e) => setVelocidadMs(Number(e.target.value))}
-                    aria-label="Velocidad de ejecución"
-                  >
-                    <option value="0">Turbo</option>
-                    <option value="180">Normal</option>
-                    <option value="450">Lento</option>
-                  </select>
-
-                  <button
-                    type="button"
-                    className="ide-icon-btn"
-                    onClick={() => {
-                      setSalidas([]);
-                      setTiempoUltEjec(null);
-                    }}
-                    aria-label="Limpiar salida"
-                    title="Limpiar salida"
-                  >
-                    <Trash2 size={14} aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-
-              {/* ESCENARIO 2D INTERACTIVO ANIMADO (ESTILO SCRATCH × POKÉMON × MAKECODE) */}
+              {/* 1. ESCENARIO 2D CON DIRECTOR DE ESCENA Y SELECTOR DIRECTO DE JUEGOS */}
               <GameStage2D
                 tema={tema}
                 nombrePrograma={pestanaActual.nombre}
                 codigo={pestanaActual.codigo}
+                runSeq={runSeq}
                 salidas={salidas}
                 variables={variables}
                 estadoEjec={estadoEjec}
+                preguntaActiva={preguntaPendiente?.mensaje ?? null}
+                opcionesRapidas={opcionesRapidasPregunta}
+                onElegirOpcion={enviarValorRespuesta}
+                onJugar={() => void iniciarEjecucion(false)}
+                onDetener={detenerEjecucion}
+                onSeleccionarJuego={seleccionarJuegoDirecto}
                 desactivarAnimacion={movimientoReducido}
               />
 
-              {/* Entrada interactiva para `preguntar` (con botones rápidos de juego 2D!) */}
-              {preguntaPendiente && (
-                <div className="inline-prompt" role="region" aria-label="Responder pregunta del juego">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                    <strong style={{ fontSize: '0.84rem' }}>{preguntaPendiente.mensaje}</strong>
-                    <span className="pill-mini ok">Tu turno</span>
+              {/* 2. TERMINAL INTERACTIVA PERSISTENTE (NUNCA SE CIERRA: PERMITE RESPONDER Y REJUGAR AQUÍ TAMBIÉN) */}
+              <div className="terminal-shell">
+                <div className="wb-pane-header terminal-header">
+                  <span className="wb-pane-title">
+                    <Terminal size={14} aria-hidden="true" style={{ color: 'var(--accent)' }} />
+                    <span>Terminal</span>
+                    {preguntaPendiente ? (
+                      <span className="pill-mini ok">● Tu turno</span>
+                    ) : estadoEjec !== 'inactivo' ? (
+                      <span className="pill-mini">● En marcha</span>
+                    ) : salidas.length > 0 ? (
+                      <span className="pill-mini">✓ Finalizado</span>
+                    ) : null}
+                    {lineaActiva && <span className="pill-mini">L{lineaActiva}</span>}
+                  </span>
+
+                  <div className="ide-actions">
+                    <label htmlFor="wb-speed" className="sr-only">
+                      Velocidad de ejecución
+                    </label>
+                    <select
+                      id="wb-speed"
+                      className="ide-icon-btn"
+                      style={{
+                        border: '1px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-alt)',
+                        padding: '0 6px',
+                      }}
+                      value={String(velocidadMs)}
+                      onChange={(e) => setVelocidadMs(Number(e.target.value))}
+                      aria-label="Velocidad de ejecución"
+                    >
+                      <option value="0">Turbo</option>
+                      <option value="180">Normal</option>
+                      <option value="450">Paso lento</option>
+                    </select>
+
+                    <button
+                      type="button"
+                      className="ide-icon-btn"
+                      onClick={() => {
+                        setSalidas([]);
+                        setTiempoUltEjec(null);
+                      }}
+                      aria-label="Limpiar salida"
+                      title="Limpiar terminal"
+                    >
+                      <Trash2 size={14} aria-hidden="true" />
+                    </button>
                   </div>
-                  {opcionesRapidasPregunta.length > 0 && (
-                    <div className="quick-choice-row" role="group" aria-label="Opciones rápidas del juego">
+                </div>
+
+                {/* Historial vivo de líneas de la terminal */}
+                <div className="overlay-scroll-host is-flex">
+                  <div
+                    ref={setWbOutputNode}
+                    className="output-stream"
+                    role="log"
+                    aria-live="polite"
+                    aria-label="Consola de salida"
+                  >
+                    {salidas.length === 0 && !preguntaPendiente && todosDiagnosticos.length === 0 && (
+                      <div className="output-empty">
+                        <p style={{ margin: '0 0 8px' }}>
+                          Toca un juego arriba (<strong>RPG</strong>, <strong>Dado</strong>,{' '}
+                          <strong>Duelo</strong>, <strong>Cohete</strong> o <strong>Bóveda</strong>) o pulsa{' '}
+                          <strong>Jugar</strong> para empezar.
+                        </p>
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm"
+                          onClick={() => void iniciarEjecucion(false)}
+                        >
+                          <Play size={13} aria-hidden="true" /> Jugar ahora
+                        </button>
+                      </div>
+                    )}
+
+                    {salidas.map((item) => {
+                      const valClass = item.clase === 'salida' ? clasificarValorSalida(item.texto) : '';
+                      const rowClass =
+                        item.clase === 'salida'
+                          ? valClass
+                          : `is-${item.clase}`;
+                      const prefijo =
+                        item.clase === 'pregunta'
+                          ? '? '
+                          : item.clase === 'respuesta'
+                            ? '› '
+                            : '';
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className={`output-row ${rowClass}`}
+                          onMouseEnter={() => setHoverLine(item.linea)}
+                          onMouseLeave={() => setHoverLine(null)}
+                          onClick={() => {
+                            if (item.linea) editorRef.current?.focusLine(item.linea, 1);
+                          }}
+                        >
+                          <span className="output-ln">{item.linea ?? '·'}</span>
+                          <span className="output-val">
+                            {prefijo}
+                            {item.texto}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    <div ref={outputEndRef} />
+                  </div>
+                  <ContainerOverlayScrollbar targetRef={wbOutputScrollRef} />
+                </div>
+
+                {/* Barra de entrada SIEMPRE ABIERTA en la terminal (nunca desaparece ni salta) */}
+                <div
+                  className={`terminal-input-dock ${preguntaPendiente ? 'is-waiting' : ''}`}
+                  role="region"
+                  aria-label="Entrada de la terminal"
+                >
+                  {preguntaPendiente && opcionesRapidasPregunta.length > 0 && (
+                    <div className="terminal-quick-chips" role="group" aria-label="Elegir desde la terminal">
                       {opcionesRapidasPregunta.map((op) => (
                         <button
                           key={op.val}
                           type="button"
-                          className="quick-choice-btn"
+                          className="terminal-chip-btn"
                           onClick={() => enviarValorRespuesta(op.val)}
                         >
                           {op.label}
@@ -1089,85 +1184,65 @@ export function App() {
                       ))}
                     </div>
                   )}
-                  <form className="inline-prompt-form" onSubmit={enviarRespuesta}>
+
+                  <form
+                    className="terminal-prompt-form"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (preguntaPendiente) {
+                        enviarValorRespuesta(textoRespuesta);
+                      } else {
+                        setComandoTerminal('');
+                        void iniciarEjecucion(false);
+                      }
+                    }}
+                  >
+                    <span className="terminal-prompt-sig" aria-hidden="true">
+                      &gt;_
+                    </span>
                     <label htmlFor="wb-prompt-input" className="sr-only">
-                      Tu respuesta
+                      {preguntaPendiente ? preguntaPendiente.mensaje : 'Comando de terminal'}
                     </label>
                     <input
                       id="wb-prompt-input"
                       type="text"
-                      className="ide-input"
-                      value={textoRespuesta}
-                      onChange={(e) => setTextoRespuesta(e.target.value)}
+                      className="terminal-prompt-input"
+                      value={preguntaPendiente ? textoRespuesta : comandoTerminal}
+                      onChange={(e) => {
+                        if (preguntaPendiente) setTextoRespuesta(e.target.value);
+                        else setComandoTerminal(e.target.value);
+                      }}
                       placeholder={
-                        preguntaPendiente.tipo === 'numero'
-                          ? 'O escribe un número...'
-                          : preguntaPendiente.tipo === 'logico'
-                            ? 'verdadero o falso'
-                            : 'Escribe aquí...'
+                        preguntaPendiente
+                          ? `${preguntaPendiente.mensaje} (escribe aquí y pulsa Enter)`
+                          : salidas.length > 0
+                            ? 'Partida terminada · pulsa Enter o el botón para volver a jugar'
+                            : 'Pulsa Enter o Jugar para iniciar en la terminal...'
                       }
-                      autoFocus
                     />
-                    <button type="submit" className="btn btn-primary btn-sm">
-                      <Send size={13} aria-hidden="true" /> Enviar
-                    </button>
+                    {preguntaPendiente ? (
+                      <button type="submit" className="btn btn-primary btn-sm">
+                        <Send size={13} aria-hidden="true" /> Enviar
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        className="btn btn-primary btn-sm"
+                        disabled={compilacion.diagnosticos.length > 0 && modoMotor === 'navegador'}
+                      >
+                        {salidas.length > 0 ? (
+                          <>
+                            <RotateCcw size={13} aria-hidden="true" /> Volver a jugar
+                          </>
+                        ) : (
+                          <>
+                            <Play size={13} aria-hidden="true" /> Jugar
+                          </>
+                        )}
+                      </button>
+                    )}
                   </form>
                 </div>
-              )}
-
-              {/* Mini barra de ánimo de Chispa */}
-              <div className="stage-hero-strip" aria-live="polite">
-                <ChispaMascota estado={estadoMascota} size={30} />
-                <div className="stage-bubble" title={textoBurbujaChispa}>
-                  {textoBurbujaChispa}
-                </div>
-              </div>
-
-              {/* Salida anclada por número de línea (estilo GoJS.app) */}
-              <div className="overlay-scroll-host is-flex">
-                <div
-                  ref={setWbOutputNode}
-                  className="output-stream"
-                  role="log"
-                  aria-live="polite"
-                  aria-label="Consola de salida"
-                >
-                  {salidas.length === 0 && !preguntaPendiente && todosDiagnosticos.length === 0 && (
-                    <p className="output-empty">
-                      Pulsa <strong>Jugar</strong> (`Ctrl + Enter`) para ver tu juego cobrar vida en
-                      el Escenario 2D.
-                    </p>
-                  )}
-
-                  {salidas.map((item) => {
-                    const valClass = item.clase === 'salida' ? clasificarValorSalida(item.texto) : '';
-                    const rowClass =
-                      item.clase === 'salida'
-                        ? valClass
-                        : `is-${item.clase}`;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={`output-row ${rowClass}`}
-                        onMouseEnter={() => setHoverLine(item.linea)}
-                        onMouseLeave={() => setHoverLine(null)}
-                        onClick={() => {
-                          if (item.linea) editorRef.current?.focusLine(item.linea, 1);
-                        }}
-                      >
-                        <span className="output-ln">{item.linea ?? '·'}</span>
-                        <span className="output-val">
-                          {item.clase === 'salida' && valClass === ''
-                            ? `"${item.texto}"`
-                            : item.texto}
-                        </span>
-                      </button>
-                    );
-                  })}
-                  <div ref={outputEndRef} />
-                </div>
-                <ContainerOverlayScrollbar targetRef={wbOutputScrollRef} />
               </div>
 
               {/* Diagnósticos y pistas pedagógicas amigables con botón de arreglo en 1 clic */}

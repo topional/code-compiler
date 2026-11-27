@@ -2075,6 +2075,63 @@ dialog.cmd-dialog {
   margin-left: 2px;
 }
 
+.stage-hw-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.stage-play-pill {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ok);
+  background: var(--ok);
+  color: var(--ok-ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: filter 120ms ease, transform 120ms ease;
+}
+
+.stage-play-pill:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.stage-stop-pill,
+.stage-size-pill {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+  color: var(--ink-secondary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.stage-stop-pill {
+  border-color: var(--err);
+  color: var(--err);
+  background: var(--err-bg);
+}
+
+.stage-size-pill:hover {
+  border-color: var(--accent);
+  color: var(--ink-primary);
+}
+
+.game-stage-viewport {
+  position: relative;
+  width: 100%;
+}
+
 .game-stage-canvas {
   display: block;
   width: 100%;
@@ -2082,6 +2139,128 @@ dialog.cmd-dialog {
   image-rendering: pixelated;
   cursor: pointer;
   background: var(--bg-app);
+  transition: height 160ms ease;
+}
+
+.game-stage-shell.is-expanded .game-stage-canvas {
+  height: 340px;
+}
+
+.stage-controller-deck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.stage-controller-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--accent-soft-ink);
+  background: var(--accent-soft);
+  padding: 2px 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.stage-controller-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* ==========================================================================
+   TERMINAL INTERACTIVA PERSISTENTE (NUNCA SE CIERRA NI SALTA)
+   ========================================================================== */
+.terminal-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-editor);
+}
+
+.terminal-header {
+  background: var(--bg-surface);
+}
+
+.terminal-input-dock {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  padding: 7px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.terminal-input-dock.is-waiting {
+  background: var(--info-bg);
+  border-top: 1.5px solid var(--info);
+}
+
+.terminal-quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.terminal-chip-btn {
+  min-height: 26px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.terminal-chip-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.terminal-prompt-form {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.terminal-prompt-sig {
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--accent);
+  padding-left: 3px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.terminal-prompt-input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-editor);
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  caret-color: var(--accent);
+}
+
+.terminal-prompt-input:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 
 .quick-choice-row {
