@@ -152,6 +152,7 @@ comparaciones, condiciones, repeticiones, límites aleatorios y funciones; véas
 Los parámetros y resultados de funciones usan `numero`,
 `texto` y `logico`. Toda definición usa paréntesis para los parámetros y una
 función sin parámetros usa `()`, como en `definir saludo() devuelve texto`.
+`con` sigue siendo una palabra reservada, aunque el parser ya no la usa.
 `devuelve` indica el tipo de resultado y `devolver` entrega el resultado.
 
 La elección aleatoria usa una sola forma: `numero aleatorio entre LIMITE y LIMITE`.

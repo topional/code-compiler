@@ -1,262 +1,153 @@
-# Lenguaje educativo
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="docs/logo-light.svg" />
+    <img alt="Chispa .edu · Code Compiler — De Scratch al código real en español" src="docs/logo-light.svg" width="420" />
+  </picture>
+</p>
 
-Proyecto de un lenguaje textual en español para facilitar la transición desde
-Scratch. La versión actual implementa el análisis léxico, sintáctico y semántico
-con ANTLR4 y Python, y genera y ejecuta código intermedio de tres direcciones
-para las construcciones de su gramática.
+<p align="center">
+  <strong>Estudio web educativo, compilador e intérprete del lenguaje español <code>.edu</code> (<code>topional/code-compiler</code>), diseñado para facilitar la transición desde Scratch hacia la programación textual.</strong>
+</p>
 
-La sintaxis básica separa la declaración de la asignación:
+<p align="center">
+  <img alt="GitHub Pages Ready" src="https://img.shields.io/badge/GitHub%20Pages-100%25%20Est%C3%A1tico-FF6B2C?style=flat-square" />
+  <img alt="10 Temas" src="https://img.shields.io/badge/Temas%20Visuales-10%20Paletas%20WCAG-7AA2F7?style=flat-square" />
+  <img alt="WCAG AAA 21:1" src="https://img.shields.io/badge/Accesibilidad-WCAG%20AAA%2021%3A1-047857?style=flat-square" />
+  <img alt="Paridad Compilador" src="https://img.shields.io/badge/Paridad%20.edu-13%2F13%20Tests%20OK-1D4ED8?style=flat-square" />
+  <img alt="Contrato IR" src="https://img.shields.io/badge/C%C3%B3digo%20Intermedio-JSON%20v1-6D28D9?style=flat-square" />
+</p>
 
-```text
-crear variable edad
-asignar edad valor de 10
-mostrar edad
+---
 
-crear variable nombre
-asignar nombre valor de "Ana"
-mostrar nombre
-mostrar 10
-mostrar "Hola"
+## Capturas reales
 
-crear variable dado
-asignar dado valor de numero aleatorio entre 1 y 6
-mostrar dado
+| Portada en *GoJS Nocturno* (con halo pixel y auto-run) | Portada en *Cuaderno Taller* (claro estilo Scratch) |
+| :---: | :---: |
+| ![Portada GoJS Nocturno](docs/screenshots/01-inicio-gojs-oscuro.png) | ![Portada Cuaderno Taller](docs/screenshots/02-inicio-cuaderno-claro.png) |
+
+| Galería visual de 10 temas (*Dracula*, *Tokyo Night*, *Arcade Pixel*...) | Estudio `.edu` en *Tokyo Night* con Bloques y Memoria |
+| :---: | :---: |
+| ![Galería de 10 temas](docs/screenshots/03-galeria-10-temas.png) | ![Estudio Tokyo Night](docs/screenshots/04-estudio-tokyo-night.png) |
+
+| Rayos X del Compilador en *Arcade Pixel* | Misiones Guiadas en *Bosque Menta* |
+| :---: | :---: |
+| ![Rayos X Arcade Pixel](docs/screenshots/05-rayosx-arcade-pixel.png) | ![Misiones Bosque Menta](docs/screenshots/06-misiones-bosque-menta.png) |
+
+---
+
+## Qué incluye Chispa `.edu · Code Compiler`
+
+| Módulo | Qué aporta al estudiante y al docente |
+| :--- | :--- |
+| **Portada interactiva tipo GoJS.app × Scratch** | Playground `dado_magico.edu` en vivo con halo pixel-matrix, `auto-run` editable, salidas clicables que iluminan su línea, puente interactivo Scratch ↔ `.edu`, visor de las 4 etapas del compilador y probador en vivo de los 10 temas. |
+| **10 Temas Visuales artesanales** | **Oscuros:** *GoJS Nocturno*, *Dracula*, *Tokyo Night*, *Catppuccin Mocha*, *Nord Ártico*, *Arcade Pixel* · **Claros:** *Cuaderno Taller*, *Catppuccin Latte*, *Bosque Menta* · **Accesibilidad:** *Alto Contraste WCAG AAA 21:1*. Cambian toda la UI, sintaxis, logo SVG, mascota y scrollbar. |
+| **Estudio `.edu` (IDE creativo)** | Editor CodeMirror 6 coloreado por categoría Scratch, `auto-run` inteligente (`800 ms`), **Formateador automático** (`Ctrl+Shift+F`), **Historial de instantáneas** con restauración en 1 clic, **Paleta de Comandos** (`Ctrl+K`), multipestaña persistente e importación/exportación `.edu` y `.ir.json`. |
+| **Paleta de Bloques `.edu`** | Fichas táctiles (clic o drag & drop) organizadas por color Scratch que insertan código `.edu` válido al cursor. |
+| **Escenario + Depurador Paso a Paso** | Burbujas interactivas (hover ilumina línea, clic salta a la línea), soporte real para `preguntar "..." guardar en x`, velocidad regulable (`Turbo / Normal / Lento`), **Cajitas de Memoria** animadas y **Pistas Pedagógicas** amigables junto a cada diagnóstico. |
+| **Rayos X del Compilador** | Inspección en tiempo real de las 4 etapas: **1. Tokens (Lexer)** · **2. Árbol Sintáctico (Parser)** · **3. Tabla de Símbolos (Semántico)** · **4. Código Intermedio de 3 direcciones (JSON v1)**. |
+| **Misiones Interactivas + Confeti** | 6 retos graduales (incluido *«¡Caza los 7 bugs!»* sobre `examples/con_errores.edu`) con verificación automática real, celebración con confeti (respetando movimiento reducido), insignias y ficha SVG descargable. |
+| **Guía Visual Scratch ↔ `.edu`** | Diccionario buscable con tolerancia a errores tipográficos (**Fuse.js**) y botón *«Probar en el Estudio»*. |
+
+---
+
+## Arquitectura dual (100 % GitHub Pages + Backend Python intacto)
+
+```mermaid
+flowchart LR
+    U["Estudiante / Docente"] --> UI["Chispa .edu · Code Compiler (Vite + React + TypeScript)"]
+    UI --> M1["Motor en el Navegador (GitHub Pages · por defecto)"]
+    UI -. "Opcional en Ajustes" .-> M2["API Python FastAPI (src/web/api.py)"]
+    M1 --> E1["Lexer → Parser → Semántico → IR v1 → Intérprete paso a paso"]
+    M2 --> E2["ANTLR 4.13.1 + Python (src/lenguaje/)"]
 ```
 
-Las palabras reservadas admiten mayúsculas y minúsculas; los tokens conservan
-el texto original. Se detectan variables no declaradas, declaraciones duplicadas,
-lecturas sin inicializar y tipos incompatibles en asignaciones y operaciones.
+* **100 % estático para GitHub Pages:** El motor en `web/engine/` replica fielmente `grammar/EducativoLexer.g4`, `grammar/EducativoParser.g4`, `src/lenguaje/semantico.py`, `src/lenguaje/generador.py` y `src/lenguaje/interprete.py` (incluyendo aritmética exacta de fracciones y formato JSON v1), verificado contra toda la batería `tests/` y `examples/`.
+* **Backend Python 100 % conservado:** Toda la cadena ANTLR4 + Python + FastAPI (`src/main.py`, `src/interprete.py`, `src/lenguaje/`, `src/web/`, `grammar/`, `tests/`) sigue intacta.
 
-## Preparación
+---
 
-Se necesita Python 3.10 o posterior, Java, GNU Make 4.3 o posterior, Bash y el
-generador de ANTLR 4.13.1. Ejecutar las órdenes desde la raíz del repositorio,
-donde están `Makefile` y `requirements.txt`.
+## Librerías open-source y referencias consultadas
 
-El runtime de Python y el generador usan la misma versión, 4.13.1. El archivo
-JAR del generador debe estar disponible antes de ejecutar `make generar`:
-`pip` instala el runtime de Python, pero no descarga el generador. La ruta
-predeterminada del JAR es `/usr/local/lib/antlr-4.13.1-complete.jar`.
+| Librería / Recurso | Repositorio | Licencia | Uso en Chispa `.edu` |
+| :--- | :--- | :--- | :--- |
+| **React 19** | [facebook/react](https://github.com/facebook/react) | MIT | Interfaz declarativa y estado reactivo del Estudio. |
+| **Vite 6** | [vitejs/vite](https://github.com/vitejs/vite) | MIT | Empaquetado estático optimizado para GitHub Pages. |
+| **TypeScript 5** | [microsoft/TypeScript](https://github.com/microsoft/TypeScript) | Apache-2.0 | Tipado estricto del compilador, intérprete y UI. |
+| **CodeMirror 6** | [codemirror/dev](https://github.com/codemirror/dev) | MIT | Editor accesible con sintaxis `.edu`, autocompletado y hover/línea activa. |
+| **Motion** | [motiondivision/motion](https://github.com/motiondivision/motion) | MIT | Animaciones fluidas respetando `prefers-reduced-motion` (`MotionConfig`). |
+| **Lenis** | [darkroomengineering/lenis](https://github.com/darkroomengineering/lenis) | MIT | Scroll suave con inercia (desactivado en movimiento reducido). |
+| **Fuse.js** | [krisk/Fuse](https://github.com/krisk/Fuse) | Apache-2.0 | Búsqueda aproximada en la Guía Visual y Paleta `Ctrl+K`. |
+| **canvas-confetti** | [catdad/canvas-confetti](https://github.com/catdad/canvas-confetti) | ISC | Celebración al completar misiones educativas. |
+| **Lucide React** | [lucide-icons/lucide](https://github.com/lucide-icons/lucide) | ISC | Iconografía vectorial consistente. |
+| **Fredoka / Plus Jakarta Sans / JetBrains Mono** | [fontsource/fontsource](https://github.com/fontsource/fontsource) | OFL-1.1 | Tipografías 100 % autoalojadas (cero CDNs externos). |
+| **Vitest + Playwright + axe-core** | [vitest](https://github.com/vitest-dev/vitest) · [playwright](https://github.com/microsoft/playwright) · [axe-core](https://github.com/dequelabs/axe-core) | MIT / Apache-2.0 / MPL-2.0 | Pruebas de paridad, E2E y auditoría WCAG en los 10 temas y 4 viewports. |
+| **ANTLR 4.13.1 + FastAPI** | [antlr/antlr4](https://github.com/antlr/antlr4) · [fastapi/fastapi](https://github.com/fastapi/fastapi) | BSD-3-Clause / MIT | Compilador CLI y API Python originales en `src/`. |
+| **Referencias de diseño y pedagogía** | [midudev/gojs](https://github.com/midudev/gojs) · [fluyeporlaweb/awesome-design-stack](https://github.com/fluyeporlaweb/awesome-design-stack) · Scratch · Hedy · EduBlocks · Python Tutor · Codédex · Pilas Bloques | — | Inspiración para el playground instantáneo, la transición bloques→texto, el depurador visual y la galería de temas. |
 
-Después de clonar el repositorio, preparar el entorno y generar los analizadores:
+---
+
+## Instalación y ejecución local
+
+### 1. Aplicación web (Chispa `.edu`)
+
+Requisitos: **Node.js 20+** y **npm**.
+
+```bash
+npm install
+npm run dev
+```
+
+### 2. Build de producción y vista previa local
+
+```bash
+npm run build
+npm run preview
+```
+
+### 3. Compilador CLI y API Python originales (opcional)
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 make generar
-```
-
-Si el JAR está en otro lugar, indicar su ruta al ejecutar Make:
-
-```bash
-make generar ANTLR_JAR=/ruta/antlr-4.13.1-complete.jar
-```
-
-La variable `ANTLR_JAR` también se puede usar con `make probar` y `make test`.
-
-## Generar y probar
-
-| Comando | Función |
-| --- | --- |
-| `make generar` | Genera los archivos de ANTLR a partir de las gramáticas `.g4`. |
-| `make probar` | Genera lo necesario y analiza `examples/calculadora.edu`. |
-| `make probar ARCHIVO=ruta/programa.edu` | Analiza el archivo indicado. |
-| `make test` | Comprueba automáticamente las entradas de gramática y semántica. |
-| `make test GRUPO=gramatica` | Comprueba solo las entradas de gramática. |
-| `make test GRUPO=semantica` | Comprueba solo las entradas de semántica. |
-
-```bash
-make generar
-make probar
 make probar ARCHIVO=examples/calculadora.edu
-make probar ARCHIVO=examples/piedra_papel_tijera.edu
 ```
 
-Para ver también el árbol de análisis sintáctico en texto, con paréntesis:
+---
+
+## Despliegue automático en GitHub Pages
+
+El repositorio incluye [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml):
+
+1. Sube el proyecto a la rama `main` de tu repositorio en GitHub.
+2. En **Settings → Pages → Build and deployment → Source**, elige **GitHub Actions**.
+3. Cada `push` a `main` ejecuta `npm run typecheck && npm test && npm run build` y publica `dist/` automáticamente.
+
+---
+
+## Comandos de verificación
 
 ```bash
-.venv/bin/python src/main.py examples/calculadora.edu --arbol
+npm run typecheck   # Comprobación estricta TypeScript
+npm test            # 13 suites de paridad contra tests/ y examples/
+npm run build       # Build estático de producción
+npm run audit:web   # Auditoría Playwright + axe-core (10 temas × 4 viewports × E2E)
 ```
 
-`make probar` usa el Python de `.venv`, incluso si el entorno no está
-activado. Depende de `generar`: no hace falta ejecutar ambos comandos por
-separado. Make reutiliza los archivos actualizados y regenera los necesarios
-cuando cambian las gramáticas.
+---
 
-El script Bash de `make test` comprueba que las entradas `.edu` válidas se
-acepten y las inválidas produzcan errores de su etapa. Las entradas del lexer
-se revisan manualmente. Las pruebas de integración del intérprete se ejecutan
-con `python -m unittest discover -s tests`. Consulta [la guía de pruebas](tests/README.md).
+## Documentación técnica original del compilador `.edu`
 
-### Exportar y ejecutar un programa
-
-```bash
-python src/main.py examples/calculadora.edu --etapa intermedio --salida calculadora.ir.json
-python src/interprete.py calculadora.ir.json
-```
-
-El compilador guarda las instrucciones y sus posiciones de origen en un JSON
-UTF-8 de versión 1 si el análisis y la generación terminan correctamente.
-El intérprete abre el JSON y ejecuta el programa. `mostrar` imprime el valor y
-`preguntar` vuelve a solicitarlo si la entrada no corresponde al tipo esperado.
-Los errores de ejecución incluyen la línea y la columna cuando están disponibles.
-
-### API para el editor
-
-`POST /compilar` analiza texto `.edu` y devuelve el mismo JSON de versión 1 que
-exporta la terminal. El WebSocket `/ejecutar` ejecuta ese JSON e intercambia
-preguntas y respuestas con el editor. `src/web/` contiene la API y la supervisión
-de subprocesos. `src/lenguaje/` contiene el compilador y el intérprete que usan
-la API y la terminal. Consulta [el contrato y el despliegue](docs/api.md).
-
-### Archivos generados por ANTLR
-
-`make generar` utiliza `grammar/EducativoLexer.g4` y
-`grammar/EducativoParser.g4` para crear:
-
-```text
-src/generated/
-├── EducativoLexer.py             # Reconocimiento de tokens
-├── EducativoLexer.tokens         # Vocabulario de tokens
-├── EducativoLexer.interp         # Datos auxiliares de ANTLR
-├── EducativoParser.py            # Análisis sintáctico
-├── EducativoParserVisitor.py     # Base para recorrer el árbol
-├── EducativoParser.tokens
-└── EducativoParser.interp
-```
-
-Ejecutar `make generar` antes de ejecutar directamente
-`src/main.py`. Los archivos generados se actualizan desde los `.g4`; los cambios
-del analizador semántico se escriben en `src/lenguaje/semantico.py` y
-`src/lenguaje/tabla_simbolos.py`.
-
-### Flujo del driver
-
-`src/main.py` lee el archivo UTF-8 y pasa el texto a `src/lenguaje/compilador.py`.
-El compilador ejecuta el lexer, llama a `parser.programa()` para construir el árbol
-sintáctico y, si ambas etapas terminan sin errores, recorre el árbol con
-`AnalizadorSemantico`. Por defecto, la terminal completa las tres etapas y muestra los
-tokens, `Análisis sintáctico correcto.` y `Análisis semántico correcto.`.
-Con `--etapa lexer` o `--etapa gramatica` se detiene al terminar esa etapa;
-en Make se selecciona con `ETAPA=lexer` o `ETAPA=gramatica`.
-
-Ante un error léxico, sintáctico o semántico muestra la posición en stderr,
-detiene las etapas posteriores y termina con código 1; si el archivo no se
-puede leer, con código 2. Por ejemplo:
-
-```bash
-make probar ARCHIVO=tests/lexer/invalidos/caracter.edu
-```
-
-Esa prueba falla intencionalmente porque `@` no está definido.
-
-Para probar errores sintácticos con tokens válidos:
-
-```bash
-make probar ARCHIVO=tests/gramatica/invalidos/asignacion_sin_valor.edu
-make probar ARCHIVO=tests/gramatica/invalidos/condicional_sin_fin.edu
-```
-
-Esas entradas fallan intencionalmente: falta `valor de` en la primera y `fin`
-en la segunda. Los mensajes específicos de ANTLR pueden aparecer en inglés.
-
-`grammar/EducativoParser.g4` reutiliza el vocabulario de `EducativoLexer.g4`.
-ANTLR genera `EducativoParser.py` y `EducativoParserVisitor.py`. El analizador
-en `src/lenguaje/semantico.py` usa el visitor para recorrer el árbol.
-
-## Análisis semántico
-
-El analizador semántico detecta los siguientes errores:
-
-- Uso de una variable no declarada, tanto al leer como al asignar o preguntar.
-- Declaración repetida de una variable en el mismo ámbito, incluidos parámetros.
-- Lectura de una variable sin un valor inicial garantizado.
-- Tipos incompatibles en asignaciones y operaciones aritméticas o lógicas.
-- Condiciones de `si` y `mientras` que no sean lógicas.
-- Cantidades de repeticiones que no sean numéricas, enteras y no negativas.
-- Límites aleatorios que no sean numéricos, enteros y ordenados.
-- Comparaciones entre tipos incompatibles o comparaciones de orden no numéricas.
-- Funciones no declaradas o duplicadas, argumentos incorrectos y retornos inválidos o ausentes.
-
-Las restricciones de valores se comprueban cuando pueden determinarse mediante
-literales, aritmética y variables con valores conocidos. `2.0` cuenta como entero;
-se permiten cero repeticiones y límites negativos o iguales en aleatorios.
-El intérprete comprueba los valores numéricos desconocidos durante la ejecución.
-
-El visitor de `src/lenguaje/semantico.py` usa la tabla de `src/lenguaje/tabla_simbolos.py`,
-con un ámbito global y ámbitos locales
-para funciones y bloques. Los parámetros comparten ámbito con el cuerpo de la
-función. Se permite ocultar una variable exterior; los nombres distinguen
-mayúsculas. Las declaraciones se procesan en orden de fuente, también dentro
-de funciones: solo ven declaraciones exteriores anteriores a su definición.
-La primera asignación válida determina el tipo (`numero`, `texto` o `logico`);
-las siguientes deben respetarlo. Enteros y decimales comparten `numero`. Los
-parámetros se consideran inicializados y tienen el tipo declarado. Una entrada
-con `preguntar` inicializa la variable: conserva su tipo si ya se conoce y, si
-no, establece `texto`. El intérprete convierte la entrada al tipo establecido.
-
-Los operadores aritméticos requieren números, y `no`, `y`, `o` requieren
-lógicos. `+` no concatena textos. Tras un `si`, una variable se considera
-inicializada solo si lo está en todos los caminos. Los ciclos podrían no
-ejecutarse; sus asignaciones no garantizan inicialización posterior. Definir
-una función tampoco ejecuta su cuerpo. Las funciones deben declararse antes
-de utilizarlas; se permite la recursión. Se validan su firma, argumentos y tipo
-de retorno, y se exige un retorno en todos los caminos. La comprobación de
-retorno es conservadora: un ciclo no garantiza que su cuerpo se ejecute.
-
-```bash
-make probar ARCHIVO=tests/semantica/invalidos/variable_no_declarada.edu
-make probar ARCHIVO=tests/semantica/invalidos/variable_duplicada.edu
-make probar ARCHIVO=tests/semantica/invalidos/variable_sin_inicializar.edu
-make probar ARCHIVO=tests/semantica/invalidos/tipo_incompatible.edu
-```
-
-Estas entradas fallan intencionalmente con código 1 y diagnósticos en español
-que indican la posición y describen el problema.
-Las entradas `tests/semantica/invalidos/comparaciones.edu` y
-`tests/semantica/invalidos/funciones_y_retornos.edu` permiten revisar las
-comprobaciones; `tests/semantica/validos/funciones_y_comparaciones.edu` muestra un caso válido.
-
-Las entradas están en `tests/lexer/`, `tests/gramatica/` y `tests/semantica/`,
-separadas en `validos` e `invalidos`. Elige un archivo con `make probar ARCHIVO=...`
-y revisa su salida. Usa `ETAPA=lexer` o `ETAPA=gramatica` para detener el análisis
-en esa etapa. Consulta [la guía de entradas](tests/README.md).
-
-## Alcance actual
-
-El lexer reconoce variables, entrada/salida, operaciones, lógica, comparaciones,
-condicionales, ciclos, funciones, tipos, elección aleatoria y las palabras
-reservadas `juego` y `calculadora`. El parser acepta estas dos últimas como
-instrucciones sin argumentos. La calculadora y el juego de `examples/` están
-escritos con variables, entrada/salida y condicionales. El parser comprueba
-la estructura, la separación por líneas, los bloques y la precedencia de las
-expresiones.
-El analizador semántico comprueba declaraciones, inicialización y tipos en
-asignaciones, operaciones, comparaciones, condiciones, repeticiones, rangos y funciones.
-El analizador comprueba las lecturas de variables exteriores con el estado que tienen
-al llamar a la función. Después de la llamada, solo da por inicializadas las variables
-que lo están en todos los caminos de retorno. El análisis conserva ambos caminos de
-un condicional y no presupone nuevas inicializaciones en una llamada recursiva activa.
-
-`src/lenguaje/generador.py` recorre el árbol mediante el visitor de ANTLR y usa
-`Builder`, definido en `src/lenguaje/builder.py`, para construir el código
-intermedio. El builder guarda una lista de objetos `Instruccion`, definidos en
-`src/lenguaje/instruccion.py`, con operación, argumentos, destino y posición.
-También conserva metadatos de tipo y nombre cuando corresponden.
-
-El generador admite variables, entrada/salida, números, textos, valores lógicos,
-aritmética, lógica, comparaciones, condicionales, ciclos, aleatorios, funciones,
-parámetros, llamadas, recursión y retornos. Traduce `juego` y `calculadora` como
-marcadores sin comportamiento de juego o calculadora incorporado. Los ámbitos
-usan identificadores internos distintos para permitir nombres repetidos en
-bloques diferentes. Las funciones conservan enlaces léxicos y sus cuerpos se
-omiten en el flujo principal mediante saltos.
-
-La etapa `intermedio` realiza primero el análisis completo y construye las
-instrucciones en memoria. Termina con código 0 y sin salida en consola cuando
-la generación es correcta, incluso con `--arbol`. Con `--salida` exporta el
-JSON para `src/interprete.py`.
-
-Consulta [la representación intermedia](docs/intermedio.md) para conocer las
-instrucciones, sus campos y el contrato de ejecución.
+| Documento | Contenido |
+| :--- | :--- |
+| [docs/tokens.md](docs/tokens.md) | Especificación léxica (hito 1). |
+| [docs/gramatica.md](docs/gramatica.md) | Gramática libre de contexto y evolución (hitos 1 y 2). |
+| [docs/derivaciones.md](docs/derivaciones.md) | Derivaciones por la izquierda por construcción (hito 1). |
+| [docs/semantica.md](docs/semantica.md) | Errores semánticos y tabla de símbolos (hitos 1 y 2). |
+| [docs/arquitectura.md](docs/arquitectura.md) | Componentes, flujo de datos y decisión sin LLVM (hito 2). |
+| [docs/intermedio.md](docs/intermedio.md) | Código intermedio de tres direcciones JSON v1 (hito 3). |
+| [docs/plan_validacion.md](docs/plan_validacion.md) | Plan de validación por etapa (hito 2). |
+| [docs/resultados_validacion.md](docs/resultados_validacion.md) | Resultados de validación (hito 3). |
+| [docs/api.md](docs/api.md) | Contrato de la API web FastAPI + WebSocket. |

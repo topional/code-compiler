@@ -1,0 +1,758 @@
+/* ==========================================================================
+   Chispa .edu · Code Compiler — Sistema de 10 Temas WCAG Verificados
+   ========================================================================== */
+
+:root {
+  --font-display: 'Fredoka', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --text-scale: 1;
+}
+
+/* 1. GoJS Nocturno (Default — Obsidiana + Amarillo Eléctrico + Halo Pixel Azul) */
+:root,
+[data-theme='gojs-dark'] {
+  color-scheme: dark;
+  --bg-canvas: #0c0f17;
+  --bg-surface: #141926;
+  --bg-surface-alt: #1b2234;
+  --bg-surface-hover: #242d45;
+  --bg-editor: #10141f;
+  --bg-editor-gutter: #141926;
+  --bg-dot: rgba(148, 163, 184, 0.14);
+  --hero-pixel-glow: rgba(56, 189, 248, 0.32);
+  --hero-pixel-glow-2: rgba(250, 204, 21, 0.24);
+
+  --ink-primary: #f5f7ff;
+  --ink-secondary: #c5d0e8;
+  --ink-muted: #98a8c7;
+  --ink-inverse: #0c0f17;
+
+  --accent: #facc15;
+  --accent-bright: #fde047;
+  --accent-hover: #eab308;
+  --accent-ink: #0c0f17;
+  --accent-soft: rgba(250, 204, 21, 0.15);
+  --accent-soft-ink: #fde047;
+
+  --border-subtle: #28324c;
+  --border-strong: #4a5c88;
+  --shadow-card: 0 3px 0 rgba(0, 0, 0, 0.48), 0 14px 34px rgba(0, 0, 0, 0.36);
+  --shadow-pop: 0 8px 0 rgba(0, 0, 0, 0.56), 0 26px 60px rgba(0, 0, 0, 0.52);
+  --shadow-btn: 0 3px 0 rgba(0, 0, 0, 0.55);
+
+  --cat-variable: #fb923c;
+  --cat-variable-bg: rgba(251, 146, 60, 0.15);
+  --cat-io: #c084fc;
+  --cat-io-bg: rgba(192, 132, 252, 0.15);
+  --cat-control: #facc15;
+  --cat-control-bg: rgba(250, 204, 21, 0.15);
+  --cat-operador: #34d399;
+  --cat-operador-bg: rgba(52, 211, 153, 0.15);
+  --cat-funcion: #f472b6;
+  --cat-funcion-bg: rgba(244, 114, 182, 0.15);
+
+  --ok: #4ade80;
+  --ok-ink: #062112;
+  --ok-bg: rgba(74, 222, 128, 0.15);
+  --warn: #facc15;
+  --warn-bg: rgba(250, 204, 21, 0.15);
+  --err: #f87171;
+  --err-bg: rgba(248, 113, 113, 0.16);
+  --info: #60a5fa;
+  --info-bg: rgba(96, 165, 250, 0.16);
+
+  --line-active-bg: rgba(250, 204, 21, 0.22);
+  --line-active-border: #facc15;
+  --line-hover-bg: rgba(56, 189, 248, 0.22);
+  --line-error-bg: rgba(248, 113, 113, 0.18);
+  --comment-ink: #8fa1c4;
+  --string-ink: #4ade80;
+  --number-ink: #60a5fa;
+
+  --focus-ring: #fde047;
+  --scroll-track: #121724;
+  --scroll-thumb: #364366;
+  --scroll-thumb-hover: #526494;
+
+  --logo-frame: #facc15;
+  --logo-body: #141926;
+  --logo-spark: #fde047;
+  --logo-ink: #f5f7ff;
+  --logo-badge-bg: #facc15;
+  --logo-badge-ink: #0c0f17;
+}
+
+/* 2. Dracula */
+[data-theme='dracula'] {
+  color-scheme: dark;
+  --bg-canvas: #21222c;
+  --bg-surface: #282a36;
+  --bg-surface-alt: #313444;
+  --bg-surface-hover: #3c4054;
+  --bg-editor: #1e2029;
+  --bg-editor-gutter: #282a36;
+  --bg-dot: rgba(189, 147, 249, 0.16);
+  --hero-pixel-glow: rgba(189, 147, 249, 0.34);
+  --hero-pixel-glow-2: rgba(255, 121, 198, 0.24);
+
+  --ink-primary: #f8f8f2;
+  --ink-secondary: #d5d7e8;
+  --ink-muted: #a8b2d1;
+  --ink-inverse: #21222c;
+
+  --accent: #bd93f9;
+  --accent-bright: #d4b6ff;
+  --accent-hover: #a774f5;
+  --accent-ink: #191a21;
+  --accent-soft: rgba(189, 147, 249, 0.18);
+  --accent-soft-ink: #e2ccff;
+
+  --border-subtle: #44475a;
+  --border-strong: #6c7293;
+  --shadow-card: 0 3px 0 rgba(12, 12, 18, 0.5), 0 14px 32px rgba(0, 0, 0, 0.36);
+  --shadow-pop: 0 8px 0 rgba(12, 12, 18, 0.56), 0 24px 56px rgba(0, 0, 0, 0.5);
+  --shadow-btn: 0 3px 0 rgba(12, 12, 18, 0.55);
+
+  --cat-variable: #ffb86c;
+  --cat-variable-bg: rgba(255, 184, 108, 0.16);
+  --cat-io: #bd93f9;
+  --cat-io-bg: rgba(189, 147, 249, 0.16);
+  --cat-control: #f1fa8c;
+  --cat-control-bg: rgba(241, 250, 140, 0.15);
+  --cat-operador: #50fa7b;
+  --cat-operador-bg: rgba(80, 250, 123, 0.15);
+  --cat-funcion: #ff79c6;
+  --cat-funcion-bg: rgba(255, 121, 198, 0.16);
+
+  --ok: #50fa7b;
+  --ok-ink: #142219;
+  --ok-bg: rgba(80, 250, 123, 0.15);
+  --warn: #f1fa8c;
+  --warn-bg: rgba(241, 250, 140, 0.15);
+  --err: #ff6e6e;
+  --err-bg: rgba(255, 85, 85, 0.18);
+  --info: #8be9fd;
+  --info-bg: rgba(139, 233, 253, 0.16);
+
+  --line-active-bg: rgba(189, 147, 249, 0.24);
+  --line-active-border: #ff79c6;
+  --line-hover-bg: rgba(139, 233, 253, 0.2);
+  --line-error-bg: rgba(255, 85, 85, 0.2);
+  --comment-ink: #9ca7c9;
+  --string-ink: #f1fa8c;
+  --number-ink: #8be9fd;
+
+  --focus-ring: #8be9fd;
+  --scroll-track: #21222c;
+  --scroll-thumb: #50546d;
+  --scroll-thumb-hover: #6c7293;
+
+  --logo-frame: #bd93f9;
+  --logo-body: #282a36;
+  --logo-spark: #ff79c6;
+  --logo-ink: #f8f8f2;
+  --logo-badge-bg: #ff79c6;
+  --logo-badge-ink: #191a21;
+}
+
+/* 3. Tokyo Night */
+[data-theme='tokyo-night'] {
+  color-scheme: dark;
+  --bg-canvas: #16161e;
+  --bg-surface: #1a1b26;
+  --bg-surface-alt: #24283b;
+  --bg-surface-hover: #2f3549;
+  --bg-editor: #13141c;
+  --bg-editor-gutter: #1a1b26;
+  --bg-dot: rgba(122, 162, 247, 0.16);
+  --hero-pixel-glow: rgba(122, 162, 247, 0.34);
+  --hero-pixel-glow-2: rgba(115, 218, 202, 0.24);
+
+  --ink-primary: #eef2ff;
+  --ink-secondary: #c0caf5;
+  --ink-muted: #9aa5ce;
+  --ink-inverse: #16161e;
+
+  --accent: #7aa2f7;
+  --accent-bright: #89b4fa;
+  --accent-hover: #608df0;
+  --accent-ink: #11131d;
+  --accent-soft: rgba(122, 162, 247, 0.17);
+  --accent-soft-ink: #b4cdfd;
+
+  --border-subtle: #333952;
+  --border-strong: #565f89;
+  --shadow-card: 0 3px 0 rgba(0, 0, 0, 0.48), 0 14px 32px rgba(0, 0, 0, 0.38);
+  --shadow-pop: 0 8px 0 rgba(0, 0, 0, 0.56), 0 24px 56px rgba(0, 0, 0, 0.5);
+  --shadow-btn: 0 3px 0 rgba(0, 0, 0, 0.55);
+
+  --cat-variable: #ff9e64;
+  --cat-variable-bg: rgba(255, 158, 100, 0.16);
+  --cat-io: #bb9af7;
+  --cat-io-bg: rgba(187, 154, 247, 0.16);
+  --cat-control: #e0af68;
+  --cat-control-bg: rgba(224, 175, 104, 0.16);
+  --cat-operador: #73daca;
+  --cat-operador-bg: rgba(115, 218, 202, 0.15);
+  --cat-funcion: #f7768e;
+  --cat-funcion-bg: rgba(247, 118, 142, 0.16);
+
+  --ok: #9ece6a;
+  --ok-ink: #161e0f;
+  --ok-bg: rgba(158, 206, 106, 0.15);
+  --warn: #e0af68;
+  --warn-bg: rgba(224, 175, 104, 0.15);
+  --err: #f7768e;
+  --err-bg: rgba(247, 118, 142, 0.18);
+  --info: #7dcfff;
+  --info-bg: rgba(125, 207, 255, 0.16);
+
+  --line-active-bg: rgba(122, 162, 247, 0.24);
+  --line-active-border: #7dcfff;
+  --line-hover-bg: rgba(115, 218, 202, 0.2);
+  --line-error-bg: rgba(247, 118, 142, 0.2);
+  --comment-ink: #8f9bc7;
+  --string-ink: #9ece6a;
+  --number-ink: #7dcfff;
+
+  --focus-ring: #7dcfff;
+  --scroll-track: #16161e;
+  --scroll-thumb: #3b4261;
+  --scroll-thumb-hover: #565f89;
+
+  --logo-frame: #7aa2f7;
+  --logo-body: #1a1b26;
+  --logo-spark: #73daca;
+  --logo-ink: #eef2ff;
+  --logo-badge-bg: #73daca;
+  --logo-badge-ink: #11131d;
+}
+
+/* 4. Catppuccin Mocha */
+[data-theme='catppuccin-mocha'] {
+  color-scheme: dark;
+  --bg-canvas: #181825;
+  --bg-surface: #1e1e2e;
+  --bg-surface-alt: #29293e;
+  --bg-surface-hover: #34344e;
+  --bg-editor: #141420;
+  --bg-editor-gutter: #1e1e2e;
+  --bg-dot: rgba(203, 166, 247, 0.14);
+  --hero-pixel-glow: rgba(203, 166, 247, 0.3);
+  --hero-pixel-glow-2: rgba(250, 179, 135, 0.24);
+
+  --ink-primary: #cdd6f4;
+  --ink-secondary: #bac2de;
+  --ink-muted: #a6adc8;
+  --ink-inverse: #11111b;
+
+  --accent: #cba6f7;
+  --accent-bright: #d8bcfa;
+  --accent-hover: #b48ef2;
+  --accent-ink: #11111b;
+  --accent-soft: rgba(203, 166, 247, 0.16);
+  --accent-soft-ink: #e2ccff;
+
+  --border-subtle: #3a3c55;
+  --border-strong: #6c7086;
+  --shadow-card: 0 3px 0 rgba(0, 0, 0, 0.45), 0 14px 32px rgba(0, 0, 0, 0.34);
+  --shadow-pop: 0 8px 0 rgba(0, 0, 0, 0.52), 0 24px 54px rgba(0, 0, 0, 0.46);
+  --shadow-btn: 0 3px 0 rgba(0, 0, 0, 0.5);
+
+  --cat-variable: #fab387;
+  --cat-variable-bg: rgba(250, 179, 135, 0.15);
+  --cat-io: #cba6f7;
+  --cat-io-bg: rgba(203, 166, 247, 0.15);
+  --cat-control: #f9e2af;
+  --cat-control-bg: rgba(249, 226, 175, 0.15);
+  --cat-operador: #94e2d5;
+  --cat-operador-bg: rgba(148, 226, 213, 0.15);
+  --cat-funcion: #f38ba8;
+  --cat-funcion-bg: rgba(243, 139, 168, 0.15);
+
+  --ok: #a6e3a1;
+  --ok-ink: #11111b;
+  --ok-bg: rgba(166, 227, 161, 0.15);
+  --warn: #f9e2af;
+  --warn-bg: rgba(249, 226, 175, 0.15);
+  --err: #f38ba8;
+  --err-bg: rgba(243, 139, 168, 0.16);
+  --info: #89dceb;
+  --info-bg: rgba(137, 220, 235, 0.15);
+
+  --line-active-bg: rgba(250, 179, 135, 0.22);
+  --line-active-border: #fab387;
+  --line-hover-bg: rgba(137, 220, 235, 0.2);
+  --line-error-bg: rgba(243, 139, 168, 0.18);
+  --comment-ink: #9aa2be;
+  --string-ink: #a6e3a1;
+  --number-ink: #89b4fa;
+
+  --focus-ring: #fab387;
+  --scroll-track: #181825;
+  --scroll-thumb: #45475a;
+  --scroll-thumb-hover: #6c7086;
+
+  --logo-frame: #fab387;
+  --logo-body: #1e1e2e;
+  --logo-spark: #cba6f7;
+  --logo-ink: #cdd6f4;
+  --logo-badge-bg: #cba6f7;
+  --logo-badge-ink: #11111b;
+}
+
+/* 5. Nord Ártico */
+[data-theme='nord'] {
+  color-scheme: dark;
+  --bg-canvas: #242933;
+  --bg-surface: #2e3440;
+  --bg-surface-alt: #3b4252;
+  --bg-surface-hover: #434c5e;
+  --bg-editor: #222730;
+  --bg-editor-gutter: #2e3440;
+  --bg-dot: rgba(136, 192, 208, 0.16);
+  --hero-pixel-glow: rgba(136, 192, 208, 0.3);
+  --hero-pixel-glow-2: rgba(163, 190, 140, 0.24);
+
+  --ink-primary: #eceff4;
+  --ink-secondary: #d8dee9;
+  --ink-muted: #b4c0d3;
+  --ink-inverse: #242933;
+
+  --accent: #88c0d0;
+  --accent-bright: #8fbcbb;
+  --accent-hover: #70b0c2;
+  --accent-ink: #1b2028;
+  --accent-soft: rgba(136, 192, 208, 0.18);
+  --accent-soft-ink: #bce2ec;
+
+  --border-subtle: #4c566a;
+  --border-strong: #7b88a1;
+  --shadow-card: 0 3px 0 rgba(0, 0, 0, 0.38), 0 12px 28px rgba(0, 0, 0, 0.28);
+  --shadow-pop: 0 8px 0 rgba(0, 0, 0, 0.45), 0 22px 48px rgba(0, 0, 0, 0.4);
+  --shadow-btn: 0 3px 0 rgba(0, 0, 0, 0.42);
+
+  --cat-variable: #d08770;
+  --cat-variable-bg: rgba(208, 135, 112, 0.18);
+  --cat-io: #d4a6cb;
+  --cat-io-bg: rgba(180, 142, 173, 0.2);
+  --cat-control: #ebcb8b;
+  --cat-control-bg: rgba(235, 203, 139, 0.16);
+  --cat-operador: #bfe0a6;
+  --cat-operador-bg: rgba(163, 190, 140, 0.14);
+  --cat-funcion: #88c0d0;
+  --cat-funcion-bg: rgba(136, 192, 208, 0.18);
+
+  --ok: #b8d4a3;
+  --ok-ink: #161d12;
+  --ok-bg: rgba(163, 190, 140, 0.14);
+  --warn: #ebcb8b;
+  --warn-bg: rgba(235, 203, 139, 0.16);
+  --err: #e68a93;
+  --err-bg: rgba(191, 97, 106, 0.24);
+  --info: #88c0d0;
+  --info-bg: rgba(136, 192, 208, 0.18);
+
+  --line-active-bg: rgba(235, 203, 139, 0.2);
+  --line-active-border: #ebcb8b;
+  --line-hover-bg: rgba(136, 192, 208, 0.22);
+  --line-error-bg: rgba(191, 97, 106, 0.25);
+  --comment-ink: #a2b0c7;
+  --string-ink: #a3be8c;
+  --number-ink: #88c0d0;
+
+  --focus-ring: #ebcb8b;
+  --scroll-track: #242933;
+  --scroll-thumb: #4c566a;
+  --scroll-thumb-hover: #6c7a96;
+
+  --logo-frame: #88c0d0;
+  --logo-body: #2e3440;
+  --logo-spark: #ebcb8b;
+  --logo-ink: #eceff4;
+  --logo-badge-bg: #ebcb8b;
+  --logo-badge-ink: #1b2028;
+}
+
+/* 6. Arcade Pixel (Retro RPG estilo Codédex) */
+[data-theme='arcade-pixel'] {
+  color-scheme: dark;
+  --bg-canvas: #110b22;
+  --bg-surface: #1b1236;
+  --bg-surface-alt: #25194a;
+  --bg-surface-hover: #322263;
+  --bg-editor: #140d29;
+  --bg-editor-gutter: #1b1236;
+  --bg-dot: rgba(34, 211, 238, 0.18);
+  --hero-pixel-glow: rgba(34, 211, 238, 0.36);
+  --hero-pixel-glow-2: rgba(244, 114, 182, 0.3);
+
+  --ink-primary: #fdf8ff;
+  --ink-secondary: #dfd6f8;
+  --ink-muted: #b8a8e3;
+  --ink-inverse: #110b22;
+
+  --accent: #22d3ee;
+  --accent-bright: #67e8f9;
+  --accent-hover: #06b6d4;
+  --accent-ink: #0c0819;
+  --accent-soft: rgba(34, 211, 238, 0.16);
+  --accent-soft-ink: #a5f3fc;
+
+  --border-subtle: #3d2c75;
+  --border-strong: #6d53c2;
+  --shadow-card: 0 4px 0 rgba(0, 0, 0, 0.55), 0 16px 36px rgba(0, 0, 0, 0.42);
+  --shadow-pop: 0 8px 0 rgba(0, 0, 0, 0.62), 0 26px 58px rgba(0, 0, 0, 0.55);
+  --shadow-btn: 0 4px 0 rgba(0, 0, 0, 0.6);
+
+  --cat-variable: #fb923c;
+  --cat-variable-bg: rgba(251, 146, 60, 0.18);
+  --cat-io: #e879f9;
+  --cat-io-bg: rgba(232, 121, 249, 0.18);
+  --cat-control: #fde047;
+  --cat-control-bg: rgba(253, 224, 71, 0.16);
+  --cat-operador: #4ade80;
+  --cat-operador-bg: rgba(74, 222, 128, 0.16);
+  --cat-funcion: #f472b6;
+  --cat-funcion-bg: rgba(244, 114, 182, 0.18);
+
+  --ok: #4ade80;
+  --ok-ink: #072010;
+  --ok-bg: rgba(74, 222, 128, 0.16);
+  --warn: #fde047;
+  --warn-bg: rgba(253, 224, 71, 0.16);
+  --err: #fb7185;
+  --err-bg: rgba(251, 113, 133, 0.2);
+  --info: #22d3ee;
+  --info-bg: rgba(34, 211, 238, 0.18);
+
+  --line-active-bg: rgba(253, 224, 71, 0.24);
+  --line-active-border: #fde047;
+  --line-hover-bg: rgba(34, 211, 238, 0.24);
+  --line-error-bg: rgba(251, 113, 133, 0.22);
+  --comment-ink: #a796d9;
+  --string-ink: #4ade80;
+  --number-ink: #67e8f9;
+
+  --focus-ring: #fde047;
+  --scroll-track: #110b22;
+  --scroll-thumb: #4e3994;
+  --scroll-thumb-hover: #7256cf;
+
+  --logo-frame: #fde047;
+  --logo-body: #1b1236;
+  --logo-spark: #22d3ee;
+  --logo-ink: #fdf8ff;
+  --logo-badge-bg: #f472b6;
+  --logo-badge-ink: #110b22;
+}
+
+/* 7. Cuaderno Taller (Claro cálido estilo Scratch) */
+[data-theme='cuaderno'],
+[data-theme='light'] {
+  color-scheme: light;
+  --bg-canvas: #fff9f0;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f6efe4;
+  --bg-surface-hover: #efe5d5;
+  --bg-editor: #fffdf9;
+  --bg-editor-gutter: #f6efe4;
+  --bg-dot: rgba(20, 32, 56, 0.08);
+  --hero-pixel-glow: rgba(255, 107, 44, 0.22);
+  --hero-pixel-glow-2: rgba(109, 40, 217, 0.16);
+
+  --ink-primary: #142038;
+  --ink-secondary: #3b4b66;
+  --ink-muted: #50607c;
+  --ink-inverse: #ffffff;
+
+  --accent: #c9410a;
+  --accent-bright: #ff6b2c;
+  --accent-hover: #a83305;
+  --accent-ink: #ffffff;
+  --accent-soft: #ffedd5;
+  --accent-soft-ink: #7c2d12;
+
+  --border-subtle: #dfd3c0;
+  --border-strong: #1f2e4d;
+  --shadow-card: 0 3px 0 rgba(20, 32, 56, 0.12), 0 12px 28px rgba(20, 32, 56, 0.06);
+  --shadow-pop: 0 6px 0 rgba(20, 32, 56, 0.18), 0 22px 44px rgba(20, 32, 56, 0.12);
+  --shadow-btn: 0 3px 0 rgba(20, 32, 56, 0.22);
+
+  --cat-variable: #c2410c;
+  --cat-variable-bg: #ffedd5;
+  --cat-io: #6d28d9;
+  --cat-io-bg: #ede9fe;
+  --cat-control: #92400e;
+  --cat-control-bg: #fef3c7;
+  --cat-operador: #047857;
+  --cat-operador-bg: #d1fae5;
+  --cat-funcion: #be185d;
+  --cat-funcion-bg: #fce7f3;
+
+  --ok: #047857;
+  --ok-ink: #ffffff;
+  --ok-bg: #d1fae5;
+  --warn: #92400e;
+  --warn-bg: #fef3c7;
+  --err: #b91c1c;
+  --err-bg: #fee2e2;
+  --info: #1d4ed8;
+  --info-bg: #dbeafe;
+
+  --line-active-bg: rgba(255, 196, 61, 0.34);
+  --line-active-border: #c9410a;
+  --line-hover-bg: rgba(29, 78, 216, 0.12);
+  --line-error-bg: rgba(185, 28, 28, 0.12);
+  --comment-ink: #5a6782;
+  --string-ink: #047857;
+  --number-ink: #1d4ed8;
+
+  --focus-ring: #1d4ed8;
+  --scroll-track: #f3eadc;
+  --scroll-thumb: #bdaea0;
+  --scroll-thumb-hover: #8f7e6e;
+
+  --logo-frame: #ff6b2c;
+  --logo-body: #fff9f0;
+  --logo-spark: #c9410a;
+  --logo-ink: #142038;
+  --logo-badge-bg: #142038;
+  --logo-badge-ink: #fff9f0;
+}
+
+/* 8. Catppuccin Latte */
+[data-theme='catppuccin-latte'] {
+  color-scheme: light;
+  --bg-canvas: #eff1f5;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #e6e9ef;
+  --bg-surface-hover: #dce0e8;
+  --bg-editor: #fafbfd;
+  --bg-editor-gutter: #e6e9ef;
+  --bg-dot: rgba(76, 79, 105, 0.1);
+  --hero-pixel-glow: rgba(90, 79, 207, 0.22);
+  --hero-pixel-glow-2: rgba(32, 159, 181, 0.2);
+
+  --ink-primary: #2c2f44;
+  --ink-secondary: #4c4f69;
+  --ink-muted: #5c5f77;
+  --ink-inverse: #ffffff;
+
+  --accent: #5a4fcf;
+  --accent-bright: #7287fd;
+  --accent-hover: #473cb5;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6e3ff;
+  --accent-soft-ink: #3c329c;
+
+  --border-subtle: #ccd0da;
+  --border-strong: #4c4f69;
+  --shadow-card: 0 3px 0 rgba(44, 47, 68, 0.12), 0 12px 26px rgba(44, 47, 68, 0.06);
+  --shadow-pop: 0 6px 0 rgba(44, 47, 68, 0.18), 0 22px 42px rgba(44, 47, 68, 0.12);
+  --shadow-btn: 0 3px 0 rgba(44, 47, 68, 0.22);
+
+  --cat-variable: #c84b00;
+  --cat-variable-bg: #ffedd5;
+  --cat-io: #6d28d9;
+  --cat-io-bg: #ede9fe;
+  --cat-control: #9a5b00;
+  --cat-control-bg: #fef3c7;
+  --cat-operador: #047857;
+  --cat-operador-bg: #d1fae5;
+  --cat-funcion: #c0185a;
+  --cat-funcion-bg: #fce7f3;
+
+  --ok: #047857;
+  --ok-ink: #ffffff;
+  --ok-bg: #d1fae5;
+  --warn: #9a5b00;
+  --warn-bg: #fef3c7;
+  --err: #be123c;
+  --err-bg: #ffe4e6;
+  --info: #0369a1;
+  --info-bg: #e0f2fe;
+
+  --line-active-bg: rgba(90, 79, 207, 0.16);
+  --line-active-border: #5a4fcf;
+  --line-hover-bg: rgba(3, 105, 161, 0.12);
+  --line-error-bg: rgba(190, 18, 60, 0.12);
+  --comment-ink: #646880;
+  --string-ink: #047857;
+  --number-ink: #1e66f5;
+
+  --focus-ring: #5a4fcf;
+  --scroll-track: #e6e9ef;
+  --scroll-thumb: #acb0be;
+  --scroll-thumb-hover: #8c8fa1;
+
+  --logo-frame: #5a4fcf;
+  --logo-body: #ffffff;
+  --logo-spark: #c84b00;
+  --logo-ink: #2c2f44;
+  --logo-badge-bg: #2c2f44;
+  --logo-badge-ink: #ffffff;
+}
+
+/* 9. Bosque Menta (Claro botánico) */
+[data-theme='bosque-menta'] {
+  color-scheme: light;
+  --bg-canvas: #f1f8f4;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #e3f0e8;
+  --bg-surface-hover: #d5e8dc;
+  --bg-editor: #fafdfb;
+  --bg-editor-gutter: #e3f0e8;
+  --bg-dot: rgba(20, 51, 38, 0.09);
+  --hero-pixel-glow: rgba(5, 150, 105, 0.24);
+  --hero-pixel-glow-2: rgba(217, 119, 6, 0.18);
+
+  --ink-primary: #122e22;
+  --ink-secondary: #2e5242;
+  --ink-muted: #456958;
+  --ink-inverse: #ffffff;
+
+  --accent: #047857;
+  --accent-bright: #10b981;
+  --accent-hover: #065f46;
+  --accent-ink: #ffffff;
+  --accent-soft: #d1fae5;
+  --accent-soft-ink: #064e3b;
+
+  --border-subtle: #c2dccb;
+  --border-strong: #174030;
+  --shadow-card: 0 3px 0 rgba(18, 46, 34, 0.12), 0 12px 26px rgba(18, 46, 34, 0.06);
+  --shadow-pop: 0 6px 0 rgba(18, 46, 34, 0.18), 0 22px 42px rgba(18, 46, 34, 0.12);
+  --shadow-btn: 0 3px 0 rgba(18, 46, 34, 0.22);
+
+  --cat-variable: #b45309;
+  --cat-variable-bg: #fef3c7;
+  --cat-io: #6d28d9;
+  --cat-io-bg: #ede9fe;
+  --cat-control: #92400e;
+  --cat-control-bg: #ffedd5;
+  --cat-operador: #047857;
+  --cat-operador-bg: #d1fae5;
+  --cat-funcion: #be185d;
+  --cat-funcion-bg: #fce7f3;
+
+  --ok: #047857;
+  --ok-ink: #ffffff;
+  --ok-bg: #d1fae5;
+  --warn: #92400e;
+  --warn-bg: #fef3c7;
+  --err: #b91c1c;
+  --err-bg: #fee2e2;
+  --info: #0369a1;
+  --info-bg: #e0f2fe;
+
+  --line-active-bg: rgba(16, 185, 129, 0.22);
+  --line-active-border: #047857;
+  --line-hover-bg: rgba(3, 105, 161, 0.12);
+  --line-error-bg: rgba(185, 28, 28, 0.12);
+  --comment-ink: #4f6f60;
+  --string-ink: #047857;
+  --number-ink: #0369a1;
+
+  --focus-ring: #047857;
+  --scroll-track: #e3f0e8;
+  --scroll-thumb: #95bfa6;
+  --scroll-thumb-hover: #6da182;
+
+  --logo-frame: #047857;
+  --logo-body: #f1f8f4;
+  --logo-spark: #b45309;
+  --logo-ink: #122e22;
+  --logo-badge-bg: #122e22;
+  --logo-badge-ink: #f1f8f4;
+}
+
+/* 10. Alto Contraste: WCAG AAA 21:1 */
+[data-theme='high-contrast'] {
+  color-scheme: dark;
+  --bg-canvas: #000000;
+  --bg-surface: #000000;
+  --bg-surface-alt: #0a0a0a;
+  --bg-surface-hover: #1a1a1a;
+  --bg-editor: #000000;
+  --bg-editor-gutter: #000000;
+  --bg-dot: rgba(255, 255, 255, 0.18);
+  --hero-pixel-glow: transparent;
+  --hero-pixel-glow-2: transparent;
+
+  --ink-primary: #ffffff;
+  --ink-secondary: #ffffff;
+  --ink-muted: #e5e5e5;
+  --ink-inverse: #000000;
+
+  --accent: #ffff00;
+  --accent-bright: #ffff00;
+  --accent-hover: #00ffff;
+  --accent-ink: #000000;
+  --accent-soft: #000000;
+  --accent-soft-ink: #ffff00;
+
+  --border-subtle: #ffffff;
+  --border-strong: #ffff00;
+  --shadow-card: none;
+  --shadow-pop: none;
+  --shadow-btn: none;
+
+  --cat-variable: #ffaa00;
+  --cat-variable-bg: #000000;
+  --cat-io: #ff80ff;
+  --cat-io-bg: #000000;
+  --cat-control: #ffff00;
+  --cat-control-bg: #000000;
+  --cat-operador: #7fff00;
+  --cat-operador-bg: #000000;
+  --cat-funcion: #00ffff;
+  --cat-funcion-bg: #000000;
+
+  --ok: #7fff00;
+  --ok-ink: #000000;
+  --ok-bg: #000000;
+  --warn: #ffff00;
+  --warn-bg: #000000;
+  --err: #ff6b6b;
+  --err-bg: #000000;
+  --info: #00ffff;
+  --info-bg: #000000;
+
+  --line-active-bg: #262600;
+  --line-active-border: #ffff00;
+  --line-hover-bg: #002b2b;
+  --line-error-bg: #3b0000;
+  --comment-ink: #d4d4d4;
+  --string-ink: #7fff00;
+  --number-ink: #00ffff;
+
+  --focus-ring: #ffff00;
+  --scroll-track: #000000;
+  --scroll-thumb: #ffffff;
+  --scroll-thumb-hover: #ffff00;
+
+  --logo-frame: #ffff00;
+  --logo-body: #000000;
+  --logo-spark: #ffff00;
+  --logo-ink: #ffffff;
+  --logo-badge-bg: #ffff00;
+  --logo-badge-ink: #000000;
+}
+
+/* Escalado de texto accesible */
+[data-font-scale='small'] {
+  --text-scale: 0.92;
+}
+[data-font-scale='normal'] {
+  --text-scale: 1;
+}
+[data-font-scale='large'] {
+  --text-scale: 1.14;
+}

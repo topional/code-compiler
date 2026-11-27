@@ -1,0 +1,23 @@
+# Programa básico: variables, operaciones, decisiones y repeticiones.
+crear variable nombre
+asignar nombre valor de "Ana"
+crear variable edad
+asignar edad valor de 12
+
+mostrar "Hola"
+mostrar nombre
+mostrar "El próximo año tendrás"
+mostrar edad + 1
+
+si edad es mayor o igual que 12 entonces
+    mostrar "Ya puedes programar con texto"
+sino
+    mostrar "Practica primero con bloques"
+fin
+
+crear variable contador
+asignar contador valor de 1
+repetir 3 veces
+    mostrar contador
+    asignar contador valor de contador + 1
+fin

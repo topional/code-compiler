@@ -1,0 +1,36 @@
+# Adivina el número: el proyecto clásico de Scratch escrito con texto.
+# Usa funciones, números aleatorios, entrada, ciclos y decisiones.
+definir pista(numero intento, numero secreto) devuelve texto
+    si intento es menor que secreto entonces
+        devolver "Es mayor"
+    sino
+        devolver "Es menor"
+    fin
+fin
+
+definir acerto(numero intento, numero secreto) devuelve logico
+    devolver intento es igual a secreto
+fin
+
+crear variable secreto
+asignar secreto valor de numero aleatorio entre 1 y 10
+crear variable intento
+asignar intento valor de 0
+crear variable intentos
+asignar intentos valor de 0
+crear variable terminado
+asignar terminado valor de falso
+
+mostrar "Adivina el número del 1 al 10"
+mientras no terminado hacer
+    preguntar "Tu número" guardar en intento
+    asignar intentos valor de intentos + 1
+    si acerto(intento, secreto) entonces
+        asignar terminado valor de verdadero
+    sino
+        mostrar pista(intento, secreto)
+    fin
+fin
+
+mostrar "¡Adivinaste! Intentos usados:"
+mostrar intentos

@@ -1,0 +1,20 @@
+# Programa con errores: el compilador los detecta todos y no genera código.
+crear variable puntos
+asignar puntos valor de 10
+asignar puntos valor de "diez"
+mostrar vidas
+crear variable puntos
+
+si puntos entonces
+    mostrar "Ganaste"
+fin
+
+definir doble(numero x) devuelve numero
+    devolver x * 2
+fin
+mostrar doble("cinco")
+mostrar triple(3)
+
+repetir 2.5 veces
+    mostrar "Hola"
+fin

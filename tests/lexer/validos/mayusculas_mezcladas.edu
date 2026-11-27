@@ -1,0 +1,5 @@
+CREAR VARIABLE Edad
+Asignar Edad VALOR DE 10
+MoStRaR edad
+SI Verdadero ENTONCES
+FIN

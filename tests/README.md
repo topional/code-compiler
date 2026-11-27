@@ -23,19 +23,20 @@ make probar ARCHIVO=tests/semantica/invalidos/repeticiones.edu
 Los tokens y los diagnósticos aparecen en la terminal. Una entrada inválida
 termina con código de error, de acuerdo con el resultado esperado.
 
-## Automatización de gramática y semántica
+## Automatización del lexer, la gramática y la semántica
 
 ```bash
-# Ambas etapas (el lexer no tiene pruebas automáticas).
+# Las tres etapas.
 make test
 
 # Una sola etapa.
+make test GRUPO=lexer
 make test GRUPO=gramatica
 make test GRUPO=semantica
 ```
 
 El script Bash `scripts/probar_entradas.sh` recorre las entradas `.edu` de esas
-dos etapas. En `validos/` exige código de salida 0, ausencia de errores y la
+tres etapas. En `validos/` exige código de salida 0, ausencia de errores y la
 confirmación del análisis. En `invalidos/` exige código 1 y diagnósticos de la
 etapa correspondiente. Por ejemplo, una entrada semántica que falla en sintaxis
 no pasa la prueba. Tampoco pasa si aparece una excepción de Python.
@@ -76,6 +77,20 @@ python -m unittest discover -s tests
 Estas pruebas cubren el JSON exportado, la ejecución en procesos separados,
 la recursión, los ámbitos, los ciclos, la entrada y los diagnósticos.
 Consulta [el contrato del código intermedio](../docs/intermedio.md).
+
+`test_programas.py` compila y ejecuta los programas completos de `examples/`
+(básico, principal, avanzado, calculadora, piedra, papel o tijera, y un
+programa con errores) y compara su salida con la esperada.
+
+## Matriz de validación
+
+`scripts/matriz_validacion.py` ejecuta todos los casos anteriores, asigna un ID
+a cada uno (`LEX`, `SIN`, `SEM`, `DER`, `GEN`, `PRG`, `API`) y actualiza las
+matrices de `docs/plan_validacion.md` y `docs/resultados_validacion.md`.
+
+```bash
+python scripts/matriz_validacion.py
+```
 
 ## API pública
 
