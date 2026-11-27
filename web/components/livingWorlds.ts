@@ -52,17 +52,39 @@ export interface WorldState {
   rainDrops: { x: number; y: number; len: number; speed: number; alpha: number }[];
   cityBuildings: { xNorm: number; wNorm: number; hNorm: number; seed: number }[];
   glassBeads: { x: number; y: number; r: number; vy: number; born: number; trail: { x: number; y: number }[] }[];
-  // Offscreen pixel buffer for 1-bit Bayer Dither Dunes
-  ditherCanvas: HTMLCanvasElement | null;
-  ditherCtx: CanvasRenderingContext2D | null;
+  // Bosque (snowflakes + pine tree silhouette data)
+  snowFlakes: { x: number; y: number; r: number; speed: number; sway: number; fase: number }[];
+  pines: { xNorm: number; h: number; w: number; sec: boolean }[];
+  // Dragón (18-segment sinuous sky-dragon)
+  dragon: {
+    x: number;
+    y: number;
+    angle: number;
+    spine: { x: number; y: number }[];
+    targetX: number;
+    targetY: number;
+    retargetAt: number;
+  };
+  // Luciérnagas (32 autonomous Boids fireflies)
+  fireflies: {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    fase: number;
+    sec: boolean;
+    r: number;
+  }[];
+  // Acuario (3 pulsing jellyfish with 6 trailing tentacles)
+  jellies: {
+    xNorm: number;
+    yNorm: number;
+    r: number;
+    vel: number;
+    fase: number;
+    sec: boolean;
+  }[];
 }
-
-const BAYER_4X4 = [
-  [0, 8, 2, 10],
-  [12, 4, 14, 6],
-  [3, 11, 1, 9],
-  [15, 7, 13, 5],
-];
 
 export function crearEstadoMundos(ancho: number, alto: number): WorldState {
   const initKoi = (x: number, y: number, angle: number, size: number, sec: boolean, phase: number) => ({
@@ -84,8 +106,8 @@ export function crearEstadoMundos(ancho: number, alto: number): WorldState {
     retargetAt: 0,
   });
 
-  const ditherCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
-  const ditherCtx = ditherCanvas ? ditherCanvas.getContext('2d') : null;
+  const dragonX = ancho * 0.18;
+  const dragonY = alto * 0.76;
 
   return {
     kois: [
@@ -122,8 +144,49 @@ export function crearEstadoMundos(ancho: number, alto: number): WorldState {
       seed: i * 19 + 7,
     })),
     glassBeads: [],
-    ditherCanvas,
-    ditherCtx,
+    snowFlakes: Array.from({ length: 68 }, (_, i) => ({
+      x: ((i * 71.3 + 5) % 100) / 100,
+      y: ((i * 39.7 + 11) % 100) / 100,
+      r: 1.2 + (i % 3) * 1.0,
+      speed: 0.018 + (i % 5) * 0.008,
+      sway: 10 + (i % 4) * 6,
+      fase: i * 0.67,
+    })),
+    pines: Array.from({ length: 22 }, (_, i) => ({
+      xNorm: (i + 0.35) / 22,
+      h: 48 + ((i * 23 + 9) % 7) * 12,
+      w: 22 + ((i * 13) % 4) * 6,
+      sec: i % 3 === 0,
+    })),
+    dragon: {
+      x: dragonX,
+      y: dragonY,
+      angle: -0.35,
+      spine: Array.from({ length: 18 }, (_, i) => ({
+        x: dragonX - i * 11,
+        y: dragonY + Math.sin(i * 0.45) * 14,
+      })),
+      targetX: ancho * 0.56,
+      targetY: alto * 0.18,
+      retargetAt: 0,
+    },
+    fireflies: Array.from({ length: 32 }, (_, i) => {
+      const ang = (i / 32) * Math.PI * 2;
+      return {
+        x: (((i * 43.7 + 13) % 100) / 100) * Math.max(320, ancho),
+        y: (((i * 29.3 + 19) % 100) / 100) * Math.max(320, alto),
+        vx: Math.cos(ang) * 34,
+        vy: Math.sin(ang) * 34,
+        fase: i * 0.77,
+        sec: i % 3 === 0,
+        r: 2.2 + (i % 3) * 0.9,
+      };
+    }),
+    jellies: [
+      { xNorm: 0.88, yNorm: 0.32, r: 26, vel: 0.014, fase: 0.4, sec: false },
+      { xNorm: 0.11, yNorm: 0.68, r: 22, vel: 0.011, fase: 2.5, sec: true },
+      { xNorm: 0.92, yNorm: 0.78, r: 17, vel: 0.017, fase: 4.2, sec: true },
+    ],
   };
 }
 
@@ -150,6 +213,10 @@ export function registrarToqueMundo(
       best.targetY = y;
       best.retargetAt = tiempo + 4.5;
     }
+  } else if (modo === 'dragon') {
+    state.dragon.targetX = x;
+    state.dragon.targetY = y;
+    state.dragon.retargetAt = tiempo + 4.2;
   } else if (modo === 'lluvia') {
     // Crear gota gruesa que resbala por el cristal + 3 microgotas
     state.glassBeads.push({
@@ -884,9 +951,336 @@ export function dibujarMontanasVector(
 }
 
 // ============================================================================
-// 5. DUNAS DITHER (Anthropic Dither Dunes — matriz Bayer 4×4 1-bit auténtica)
+// 5. BOSQUE & FUEGOS (Snowfall + Snow Pines — pinos, luna, nieve + fuegos pixel)
 // ============================================================================
-export function dibujarDunasDither(
+export function dibujarBosqueNieve(
+  ctx: CanvasRenderingContext2D,
+  ancho: number,
+  alto: number,
+  t: number,
+  pal: WorldPalette,
+  taps: WorldTap[],
+  state: WorldState,
+  estatico: boolean,
+) {
+  const { bgR, bgG, bgB, pR, pG, pB, sR, sG, sB, esClaro } = pal;
+  ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
+  ctx.fillRect(0, 0, ancho, alto);
+
+  // Luna creciente luminosa en esquina superior derecha
+  const mx = ancho * 0.89;
+  const my = alto * 0.16;
+  const mr = 24;
+  const moonGlow = ctx.createRadialGradient(mx, my, 0, mx, my, mr * 4.5);
+  moonGlow.addColorStop(0, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.18 : 0.22})`);
+  moonGlow.addColorStop(1, `rgba(${pR}, ${pG}, ${pB}, 0)`);
+  ctx.fillStyle = moonGlow;
+  ctx.beginPath();
+  ctx.arc(mx, my, mr * 4.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.58 : 0.72})`;
+  ctx.beginPath();
+  ctx.arc(mx, my, mr, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
+  ctx.beginPath();
+  ctx.arc(mx - 9, my - 5, mr * 0.88, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Copos de nieve cayendo con suave vaivén
+  for (const sf of state.snowFlakes) {
+    const sy = (((sf.y + (estatico ? 0 : t * sf.speed)) % 1) + 1) % 1 * alto;
+    const sx = sf.x * ancho + Math.sin(t * 0.9 + sf.fase) * sf.sway;
+    ctx.fillStyle = `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.34 : 0.42})`;
+    ctx.fillRect(Math.round(sx), Math.round(sy), Math.ceil(sf.r * 1.4), Math.ceil(sf.r * 1.4));
+  }
+
+  // Siluetas limpias de pinos únicamente en el borde inferior (sin tapar texto)
+  for (const pine of state.pines) {
+    const px = pine.xNorm * ancho;
+    const col = pine.sec ? `${sR}, ${sG}, ${sB}` : `${pR}, ${pG}, ${pB}`;
+    ctx.fillStyle = `rgba(${col}, ${esClaro ? 0.14 : 0.16})`;
+    for (let tier = 0; tier < 3; tier += 1) {
+      const baseY = alto - tier * (pine.h * 0.26);
+      const topY = baseY - pine.h * (0.48 - tier * 0.08);
+      const halfW = pine.w * (1 - tier * 0.22);
+      ctx.beginPath();
+      ctx.moveTo(px, topY);
+      ctx.lineTo(px + halfW, baseY);
+      ctx.lineTo(px - halfW, baseY);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Animación exclusiva de toque: Fuegos artificiales pixel-art (como /fireworks)
+  for (const tap of taps) {
+    const p = (t - tap.born) / 2.3;
+    if (p < 0 || p > 1) continue;
+    const fade = 1 - p;
+
+    for (let k = 0; k < 18; k += 1) {
+      const ang = (k / 18) * Math.PI * 2 + tap.seed;
+      const spd = 75 + (k % 3) * 42;
+      const gx = tap.x + Math.cos(ang) * spd * Math.pow(p, 0.72);
+      const gy = tap.y + Math.sin(ang) * spd * Math.pow(p, 0.72) + p * p * 54;
+      const col = k % 2 === 0 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
+      const sz = Math.max(2, (4.5 - (k % 2)) * (1 - p * 0.5));
+
+      ctx.fillStyle = `rgba(${col}, ${(fade * 0.95).toFixed(3)})`;
+      ctx.fillRect(Math.round(gx - sz * 0.5), Math.round(gy - sz * 0.5), Math.round(sz), Math.round(sz));
+
+      // Estela pixelada detrás de cada chispa
+      const tp = Math.max(0, p - 0.08);
+      const tx = tap.x + Math.cos(ang) * spd * Math.pow(tp, 0.72);
+      const ty = tap.y + Math.sin(ang) * spd * Math.pow(tp, 0.72) + tp * tp * 54;
+      ctx.fillStyle = `rgba(${col}, ${(fade * 0.42).toFixed(3)})`;
+      ctx.fillRect(Math.round(tx - 1.5), Math.round(ty - 1.5), 3, 3);
+    }
+  }
+}
+
+// ============================================================================
+// 6. DRAGÓN CELESTIAL (Da Nang Dragon — cuerpo sinuoso de 18 segmentos + aliento)
+// ============================================================================
+export function dibujarDragonCielo(
+  ctx: CanvasRenderingContext2D,
+  ancho: number,
+  alto: number,
+  t: number,
+  pal: WorldPalette,
+  taps: WorldTap[],
+  state: WorldState,
+  estatico: boolean,
+) {
+  const { bgR, bgG, bgB, pR, pG, pB, sR, sG, sB, esClaro } = pal;
+  ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
+  ctx.fillRect(0, 0, ancho, alto);
+
+  // Nubes estilizadas muy suaves en los costados
+  for (let i = 0; i < 4; i += 1) {
+    const cx = ancho * (i % 2 === 0 ? 0.12 : 0.88) + Math.sin(t * 0.2 + i) * 20;
+    const cy = alto * (0.2 + i * 0.22);
+    const col = i % 2 === 0 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
+    const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 150);
+    cg.addColorStop(0, `rgba(${col}, ${esClaro ? 0.1 : 0.12})`);
+    cg.addColorStop(1, `rgba(${col}, 0)`);
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 150, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Cinemática del dragón de 18 segmentos
+  const d = state.dragon;
+  if (!estatico) {
+    if (t > d.retargetAt || Math.hypot(d.targetX - d.x, d.targetY - d.y) < 46) {
+      const idx = Math.floor(t * 0.25) % 4;
+      const pts = [
+        [ancho * 0.85, alto * 0.2],
+        [ancho * 0.15, alto * 0.78],
+        [ancho * 0.86, alto * 0.78],
+        [ancho * 0.16, alto * 0.22],
+      ];
+      d.targetX = pts[idx][0];
+      d.targetY = pts[idx][1];
+      d.retargetAt = t + 5.5;
+    }
+    const desired = Math.atan2(d.targetY - d.y, d.targetX - d.x);
+    let diff = desired - d.angle;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    d.angle += diff * 0.04;
+
+    const undulate = Math.sin(t * 4.4) * 0.22;
+    d.x += Math.cos(d.angle + undulate) * 1.15;
+    d.y += Math.sin(d.angle + undulate) * 1.15;
+
+    d.spine[0].x = d.x;
+    d.spine[0].y = d.y;
+    for (let i = 1; i < d.spine.length; i += 1) {
+      const prev = d.spine[i - 1];
+      const cur = d.spine[i];
+      const ang = Math.atan2(cur.y - prev.y, cur.x - prev.x);
+      const wave = Math.sin(t * 5.8 - i * 0.45) * 0.09;
+      cur.x = prev.x + Math.cos(ang + wave) * 13;
+      cur.y = prev.y + Math.sin(ang + wave) * 13;
+    }
+  }
+
+  // Dibujar cuerpo sinuoso + espinas dorsales + bigotes
+  for (let i = d.spine.length - 1; i >= 0; i -= 1) {
+    const seg = d.spine[i];
+    const u = i / (d.spine.length - 1);
+    const rad = Math.max(2.5, (1 - u * 0.78) * 13.5);
+    const col = i % 2 === 0 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
+
+    ctx.fillStyle = `rgba(${col}, ${esClaro ? 0.56 : 0.68})`;
+    ctx.beginPath();
+    ctx.arc(seg.x, seg.y, rad, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cresta / escamas dorsales
+    if (i > 0 && i < d.spine.length - 2 && i % 2 === 1) {
+      const prev = d.spine[i - 1];
+      const norm = Math.atan2(seg.y - prev.y, seg.x - prev.x) + Math.PI * 0.5;
+      ctx.strokeStyle = `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.6 : 0.75})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(seg.x, seg.y);
+      ctx.lineTo(seg.x + Math.cos(norm) * (rad + 7), seg.y + Math.sin(norm) * (rad + 7));
+      ctx.stroke();
+    }
+  }
+
+  // Cabeza y bigotes fluidos del dragón
+  const head = d.spine[0];
+  const neck = d.spine[1];
+  const hAng = Math.atan2(head.y - neck.y, head.x - neck.x);
+  ctx.save();
+  ctx.translate(head.x, head.y);
+  ctx.rotate(hAng);
+  ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, 0.88)`;
+  ctx.beginPath();
+  ctx.ellipse(4, 0, 14, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Bigotes largos
+  ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, 0.78)`;
+  ctx.lineWidth = 1.4;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(10, side * 4);
+    ctx.quadraticCurveTo(20, side * (14 + Math.sin(t * 6) * 4), 2, side * 24);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Animación exclusiva de toque: Aliento de chispas de fuego y agua en espiral
+  for (const tap of taps) {
+    const p = (t - tap.born) / 2.2;
+    if (p < 0 || p > 1) continue;
+    const fade = 1 - p;
+
+    for (let k = 0; k < 14; k += 1) {
+      const ang = (k / 14) * Math.PI * 2 + p * 2.4 + tap.seed;
+      const dist = 10 + Math.pow(p, 0.7) * (135 + (k % 3) * 35);
+      const fx = tap.x + Math.cos(ang) * dist;
+      const fy = tap.y + Math.sin(ang) * dist;
+      const col = k % 2 === 0 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
+      ctx.fillStyle = `rgba(${col}, ${(fade * 0.88).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(fx, fy, (3.2 + (k % 3)) * fade + 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+// ============================================================================
+// 7. JARDÍN BOTÁNICO (Garden + Paper Garden — enredaderas laterales + floración)
+// ============================================================================
+export function dibujarJardinBotanico(
+  ctx: CanvasRenderingContext2D,
+  ancho: number,
+  alto: number,
+  t: number,
+  pal: WorldPalette,
+  taps: WorldTap[],
+) {
+  const { bgR, bgG, bgB, pR, pG, pB, sR, sG, sB, esClaro } = pal;
+  ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
+  ctx.fillRect(0, 0, ancho, alto);
+
+  // Hojas recortadas estilo Paper Garden en bordes izquierdo y derecho (centro 100% limpio)
+  const drawBranch = (baseX: number, baseY: number, dirX: number, phase: number) => {
+    const sway = Math.sin(t * 0.8 + phase) * 8;
+    ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.34 : 0.38})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(baseX, baseY);
+    ctx.quadraticCurveTo(baseX + dirX * 55, baseY - 65 + sway, baseX + dirX * 92, baseY - 145 + sway);
+    ctx.stroke();
+
+    for (let i = 1; i <= 5; i += 1) {
+      const u = i / 5.5;
+      const lx = baseX + dirX * (u * 90);
+      const ly = baseY - u * 140 + sway * u;
+      const side = i % 2 === 0 ? 1 : -1;
+      const leafCol = i % 2 === 0 ? `${sR}, ${sG}, ${sB}` : `${pR}, ${pG}, ${pB}`;
+      ctx.save();
+      ctx.translate(lx, ly);
+      ctx.rotate(dirX * side * 0.65 + Math.sin(t * 1.1 + i) * 0.08);
+      ctx.fillStyle = `rgba(${leafCol}, ${esClaro ? 0.22 : 0.24})`;
+      ctx.strokeStyle = `rgba(${leafCol}, ${esClaro ? 0.42 : 0.48})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(dirX * 16, 0, 18, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  drawBranch(0, alto * 0.86, 1, 0.2);
+  drawBranch(0, alto * 0.38, 1, 1.8);
+  drawBranch(ancho, alto * 0.82, -1, 2.9);
+  drawBranch(ancho, alto * 0.32, -1, 4.1);
+
+  // Animación exclusiva de toque: Floración botánica de 6 pétalos + pétalos al viento
+  for (const tap of taps) {
+    const p = (t - tap.born) / 2.8;
+    if (p < 0 || p > 1) continue;
+    const bloom = Math.min(1, p * 2.6);
+    const fade = p < 0.72 ? 1 : (1 - p) / 0.28;
+
+    // Tallo curvo brotando hacia la flor
+    ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, ${(fade * 0.72).toFixed(3)})`;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(tap.x, tap.y + 42 * bloom);
+    ctx.quadraticCurveTo(tap.x - 10, tap.y + 20 * bloom, tap.x, tap.y);
+    ctx.stroke();
+
+    // 6 pétalos abriéndose
+    const petalR = 20 * bloom;
+    ctx.save();
+    ctx.translate(tap.x, tap.y);
+    ctx.rotate(tap.seed + p * 0.4);
+    for (let k = 0; k < 6; k += 1) {
+      ctx.save();
+      ctx.rotate((k / 6) * Math.PI * 2);
+      ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${(fade * (esClaro ? 0.48 : 0.56)).toFixed(3)})`;
+      ctx.strokeStyle = `rgba(${pR}, ${pG}, ${pB}, ${(fade * 0.82).toFixed(3)})`;
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.ellipse(petalR * 0.7, 0, petalR * 0.72, petalR * 0.34, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.fillStyle = `rgba(${sR}, ${sG}, ${sB}, ${(fade * 0.92).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, 5 * bloom, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 4 pétalos sueltos flotando en la brisa
+    for (let d = 0; d < 4; d += 1) {
+      const dp = Math.max(0, p - 0.15);
+      const px = tap.x + Math.cos(d * 1.6 + tap.seed) * (20 + dp * 95) + dp * 35;
+      const py = tap.y - dp * 55 + Math.sin(t * 3 + d) * 10;
+      ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${(fade * 0.65).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.ellipse(px, py, 5, 2.5, d + t * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+// ============================================================================
+// 8. LUCIÉRNAGAS BOIDS (Enjambre autónomo + farol luminoso atractor al toque)
+// ============================================================================
+export function dibujarLuciernagas(
   ctx: CanvasRenderingContext2D,
   ancho: number,
   alto: number,
@@ -895,111 +1289,179 @@ export function dibujarDunasDither(
   taps: WorldTap[],
   state: WorldState,
   mouse: { x: number; y: number },
+  estatico: boolean,
 ) {
   const { bgR, bgG, bgB, pR, pG, pB, sR, sG, sB, esClaro } = pal;
-  if (!state.ditherCanvas || !state.ditherCtx) return;
+  ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
+  ctx.fillRect(0, 0, ancho, alto);
 
-  // Buffer de baja resolución pixelada (escala 4×) para dithering 1-bit súper nítido
-  const scale = ancho < 640 ? 5 : 4;
-  const bw = Math.max(80, Math.ceil(ancho / scale));
-  const bh = Math.max(60, Math.ceil(alto / scale));
-  if (state.ditherCanvas.width !== bw || state.ditherCanvas.height !== bh) {
-    state.ditherCanvas.width = bw;
-    state.ditherCanvas.height = bh;
+  const activeBeacon = taps.length > 0 ? taps[taps.length - 1] : null;
+  const mx = mouse.x * ancho;
+  const my = mouse.y * alto;
+
+  // Dibujar farol luminoso en cada toque activo
+  for (const tap of taps) {
+    const p = (t - tap.born) / 3.0;
+    if (p < 0 || p > 1) continue;
+    const fade = 1 - p;
+    const rGlow = 26 + Math.sin(t * 6) * 6 + p * 60;
+    const g = ctx.createRadialGradient(tap.x, tap.y, 0, tap.x, tap.y, rGlow);
+    g.addColorStop(0, `rgba(${pR}, ${pG}, ${pB}, ${(fade * 0.45).toFixed(3)})`);
+    g.addColorStop(1, `rgba(${pR}, ${pG}, ${pB}, 0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(tap.x, tap.y, rGlow, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  const dctx = state.ditherCtx;
-  const img = dctx.createImageData(bw, bh);
-  const data = img.data;
+  // Simulación Boids ligera (cohesión + separación + atracción al farol tocado)
+  const flies = state.fireflies;
+  for (let i = 0; i < flies.length; i += 1) {
+    const f = flies[i];
+    if (!estatico) {
+      let ax = Math.sin(t * 0.7 + f.fase) * 14;
+      let ay = Math.cos(t * 0.6 + f.fase * 1.2) * 14;
 
-  const sunX = bw * (0.8 + (mouse.x - 0.5) * 0.05);
-  const sunY = bh * 0.24;
-  const sunR = Math.min(bw, bh) * 0.16;
-
-  // Precomputar alturas de 3 capas de dunas paralaje
-  const dune1 = new Float32Array(bw);
-  const dune2 = new Float32Array(bw);
-  const dune3 = new Float32Array(bw);
-  for (let x = 0; x < bw; x += 1) {
-    const u = x / bw;
-    dune1[x] = bh * (0.56 + Math.sin(u * 4.2 + t * 0.12) * 0.06 + Math.cos(u * 8.1) * 0.025);
-    dune2[x] = bh * (0.69 + Math.sin(u * 3.4 - t * 0.18 + 1.4) * 0.07 + Math.cos(u * 6.5) * 0.02);
-    dune3[x] = bh * (0.83 + Math.sin(u * 5.0 + t * 0.26 + 2.7) * 0.065);
-  }
-
-  // Precalcular toques escalados al buffer pixelado
-  const scaledTaps = taps
-    .map((tp) => ({
-      x: tp.x / scale,
-      y: tp.y / scale,
-      p: (t - tp.born) / 2.2,
-    }))
-    .filter((tp) => tp.p >= 0 && tp.p <= 1);
-
-  for (let y = 0; y < bh; y += 1) {
-    const bayerRow = BAYER_4X4[y & 3];
-    for (let x = 0; x < bw; x += 1) {
-      const idx = (y * bw + x) * 4;
-      const threshold = (bayerRow[x & 3] + 0.5) / 16;
-
-      // Intensidad del sol/luna dithered + capas de dunas
-      const dSun = Math.hypot(x - sunX, y - sunY);
-      let primaryProb = 0;
-      let secondaryProb = 0;
-
-      if (dSun < sunR * 2.2) {
-        primaryProb = Math.max(primaryProb, Math.pow(Math.max(0, 1 - dSun / (sunR * 2.2)), 1.35) * 0.72);
-      }
-
-      if (y >= dune3[x]) {
-        const depth = Math.min(1, (y - dune3[x]) / (bh * 0.16));
-        primaryProb = Math.max(primaryProb, 0.35 + depth * 0.34);
-      } else if (y >= dune2[x]) {
-        const depth = Math.min(1, (y - dune2[x]) / (bh * 0.18));
-        secondaryProb = Math.max(secondaryProb, 0.24 + depth * 0.3);
-      } else if (y >= dune1[x]) {
-        const depth = Math.min(1, (y - dune1[x]) / (bh * 0.2));
-        primaryProb = Math.max(primaryProb, 0.14 + depth * 0.2);
-      }
-
-      // Animación exclusiva de toque: Espejismo dithered en 1-bit + chispas de arena
-      for (const tp of scaledTaps) {
-        const dist = Math.hypot(x - tp.x, y - tp.y);
-        const waveR = 5 + tp.p * 78;
-        const band = Math.abs(dist - waveR);
-        if (band < 14) {
-          const boost = (1 - band / 14) * (1 - tp.p) * 0.9;
-          if (dist < waveR) secondaryProb = Math.max(secondaryProb, boost);
-          else primaryProb = Math.max(primaryProb, boost);
+      if (activeBeacon && t - activeBeacon.born < 3.0) {
+        const dx = activeBeacon.x - f.x;
+        const dy = activeBeacon.y - f.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 24 && dist < 420) {
+          // Fuerza de órbita alrededor del toque
+          ax += (dx / dist) * 95 - (dy / dist) * 65;
+          ay += (dy / dist) * 95 + (dx / dist) * 65;
+        }
+      } else {
+        const dmx = mx - f.x;
+        const dmy = my - f.y;
+        const dm = Math.hypot(dmx, dmy);
+        if (dm > 30 && dm < 220) {
+          ax += (dmx / dm) * 24;
+          ay += (dmy / dm) * 24;
         }
       }
 
-      // Mezclar tinta sobre el fondo manteniendo suavidad editorial
-      const mixA = esClaro ? 0.42 : 0.48;
-      if (primaryProb > threshold && primaryProb >= secondaryProb) {
-        data[idx] = Math.round(bgR + (pR - bgR) * mixA);
-        data[idx + 1] = Math.round(bgG + (pG - bgG) * mixA);
-        data[idx + 2] = Math.round(bgB + (pB - bgB) * mixA);
-        data[idx + 3] = 255;
-      } else if (secondaryProb > threshold) {
-        data[idx] = Math.round(bgR + (sR - bgR) * mixA);
-        data[idx + 1] = Math.round(bgG + (sG - bgG) * mixA);
-        data[idx + 2] = Math.round(bgB + (sB - bgB) * mixA);
-        data[idx + 3] = 255;
-      } else {
-        data[idx] = bgR;
-        data[idx + 1] = bgG;
-        data[idx + 2] = bgB;
-        data[idx + 3] = 255;
+      f.vx = (f.vx + ax * 0.016) * 0.985;
+      f.vy = (f.vy + ay * 0.016) * 0.985;
+      const spd = Math.hypot(f.vx, f.vy);
+      if (spd > 130) {
+        f.vx = (f.vx / spd) * 130;
+        f.vy = (f.vy / spd) * 130;
       }
+
+      f.x = (f.x + f.vx * 0.016 + ancho) % Math.max(1, ancho);
+      f.y = (f.y + f.vy * 0.016 + alto) % Math.max(1, alto);
     }
+
+    const pulse = 0.42 + 0.58 * Math.sin(t * 2.6 + f.fase);
+    const col = f.sec ? `${sR}, ${sG}, ${sB}` : `${pR}, ${pG}, ${pB}`;
+    const haloR = f.r * (4.2 + pulse * 2.2);
+
+    const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, haloR);
+    g.addColorStop(0, `rgba(${col}, ${(pulse * (esClaro ? 0.58 : 0.72)).toFixed(3)})`);
+    g.addColorStop(1, `rgba(${col}, 0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, haloR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = `rgba(${col}, ${(0.55 + pulse * 0.45).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ============================================================================
+// 9. ACUARIO MEDUSAS (Medusas bioluminiscentes con tentáculos + vórtice burbujas)
+// ============================================================================
+export function dibujarAcuarioMedusas(
+  ctx: CanvasRenderingContext2D,
+  ancho: number,
+  alto: number,
+  t: number,
+  pal: WorldPalette,
+  taps: WorldTap[],
+  state: WorldState,
+  estatico: boolean,
+) {
+  const { bgR, bgG, bgB, pR, pG, pB, sR, sG, sB, esClaro } = pal;
+  ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
+  ctx.fillRect(0, 0, ancho, alto);
+
+  // Medusas bioluminiscentes pulsando en los márgenes
+  for (const j of state.jellies) {
+    const pulse = Math.sin(t * 2.2 + j.fase);
+    const jy = (((j.yNorm - (estatico ? 0 : t * j.vel)) % 1.2) + 1.2) % 1.2 * alto - 40;
+    const jx = j.xNorm * ancho + Math.sin(t * 0.7 + j.fase) * 26;
+
+    // Impulso luminoso si un toque ocurre cerca
+    let tapFlash = 0;
+    for (const tap of taps) {
+      const p = (t - tap.born) / 2.4;
+      if (p < 0 || p > 1) continue;
+      const d = Math.hypot(jx - tap.x, jy - tap.y);
+      if (d < 360) tapFlash = Math.max(tapFlash, (1 - d / 360) * (1 - p));
+    }
+
+    const col = j.sec ? `${sR}, ${sG}, ${sB}` : `${pR}, ${pG}, ${pB}`;
+    const bellW = j.r * (1 + pulse * 0.14 + tapFlash * 0.18);
+    const bellH = j.r * (0.76 - pulse * 0.1);
+
+    // 6 tentáculos sinuosos flotando detrás de la campana
+    ctx.strokeStyle = `rgba(${col}, ${(0.34 + tapFlash * 0.45).toFixed(3)})`;
+    ctx.lineWidth = 1.3;
+    for (let k = 0; k < 6; k += 1) {
+      const ox = jx + ((k - 2.5) / 2.5) * bellW * 0.72;
+      const len = j.r * (2.4 + (k % 2) * 0.9);
+      ctx.beginPath();
+      ctx.moveTo(ox, jy + 2);
+      ctx.bezierCurveTo(
+        ox + Math.sin(t * 2.6 + k + j.fase) * 14,
+        jy + len * 0.4,
+        ox - Math.cos(t * 2.1 + k + j.fase) * 16,
+        jy + len * 0.75,
+        ox + Math.sin(t * 1.9 + k) * 10,
+        jy + len,
+      );
+      ctx.stroke();
+    }
+
+    // Campana translúcida de la medusa
+    ctx.fillStyle = `rgba(${col}, ${((esClaro ? 0.22 : 0.24) + tapFlash * 0.32).toFixed(3)})`;
+    ctx.strokeStyle = `rgba(${col}, ${(0.62 + tapFlash * 0.35).toFixed(3)})`;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.ellipse(jx, jy, bellW, bellH, 0, Math.PI, Math.PI * 2);
+    ctx.quadraticCurveTo(jx, jy + 6, jx - bellW, jy);
+    ctx.fill();
+    ctx.stroke();
   }
 
-  dctx.putImageData(img, 0, 0);
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(state.ditherCanvas, 0, 0, ancho, alto);
-  ctx.restore();
+  // Animación exclusiva de toque: Columna espiral de burbujas bioluminiscentes
+  for (const tap of taps) {
+    const p = (t - tap.born) / 2.4;
+    if (p < 0 || p > 1) continue;
+    const fade = 1 - p;
+
+    for (let k = 0; k < 14; k += 1) {
+      const bp = Math.max(0, p - k * 0.03);
+      const ang = k * 0.9 + t * 3.5 + tap.seed;
+      const rad = 10 + bp * 42;
+      const bx = tap.x + Math.cos(ang) * rad;
+      const by = tap.y - bp * (170 + (k % 3) * 35);
+      const br = 2.2 + (k % 4) * 1.5;
+      const col = k % 2 === 0 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
+
+      ctx.strokeStyle = `rgba(${col}, ${(fade * 0.82).toFixed(3)})`;
+      ctx.fillStyle = `rgba(${col}, ${(fade * 0.2).toFixed(3)})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
 }
 
 // ============================================================================

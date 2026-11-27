@@ -486,8 +486,12 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                         { id: 'laguna', label: 'Laguna', hint: 'Toque: cardumen bioluminiscente y burbujas' },
                         { id: 'cosmos', label: 'Cosmos', hint: 'Toque: lente gravitacional y meteoros curvados' },
                         { id: 'vector', label: 'Vector 3D', hint: 'Toque: escáner sísmico 3D sobre las montañas' },
-                        { id: 'dunas', label: 'Dunas 1-bit', hint: 'Toque: onda de espejismo en dithering Bayer' },
                         { id: 'lluvia', label: 'Lluvia Neón', hint: 'Toque: salpicadura y gotas resbalando por el cristal' },
+                        { id: 'bosque', label: 'Bosque', hint: 'Toque: fuegos artificiales pixel-art sobre los pinos' },
+                        { id: 'dragon', label: 'Dragón', hint: 'Toque: atrae al dragón y dispara espiral de chispas' },
+                        { id: 'jardin', label: 'Jardín', hint: 'Toque: brota una flor animada y pétalos al viento' },
+                        { id: 'luciernagas', label: 'Luciérnagas', hint: 'Toque: enciende un farol que atrae al enjambre' },
+                        { id: 'acuario', label: 'Acuario', hint: 'Toque: pulso bioluminiscente y columna de burbujas' },
                       ] as const
                     ).map((s) => (
                       <button
@@ -511,6 +515,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       [
                         { id: 'halftone', label: 'Halftone', hint: 'Toque: onda risográfica' },
                         { id: 'braille', label: 'Braille', hint: 'Toque: red de constelación' },
+                        { id: 'mosaico', label: 'Mosaico', hint: 'Toque: cascada de teselas en diamante' },
                         { id: 'tablero', label: 'Tablero', hint: 'Toque: volteo mecánico de símbolos' },
                         { id: 'plano', label: 'Plano', hint: 'Toque: compás técnico (X, Y)' },
                         { id: 'plotter', label: 'Plotter', hint: 'Toque: sello topográfico' },
