@@ -1,11 +1,11 @@
 /**
- * Catálogo de 33 temas visuales diseñados a mano y verificados con WCAG AA/AAA:
- * 18 Oscuros (6×3) + 12 Claros (4×3) + 3 Accesibilidad (1×3).
+ * Catálogo de 90 temas visuales diseñados a mano y verificados con WCAG AA/AAA:
+ * 45 Oscuros (15×3) + 36 Claros (12×3) + 9 Accesibilidad (3×3).
  * Regla simétrica del logo <✦>: muestras[2] = corchetes < >, muestras[3] = estrella ✦.
  */
 
 export type TemaId =
-  // 18 Oscuros
+  // 45 Oscuros
   | 'gojs-dark'
   | 'dracula'
   | 'tokyo-night'
@@ -24,7 +24,34 @@ export type TemaId =
   | 'vesper'
   | 'poimandres'
   | 'night-owl'
-  // 12 Claros
+  | 'matrix-hacker'
+  | 'red-hacker'
+  | 'rubi-carmesi'
+  | 'volcan-escarlata'
+  | 'obsidiana-mono'
+  | 'noir-carbon'
+  | 'github-dark'
+  | 'catppuccin-frappe'
+  | 'catppuccin-macchiato'
+  | 'tokyo-storm'
+  | 'rose-pine-moon'
+  | 'palenight'
+  | 'cobalt2'
+  | 'shades-of-purple'
+  | 'horizon-dark'
+  | 'cyberpunk-2077'
+  | 'ayu-dark'
+  | 'kanagawa-dragon'
+  | 'flexoki-dark'
+  | 'andromeda'
+  | 'material-ocean'
+  | 'oxocarbon-dark'
+  | 'moonlight'
+  | 'houston'
+  | 'sonokai'
+  | 'vitesse-dark'
+  | 'winter-is-coming'
+  // 36 Claros
   | 'cuaderno'
   | 'catppuccin-latte'
   | 'bosque-menta'
@@ -37,10 +64,40 @@ export type TemaId =
   | 'flexoki-light'
   | 'light-owl'
   | 'ayu-light'
-  // 3 Accesibilidad
+  | 'blanco-puro'
+  | 'porcelana-minimal'
+  | 'alabaster-light'
+  | 'one-light'
+  | 'nord-light'
+  | 'dracula-alucard'
+  | 'kanagawa-lotus'
+  | 'vitesse-light'
+  | 'material-lighter'
+  | 'monokai-light'
+  | 'oxocarbon-light'
+  | 'winter-light'
+  | 'horizon-bright'
+  | 'papercolor-light'
+  | 'quiet-light'
+  | 'sakura-manana'
+  | 'arena-mediterraneo'
+  | 'cielo-verano'
+  | 'lavanda-estudio'
+  | 'matcha-crema'
+  | 'xcode-light'
+  | 'intellij-light'
+  | 'github-papel'
+  | 'rubi-papel'
+  // 9 Accesibilidad
   | 'high-contrast'
   | 'high-contrast-light'
-  | 'high-contrast-amber';
+  | 'high-contrast-amber'
+  | 'high-contrast-green'
+  | 'high-contrast-cyan'
+  | 'high-contrast-deuteranopia-dark'
+  | 'high-contrast-deuteranopia-light'
+  | 'high-contrast-sepia'
+  | 'high-contrast-mono';
 
 export interface TemaPreviewSintaxis {
   editorBg: string;
@@ -63,7 +120,7 @@ export interface TemaMeta {
 }
 
 export const TEMAS_CATALOGO: TemaMeta[] = [
-  // ===================== 15 TEMAS OSCUROS =====================
+  // ===================== 45 TEMAS OSCUROS (15×3) =====================
   {
     id: 'gojs-dark',
     nombre: 'GoJS Nocturno',
@@ -371,7 +428,467 @@ export const TEMAS_CATALOGO: TemaMeta[] = [
     },
   },
 
-  // ===================== 9 TEMAS CLAROS (3×3) =====================
+  {
+    id: 'matrix-hacker',
+    nombre: 'Matrix Hacker',
+    grupo: 'Oscuros',
+    descripcion: 'Terminal clásica de hacker con fósforo verde neón sobre negro abisal.',
+    metaColor: '#030a05',
+    muestras: ['#030a05', '#08140b', '#00ff66', '#22d3ee'],
+    sintaxis: {
+      editorBg: '#030804',
+      ink: '#e4ffec',
+      kw: '#00ff66',
+      str: '#86efac',
+      num: '#38bdf8',
+      fn: '#4ade80',
+      comment: '#9cb1a2',
+    },
+  },
+  {
+    id: 'red-hacker',
+    nombre: 'Hacker Carmesí',
+    grupo: 'Oscuros',
+    descripcion: 'Terminal cibernética de alerta en negro puro con rojo neón y ámbar.',
+    metaColor: '#0e0305',
+    muestras: ['#0e0305', '#19070a', '#ff4d6d', '#ff9e5e'],
+    sintaxis: {
+      editorBg: '#0c0304',
+      ink: '#fff0f2',
+      kw: '#ff4d6d',
+      str: '#ffb703',
+      num: '#ff758f',
+      fn: '#ff9e5e',
+      comment: '#b2a4a6',
+    },
+  },
+  {
+    id: 'rubi-carmesi',
+    nombre: 'Rubí Carmesí',
+    grupo: 'Oscuros',
+    descripcion: 'Fondo rojo vino profundo y elegante con acentos coral y oro cálido.',
+    metaColor: '#21090f',
+    muestras: ['#21090f', '#2d0f17', '#ff6b81', '#ffd166'],
+    sintaxis: {
+      editorBg: '#1c080d',
+      ink: '#fff2f4',
+      kw: '#ff8599',
+      str: '#ffd166',
+      num: '#ff9f68',
+      fn: '#7ce8d8',
+      comment: '#b8a7ab',
+    },
+  },
+  {
+    id: 'volcan-escarlata',
+    nombre: 'Volcán Escarlata',
+    grupo: 'Oscuros',
+    descripcion: 'Rojo volcánico intenso de estudio con lava naranja y dorado brillante.',
+    metaColor: '#240b08',
+    muestras: ['#240b08', '#32120d', '#ff7849', '#ffd166'],
+    sintaxis: {
+      editorBg: '#1e0907',
+      ink: '#fff4ef',
+      kw: '#ff7849',
+      str: '#ffe066',
+      num: '#ff9eb5',
+      fn: '#6ee7b7',
+      comment: '#b9a9a5',
+    },
+  },
+  {
+    id: 'obsidiana-mono',
+    nombre: 'Obsidiana Mono',
+    grupo: 'Oscuros',
+    descripcion: 'Monocromo ultra oscuro en negro puro y grises plateados sin distracciones.',
+    metaColor: '#060608',
+    muestras: ['#060608', '#101014', '#e4e4e7', '#a1a1aa'],
+    sintaxis: {
+      editorBg: '#050507',
+      ink: '#f4f4f5',
+      kw: '#ffffff',
+      str: '#d4d4d8',
+      num: '#c4c4cc',
+      fn: '#e4e4e7',
+      comment: '#a8a8a9',
+    },
+  },
+  {
+    id: 'noir-carbon',
+    nombre: 'Noir Carbón',
+    grupo: 'Oscuros',
+    descripcion: 'Negro carbón mate con tonos grafito, humo y blanco nítido minimalista.',
+    metaColor: '#0b0b0d',
+    muestras: ['#0b0b0d', '#151519', '#f5f5f5', '#9ca3af'],
+    sintaxis: {
+      editorBg: '#09090b',
+      ink: '#f9fafb',
+      kw: '#ffffff',
+      str: '#d1d5db',
+      num: '#e5e7eb',
+      fn: '#cbd5e1',
+      comment: '#adaeaf',
+    },
+  },
+  {
+    id: 'github-dark',
+    nombre: 'GitHub Dark',
+    grupo: 'Oscuros',
+    descripcion: 'El clásico oscuro oficial de GitHub con azul eléctrico y verde menta.',
+    metaColor: '#0d1117',
+    muestras: ['#0d1117', '#161b22', '#58a6ff', '#7ee787'],
+    sintaxis: {
+      editorBg: '#0b0e13',
+      ink: '#f0f6fc',
+      kw: '#ff7b72',
+      str: '#a5d6ff',
+      num: '#79c0ff',
+      fn: '#d2a8ff',
+      comment: '#a7adb3',
+    },
+  },
+  {
+    id: 'catppuccin-frappe',
+    nombre: 'Catppuccin Frappé',
+    grupo: 'Oscuros',
+    descripcion: 'Pizarra azulada suave con malva pastel, cerceta y melocotón cálido.',
+    metaColor: '#232634',
+    muestras: ['#232634', '#303446', '#ca9ee6', '#81c8be'],
+    sintaxis: {
+      editorBg: '#1d202c',
+      ink: '#d4dcf8',
+      kw: '#ca9ee6',
+      str: '#a6d189',
+      num: '#efa179',
+      fn: '#8caaee',
+      comment: '#adb2c5',
+    },
+  },
+  {
+    id: 'catppuccin-macchiato',
+    nombre: 'Catppuccin Macchiato',
+    grupo: 'Oscuros',
+    descripcion: 'Intermedio aterciopelado con lavanda luminosa y durazno suave.',
+    metaColor: '#181926',
+    muestras: ['#181926', '#24273a', '#c6a0f6', '#f5a97f'],
+    sintaxis: {
+      editorBg: '#141520',
+      ink: '#cad3f5',
+      kw: '#c6a0f6',
+      str: '#a6da95',
+      num: '#f5a97f',
+      fn: '#8aadf4',
+      comment: '#9fa4bd',
+    },
+  },
+  {
+    id: 'tokyo-storm',
+    nombre: 'Tokyo Storm',
+    grupo: 'Oscuros',
+    descripcion: 'Tormenta azul nocturna de Tokio con neón celeste y amatista.',
+    metaColor: '#1f2335',
+    muestras: ['#1f2335', '#24283b', '#7aa2f7', '#bb9af7'],
+    sintaxis: {
+      editorBg: '#1a1d2d',
+      ink: '#dce4ff',
+      kw: '#bb9af7',
+      str: '#9ece6a',
+      num: '#ff9e64',
+      fn: '#7dcfff',
+      comment: '#a0a6be',
+    },
+  },
+  {
+    id: 'rose-pine-moon',
+    nombre: 'Rosé Pine Moon',
+    grupo: 'Oscuros',
+    descripcion: 'Luz de luna morada suave con rosa coral, espuma y oro sereno.',
+    metaColor: '#232136',
+    muestras: ['#232136', '#2a273f', '#ea9a97', '#9ccfd8'],
+    sintaxis: {
+      editorBg: '#1d1c2d',
+      ink: '#e0def4',
+      kw: '#eb6f92',
+      str: '#f6c177',
+      num: '#c4a7e7',
+      fn: '#9ccfd8',
+      comment: '#a6a4b9',
+    },
+  },
+  {
+    id: 'palenight',
+    nombre: 'Material Palenight',
+    grupo: 'Oscuros',
+    descripcion: 'Azul violeta aterciopelado clásico con lila vibrante y cian suave.',
+    metaColor: '#222636',
+    muestras: ['#222636', '#292d3e', '#c792ea', '#89ddff'],
+    sintaxis: {
+      editorBg: '#1d202d',
+      ink: '#eeffff',
+      kw: '#c792ea',
+      str: '#c3e88d',
+      num: '#f78f70',
+      fn: '#82aaff',
+      comment: '#adbabf',
+    },
+  },
+  {
+    id: 'cobalt2',
+    nombre: 'Cobalt2',
+    grupo: 'Oscuros',
+    descripcion: 'Azul cobalto intenso de Wes Bos con amarillo eléctrico y naranja.',
+    metaColor: '#122738',
+    muestras: ['#122738', '#193549', '#ffc600', '#ff9d00'],
+    sintaxis: {
+      editorBg: '#0f212f',
+      ink: '#ffffff',
+      kw: '#ff9d00',
+      str: '#a5ff90',
+      num: '#ff8dac',
+      fn: '#ffc600',
+      comment: '#b3babf',
+    },
+  },
+  {
+    id: 'shades-of-purple',
+    nombre: 'Shades of Purple',
+    grupo: 'Oscuros',
+    descripcion: 'Púrpura eléctrico profesional con amarillo dorado y lavanda brillante.',
+    metaColor: '#191834',
+    muestras: ['#191834', '#222146', '#fad000', '#b76aff'],
+    sintaxis: {
+      editorBg: '#15142c',
+      ink: '#f8f6ff',
+      kw: '#ff9d00',
+      str: '#a5ff90',
+      num: '#ff7298',
+      fn: '#fad000',
+      comment: '#b1afbe',
+    },
+  },
+  {
+    id: 'horizon-dark',
+    nombre: 'Horizon Dark',
+    grupo: 'Oscuros',
+    descripcion: 'Atardecer cálido oscuro con fucsia coral y melocotón luminoso.',
+    metaColor: '#161820',
+    muestras: ['#161820', '#1c1e26', '#f46788', '#fab795'],
+    sintaxis: {
+      editorBg: '#12141b',
+      ink: '#f4e7e2',
+      kw: '#b877db',
+      str: '#fab795',
+      num: '#f09483',
+      fn: '#25b0bc',
+      comment: '#ada5a4',
+    },
+  },
+  {
+    id: 'cyberpunk-2077',
+    nombre: 'Cyberpunk 2077',
+    grupo: 'Oscuros',
+    descripcion: 'Noche futurista con amarillo neón de alto voltaje y cian eléctrico.',
+    metaColor: '#100820',
+    muestras: ['#100820', '#1a0e33', '#fcee09', '#00f0ff'],
+    sintaxis: {
+      editorBg: '#0d071b',
+      ink: '#faf5ff',
+      kw: '#ff2e97',
+      str: '#00f0ff',
+      num: '#fcee09',
+      fn: '#38ef7d',
+      comment: '#afa9b8',
+    },
+  },
+  {
+    id: 'ayu-dark',
+    nombre: 'Ayu Dark',
+    grupo: 'Oscuros',
+    descripcion: 'Tinta nocturna profunda con naranja mandarina y celeste cristalino.',
+    metaColor: '#0b0e14',
+    muestras: ['#0b0e14', '#121722', '#ffb454', '#59c2ff'],
+    sintaxis: {
+      editorBg: '#090c11',
+      ink: '#edf0f5',
+      kw: '#ff8f40',
+      str: '#aad94c',
+      num: '#d2a6ff',
+      fn: '#59c2ff',
+      comment: '#a5a8ad',
+    },
+  },
+  {
+    id: 'kanagawa-dragon',
+    nombre: 'Kanagawa Dragon',
+    grupo: 'Oscuros',
+    descripcion: 'Tinta oscura cálida con rojo dragón suave y azul niebla japonés.',
+    metaColor: '#141313',
+    muestras: ['#141313', '#1d1b1b', '#e46876', '#8ba4b0'],
+    sintaxis: {
+      editorBg: '#111010',
+      ink: '#e6e0d0',
+      kw: '#a292a3',
+      str: '#87a987',
+      num: '#e6c384',
+      fn: '#8ba4b0',
+      comment: '#a39e94',
+    },
+  },
+  {
+    id: 'flexoki-dark',
+    nombre: 'Flexoki Dark',
+    grupo: 'Oscuros',
+    descripcion: 'Tinta tipográfica oscura y cálida con naranja ocre y turquesa.',
+    metaColor: '#100f0f',
+    muestras: ['#100f0f', '#1c1b1a', '#f08a4b', '#4ecdc4'],
+    sintaxis: {
+      editorBg: '#0d0d0d',
+      ink: '#f2f0e5',
+      kw: '#879a39',
+      str: '#4ecdc4',
+      num: '#d0a215',
+      fn: '#4385be',
+      comment: '#aaa8a1',
+    },
+  },
+  {
+    id: 'andromeda',
+    nombre: 'Andromeda',
+    grupo: 'Oscuros',
+    descripcion: 'Espacio profundo grafito con aguamarina neón y coral estelar.',
+    metaColor: '#1d2028',
+    muestras: ['#1d2028', '#23262e', '#00e8c6', '#ff6e59'],
+    sintaxis: {
+      editorBg: '#181b22',
+      ink: '#f0f4f8',
+      kw: '#c851ed',
+      str: '#96e072',
+      num: '#f39c12',
+      fn: '#00e8c6',
+      comment: '#acb0b5',
+    },
+  },
+  {
+    id: 'material-ocean',
+    nombre: 'Material Ocean',
+    grupo: 'Oscuros',
+    descripcion: 'Abismo azul marino elegante con celeste brillante y lima suave.',
+    metaColor: '#0b0d14',
+    muestras: ['#0b0d14', '#111420', '#82aaff', '#c3e88d'],
+    sintaxis: {
+      editorBg: '#090b11',
+      ink: '#eef4ff',
+      kw: '#c792ea',
+      str: '#c3e88d',
+      num: '#f78c6c',
+      fn: '#89ddff',
+      comment: '#a5aab4',
+    },
+  },
+  {
+    id: 'oxocarbon-dark',
+    nombre: 'Oxocarbon Dark',
+    grupo: 'Oscuros',
+    descripcion: 'Inspirado en IBM Carbon: grafito profundo con rosa chicle y turquesa.',
+    metaColor: '#121212',
+    muestras: ['#121212', '#1c1c1c', '#ff7eb6', '#3ddbd9'],
+    sintaxis: {
+      editorBg: '#0f0f0f',
+      ink: '#f2f4f8',
+      kw: '#be95ff',
+      str: '#42be65',
+      num: '#78a9ff',
+      fn: '#3ddbd9',
+      comment: '#aaacae',
+    },
+  },
+  {
+    id: 'moonlight',
+    nombre: 'Moonlight II',
+    grupo: 'Oscuros',
+    descripcion: 'Azul medianoche sereno con índigo luminoso, lavanda y menta.',
+    metaColor: '#191b29',
+    muestras: ['#191b29', '#212438', '#82aaff', '#c099ff'],
+    sintaxis: {
+      editorBg: '#151722',
+      ink: '#edf2ff',
+      kw: '#c099ff',
+      str: '#c3e88d',
+      num: '#ff966c',
+      fn: '#86e1fc',
+      comment: '#a9adbb',
+    },
+  },
+  {
+    id: 'houston',
+    nombre: 'Houston',
+    grupo: 'Oscuros',
+    descripcion: 'Inspirado en Astro: espacio carbón con menta espacial y violeta.',
+    metaColor: '#14161b',
+    muestras: ['#14161b', '#1d2028', '#4bf3c8', '#cc99ff'],
+    sintaxis: {
+      editorBg: '#111217',
+      ink: '#eef0f9',
+      kw: '#cc99ff',
+      str: '#ffd493',
+      num: '#54b9ff',
+      fn: '#4bf3c8',
+      comment: '#a8aab2',
+    },
+  },
+  {
+    id: 'sonokai',
+    nombre: 'Sonokai',
+    grupo: 'Oscuros',
+    descripcion: 'Paleta de alto contraste cálida basada en Monokai con rosa y lima.',
+    metaColor: '#24262b',
+    muestras: ['#24262b', '#2c2e34', '#fc6583', '#9ed072'],
+    sintaxis: {
+      editorBg: '#1e2024',
+      ink: '#f2f4f8',
+      kw: '#fc5d7c',
+      str: '#e7c664',
+      num: '#b59ff3',
+      fn: '#9ed072',
+      comment: '#b0b2b6',
+    },
+  },
+  {
+    id: 'vitesse-dark',
+    nombre: 'Vitesse Dark',
+    grupo: 'Oscuros',
+    descripcion: 'Minimalismo oscuro de Anthony Fu con verde salvia y terracota.',
+    metaColor: '#121212',
+    muestras: ['#121212', '#1b1b1b', '#6ec4a0', '#e08b8b'],
+    sintaxis: {
+      editorBg: '#0f0f0f',
+      ink: '#ebebeb',
+      kw: '#6ec4a0',
+      str: '#d99a7c',
+      num: '#69c2c9',
+      fn: '#9ec47c',
+      comment: '#a6a6a6',
+    },
+  },
+  {
+    id: 'winter-is-coming',
+    nombre: 'Winter is Coming',
+    grupo: 'Oscuros',
+    descripcion: 'Zafiro invernal profundo con azul hielo luminoso y aguamarina.',
+    metaColor: '#051326',
+    muestras: ['#051326', '#0b1e38', '#64b5f6', '#80cbc4'],
+    sintaxis: {
+      editorBg: '#041020',
+      ink: '#eef6ff',
+      kw: '#c792ea',
+      str: '#a5e844',
+      num: '#ffcb6b',
+      fn: '#64b5f6',
+      comment: '#a3adba',
+    },
+  },
+
+  // ===================== 36 TEMAS CLAROS (12×3) =====================
   {
     id: 'cuaderno',
     nombre: 'Cuaderno Taller',
@@ -577,7 +1094,416 @@ export const TEMAS_CATALOGO: TemaMeta[] = [
     },
   },
 
-  // ===================== 3 TEMAS DE ACCESIBILIDAD (AAA) =====================
+  {
+    id: 'blanco-puro',
+    nombre: 'Blanco Nieve Puro',
+    grupo: 'Claros',
+    descripcion: 'Blanco puro impecable con azul cobalto brillante y verde esmeralda.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f8fafc', '#0052cc', '#047857'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#0f172a',
+      kw: '#0052cc',
+      str: '#047857',
+      num: '#a74d08',
+      fn: '#6d28d9',
+      comment: '#5c616e',
+    },
+  },
+  {
+    id: 'porcelana-minimal',
+    nombre: 'Porcelana Minimal',
+    grupo: 'Claros',
+    descripcion: 'Blanco absoluto minimalista con tinta grafito pura y acento azul.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f4f4f5', '#18181b', '#2563eb'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#09090b',
+      kw: '#18181b',
+      str: '#0f766e',
+      num: '#225cd9',
+      fn: '#4338ca',
+      comment: '#585859',
+    },
+  },
+  {
+    id: 'alabaster-light',
+    nombre: 'Alabaster Light',
+    grupo: 'Claros',
+    descripcion: 'Minimalismo editorial con blanco alabastro, azul tinta y verde bosque.',
+    metaColor: '#f7f7f7',
+    muestras: ['#f7f7f7', '#ffffff', '#005cc5', '#2b7a2b'],
+    sintaxis: {
+      editorBg: '#fbfbfb',
+      ink: '#1a1a1a',
+      kw: '#005cc5',
+      str: '#2b7a2b',
+      num: '#7a3e9d',
+      fn: '#005cc5',
+      comment: '#616161',
+    },
+  },
+  {
+    id: 'one-light',
+    nombre: 'Atom One Light',
+    grupo: 'Claros',
+    descripcion: 'El clásico luminoso de Atom con azul real, púrpura y verde hoja.',
+    metaColor: '#fafafa',
+    muestras: ['#fafafa', '#ffffff', '#2b63d9', '#9a2398'],
+    sintaxis: {
+      editorBg: '#fdfdfd',
+      ink: '#23262e',
+      kw: '#9a2398',
+      str: '#2e7d32',
+      num: '#8d6001',
+      fn: '#2b63d9',
+      comment: '#686a6f',
+    },
+  },
+  {
+    id: 'nord-light',
+    nombre: 'Nord Snow',
+    grupo: 'Claros',
+    descripcion: 'Nieve ártica serena con azul fiordo y pino escandinavo.',
+    metaColor: '#eceff4',
+    muestras: ['#eceff4', '#ffffff', '#2e5d9e', '#336e55'],
+    sintaxis: {
+      editorBg: '#f6f7fa',
+      ink: '#242933',
+      kw: '#2e5d9e',
+      str: '#336e55',
+      num: '#7b4b8a',
+      fn: '#1f648a',
+      comment: '#646871',
+    },
+  },
+  {
+    id: 'dracula-alucard',
+    nombre: 'Alucard Light',
+    grupo: 'Claros',
+    descripcion: 'Versión clara oficial de Dracula en marfil cálido con púrpura y carmín.',
+    metaColor: '#fffbeb',
+    muestras: ['#fffbeb', '#ffffff', '#644ac9', '#a3144d'],
+    sintaxis: {
+      editorBg: '#fffdf5',
+      ink: '#1f1f1f',
+      kw: '#a3144d',
+      str: '#14710a',
+      num: '#644ac9',
+      fn: '#036a96',
+      comment: '#676560',
+    },
+  },
+  {
+    id: 'kanagawa-lotus',
+    nombre: 'Kanagawa Lotus',
+    grupo: 'Claros',
+    descripcion: 'Papel japonés crema loto con azul índigo y rosa ciruela.',
+    metaColor: '#f2ecbc',
+    muestras: ['#f2ecbc', '#fbf7db', '#3b588f', '#9e3e5e'],
+    sintaxis: {
+      editorBg: '#f9f6de',
+      ink: '#2d2b3b',
+      kw: '#624c83',
+      str: '#4b6e35',
+      num: '#9e3e5e',
+      fn: '#3b588f',
+      comment: '#696662',
+    },
+  },
+  {
+    id: 'vitesse-light',
+    nombre: 'Vitesse Light',
+    grupo: 'Claros',
+    descripcion: 'Blanco puro nítido con verde esmeralda sereno y rojo óxido.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f5f6f5', '#1c6b48', '#a84444'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#222222',
+      kw: '#1c6b48',
+      str: '#a84444',
+      num: '#226b73',
+      fn: '#4d7324',
+      comment: '#666666',
+    },
+  },
+  {
+    id: 'material-lighter',
+    nombre: 'Material Lighter',
+    grupo: 'Claros',
+    descripcion: 'Claridad Material Design con azul océano y violeta eléctrico.',
+    metaColor: '#fafafa',
+    muestras: ['#fafafa', '#ffffff', '#00689c', '#6d35d9'],
+    sintaxis: {
+      editorBg: '#fdfdfd',
+      ink: '#263238',
+      kw: '#6d35d9',
+      str: '#2d7a36',
+      num: '#b34800',
+      fn: '#00689c',
+      comment: '#62696d',
+    },
+  },
+  {
+    id: 'monokai-light',
+    nombre: 'Monokai Light',
+    grupo: 'Claros',
+    descripcion: 'Versión diurna vibrante de Monokai con magenta vivo y verde oliva.',
+    metaColor: '#fafafa',
+    muestras: ['#fafafa', '#ffffff', '#c2185b', '#2e7d32'],
+    sintaxis: {
+      editorBg: '#fdfdfd',
+      ink: '#222222',
+      kw: '#c2185b',
+      str: '#8a5a00',
+      num: '#6a1b9a',
+      fn: '#2e7d32',
+      comment: '#676767',
+    },
+  },
+  {
+    id: 'oxocarbon-light',
+    nombre: 'Oxocarbon Light',
+    grupo: 'Claros',
+    descripcion: 'Blanco IBM Carbon ultranítido con azul técnico y magenta.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f4f4f4', '#0f60f8', '#be185d'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#161616',
+      kw: '#6929c4',
+      str: '#198038',
+      num: '#0e58e5',
+      fn: '#005d5d',
+      comment: '#616161',
+    },
+  },
+  {
+    id: 'winter-light',
+    nombre: 'Winter Light',
+    grupo: 'Claros',
+    descripcion: 'Blanco escarcha cristalino con azul ártico y turquesa profundo.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f3f7fc', '#0b5cad', '#0f766e'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#102138',
+      kw: '#7e22ce',
+      str: '#0f766e',
+      num: '#a74d08',
+      fn: '#0b5cad',
+      comment: '#5c6878',
+    },
+  },
+  {
+    id: 'horizon-bright',
+    nombre: 'Horizon Bright',
+    grupo: 'Claros',
+    descripcion: 'Rosa amanecer sutil con frambuesa intensa y verde petróleo.',
+    metaColor: '#fdf0ed',
+    muestras: ['#fdf0ed', '#ffffff', '#c21e56', '#0f6e78'],
+    sintaxis: {
+      editorBg: '#fef8f6',
+      ink: '#231920',
+      kw: '#7b2cbf',
+      str: '#0f6e78',
+      num: '#b34414',
+      fn: '#c21e56',
+      comment: '#695e62',
+    },
+  },
+  {
+    id: 'papercolor-light',
+    nombre: 'PaperColor Light',
+    grupo: 'Claros',
+    descripcion: 'Inspirado en Material Paper con azul marino y magenta editorial.',
+    metaColor: '#f2f2f2',
+    muestras: ['#f2f2f2', '#ffffff', '#005f87', '#af005f'],
+    sintaxis: {
+      editorBg: '#f9f9f9',
+      ink: '#222222',
+      kw: '#af005f',
+      str: '#4e6e00',
+      num: '#b34600',
+      fn: '#005f87',
+      comment: '#656565',
+    },
+  },
+  {
+    id: 'quiet-light',
+    nombre: 'Quiet Light',
+    grupo: 'Claros',
+    descripcion: 'Gris algodón relajante con morado suave y verde jardín.',
+    metaColor: '#f5f5f5',
+    muestras: ['#f5f5f5', '#ffffff', '#6b3fa0', '#327029'],
+    sintaxis: {
+      editorBg: '#fafafa',
+      ink: '#262626',
+      kw: '#6b3fa0',
+      str: '#327029',
+      num: '#9c430e',
+      fn: '#265c99',
+      comment: '#686868',
+    },
+  },
+  {
+    id: 'sakura-manana',
+    nombre: 'Sakura Mañana',
+    grupo: 'Claros',
+    descripcion: 'Blanco pétalo de cerezo con fucsia suave y violeta floral.',
+    metaColor: '#fff5f7',
+    muestras: ['#fff5f7', '#ffffff', '#be185d', '#6d28d9'],
+    sintaxis: {
+      editorBg: '#fffafb',
+      ink: '#2b1422',
+      kw: '#be185d',
+      str: '#0f766e',
+      num: '#9a3412',
+      fn: '#6d28d9',
+      comment: '#6f5c66',
+    },
+  },
+  {
+    id: 'arena-mediterraneo',
+    nombre: 'Arena Mediterránea',
+    grupo: 'Claros',
+    descripcion: 'Crema costero luminoso con azul Egeo y terracota cálida.',
+    metaColor: '#faf6ee',
+    muestras: ['#faf6ee', '#ffffff', '#0b669c', '#b84a14'],
+    sintaxis: {
+      editorBg: '#fdfbf7',
+      ink: '#1f2933',
+      kw: '#0b669c',
+      str: '#1f704c',
+      num: '#b34814',
+      fn: '#6d28d9',
+      comment: '#656b6f',
+    },
+  },
+  {
+    id: 'cielo-verano',
+    nombre: 'Cielo Verano',
+    grupo: 'Claros',
+    descripcion: 'Celeste clarísimo aireado con azul real y verde esmeralda.',
+    metaColor: '#f2f8ff',
+    muestras: ['#f2f8ff', '#ffffff', '#1d4ed8', '#047857'],
+    sintaxis: {
+      editorBg: '#f9fcff',
+      ink: '#10203a',
+      kw: '#1d4ed8',
+      str: '#047857',
+      num: '#ab4f09',
+      fn: '#7e22ce',
+      comment: '#586579',
+    },
+  },
+  {
+    id: 'lavanda-estudio',
+    nombre: 'Lavanda Estudio',
+    grupo: 'Claros',
+    descripcion: 'Papel lavanda muy suave con índigo creativo y cian oscuro.',
+    metaColor: '#f7f5ff',
+    muestras: ['#f7f5ff', '#ffffff', '#6d28d9', '#0e7490'],
+    sintaxis: {
+      editorBg: '#fbfaff',
+      ink: '#1e1633',
+      kw: '#6d28d9',
+      str: '#0e7490',
+      num: '#ab4f09',
+      fn: '#1d4ed8',
+      comment: '#635d74',
+    },
+  },
+  {
+    id: 'matcha-crema',
+    nombre: 'Matcha Crema',
+    grupo: 'Claros',
+    descripcion: 'Té verde matcha pálido con verde hoja y caramelo tostado.',
+    metaColor: '#f4f8ee',
+    muestras: ['#f4f8ee', '#ffffff', '#2b6b3a', '#9a4a12'],
+    sintaxis: {
+      editorBg: '#fafcf7',
+      ink: '#17261a',
+      kw: '#2b6b3a',
+      str: '#0f766e',
+      num: '#9a4a12',
+      fn: '#1d4ed8',
+      comment: '#5e695e',
+    },
+  },
+  {
+    id: 'xcode-light',
+    nombre: 'Xcode Classic',
+    grupo: 'Claros',
+    descripcion: 'Blanco puro de Apple Xcode con magenta clásico y azul cobalto.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f5f5f7', '#0b4f9e', '#9b2393'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#111111',
+      kw: '#9b2393',
+      str: '#c41a16',
+      num: '#1c00cf',
+      fn: '#0b4f9e',
+      comment: '#5d5d5d',
+    },
+  },
+  {
+    id: 'intellij-light',
+    nombre: 'IntelliJ Light',
+    grupo: 'Claros',
+    descripcion: 'Blanco limpio de JetBrains con azul marino y verde bosque.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f7f8fa', '#0033b3', '#067d17'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#080808',
+      kw: '#0033b3',
+      str: '#067d17',
+      num: '#1750eb',
+      fn: '#7a3e00',
+      comment: '#575757',
+    },
+  },
+  {
+    id: 'github-papel',
+    nombre: 'GitHub Papel',
+    grupo: 'Claros',
+    descripcion: 'Blanco quirúrgico con azul acero y naranja quemado de alto contraste.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f6f8fa', '#0550ae', '#9a3412'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#1f2328',
+      kw: '#cf222e',
+      str: '#0a3069',
+      num: '#9a3412',
+      fn: '#6639ba',
+      comment: '#64666a',
+    },
+  },
+  {
+    id: 'rubi-papel',
+    nombre: 'Rubí Papel Claro',
+    grupo: 'Claros',
+    descripcion: 'Blanco rosado sutil con rojo carmesí vibrante y ámbar oscuro.',
+    metaColor: '#fff6f6',
+    muestras: ['#fff6f6', '#ffffff', '#b91c1c', '#9a3412'],
+    sintaxis: {
+      editorBg: '#fffbfb',
+      ink: '#291214',
+      kw: '#b91c1c',
+      str: '#047857',
+      num: '#9a3412',
+      fn: '#1d4ed8',
+      comment: '#6d5b5c',
+    },
+  },
+
+  // ===================== 9 TEMAS DE ACCESIBILIDAD (3×3 AAA) =====================
   {
     id: 'high-contrast',
     nombre: 'Alto Contraste Oscuro',
@@ -627,6 +1553,108 @@ export const TEMAS_CATALOGO: TemaMeta[] = [
       num: '#5ce1e6',
       fn: '#ff99cc',
       comment: '#f2d57e',
+    },
+  },
+  {
+    id: 'high-contrast-green',
+    nombre: 'Alto Contraste Fósforo',
+    grupo: 'Accesibilidad',
+    descripcion: 'WCAG AAA negro puro y fósforo verde brillante sin fondo animado.',
+    metaColor: '#000000',
+    muestras: ['#000000', '#061209', '#00ff66', '#ffff00'],
+    sintaxis: {
+      editorBg: '#000000',
+      ink: '#f0fff4',
+      kw: '#00ff66',
+      str: '#ffff00',
+      num: '#00ffff',
+      fn: '#ff99ff',
+      comment: '#cedbd2',
+    },
+  },
+  {
+    id: 'high-contrast-cyan',
+    nombre: 'Alto Contraste Cian',
+    grupo: 'Accesibilidad',
+    descripcion: 'WCAG AAA negro puro con cian eléctrico y amarillo oro de máxima nitidez.',
+    metaColor: '#000000',
+    muestras: ['#000000', '#061018', '#00f5ff', '#ffd60a'],
+    sintaxis: {
+      editorBg: '#000000',
+      ink: '#ffffff',
+      kw: '#00f5ff',
+      str: '#80ff80',
+      num: '#ffd60a',
+      fn: '#ff80ff',
+      comment: '#dbdbdb',
+    },
+  },
+  {
+    id: 'high-contrast-deuteranopia-dark',
+    nombre: 'Daltonismo Oscuro AAA',
+    grupo: 'Accesibilidad',
+    descripcion: 'Paleta Okabe-Ito accesible para daltonismo en negro puro: azul cielo y oro.',
+    metaColor: '#000000',
+    muestras: ['#000000', '#0a0e16', '#56b4e9', '#f0e442'],
+    sintaxis: {
+      editorBg: '#000000',
+      ink: '#ffffff',
+      kw: '#f0e442',
+      str: '#56b4e9',
+      num: '#ffad5a',
+      fn: '#ffffff',
+      comment: '#dbdbdb',
+    },
+  },
+  {
+    id: 'high-contrast-deuteranopia-light',
+    nombre: 'Daltonismo Claro AAA',
+    grupo: 'Accesibilidad',
+    descripcion: 'Paleta Okabe-Ito clara accesible para daltonismo: azul marino y ámbar oscuro.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f2f5fa', '#004488', '#873b00'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#000000',
+      kw: '#004488',
+      str: '#8a3c00',
+      num: '#5a189a',
+      fn: '#000000',
+      comment: '#242424',
+    },
+  },
+  {
+    id: 'high-contrast-sepia',
+    nombre: 'Lectura Dislexia Sepia',
+    grupo: 'Accesibilidad',
+    descripcion: 'Fondo sepia cálido antireflejo con tinta negra AAA para reducir fatiga visual.',
+    metaColor: '#fdf3dc',
+    muestras: ['#fdf3dc', '#f5e6c4', '#003a8c', '#7a2e00'],
+    sintaxis: {
+      editorBg: '#fdf3dc',
+      ink: '#0a0a0a',
+      kw: '#003a8c',
+      str: '#005229',
+      num: '#7a2e00',
+      fn: '#6b006b',
+      comment: '#2c2b27',
+    },
+  },
+  {
+    id: 'high-contrast-mono',
+    nombre: 'Alto Contraste Monocromo',
+    grupo: 'Accesibilidad',
+    descripcion: 'WCAG AAA absoluto 21:1 en blanco y negro puro sin color distractor.',
+    metaColor: '#000000',
+    muestras: ['#000000', '#111111', '#ffffff', '#d4d4d4'],
+    sintaxis: {
+      editorBg: '#000000',
+      ink: '#ffffff',
+      kw: '#ffffff',
+      str: '#e5e5e5',
+      num: '#d4d4d4',
+      fn: '#ffffff',
+      comment: '#dbdbdb',
     },
   },
 ];

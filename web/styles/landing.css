@@ -1294,7 +1294,7 @@
 
 [data-theme^='high-contrast'] .lp-status-pill,
 [data-theme^='high-contrast'] .lp-code-ticker,
-[data-theme^='high-contrast'] .lp-shader-chip,
+[data-theme^='high-contrast'] .lp-shader-chip:not([aria-pressed='true']),
 [data-theme^='high-contrast'] .lp-hero-panel,
 [data-theme^='high-contrast'] .lp-pipe-source,
 [data-theme^='high-contrast'] .lp-stage-card,

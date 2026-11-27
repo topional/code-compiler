@@ -94,7 +94,7 @@ export function ThemePickerDialog({
             className="theme-search-input"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar tema (Gruvbox, Rosé Pine, Dracula, Kanagawa...)"
+            placeholder="Buscar entre 90 temas (Hacker, Rubí, Blanco Puro, Mono, Dracula...)"
           />
         </div>
 

@@ -224,10 +224,10 @@ export function dibujarCosmos(
   }
   ctx.restore();
 
-  // 5. Agujero Negro Gargantua (abajo derecha, despejado) con Doppler beaming relativista + arcos de lente
-  const bhX = ancho * (0.865 + (mouse.x - 0.5) * 0.03);
-  const bhY = alto * (0.8 + (mouse.y - 0.5) * 0.03);
-  const bhR = Math.min(ancho, alto) * 0.064;
+  // 5. Agujero Negro Gargantua (arriba a la derecha) con Doppler beaming relativista + arcos de lente
+  const bhX = ancho * (0.89 + (mouse.x - 0.5) * 0.03);
+  const bhY = alto * (0.2 + (mouse.y - 0.5) * 0.03);
+  const bhR = Math.min(ancho, alto) * 0.068;
 
   ctx.save();
   ctx.translate(bhX, bhY);
@@ -402,7 +402,7 @@ function dibujarOctaedro3D(
 }
 
 // ============================================================================
-// 4. VECTOR 3D — Sol Synthwave segmentado + octaedros 3D + cañón wireframe con oclusión + sonar 3D
+// 4. VECTOR 3D — Sol Synthwave alto a la derecha + montañas 3D de alto relieve + malla cruzada + sonar
 // ============================================================================
 export function dibujarMontanasVector(
   ctx: CanvasRenderingContext2D,
@@ -418,187 +418,207 @@ export function dibujarMontanasVector(
   ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
   ctx.fillRect(0, 0, ancho, alto);
 
-  const horizonY = alto * 0.62;
-  const vanishX = ancho * (0.5 + (mouse.x - 0.5) * 0.08);
+  const horizonY = alto * 0.55;
 
   // 1. Cielo estrellado discreto sobre el horizonte
-  for (let i = 0; i < 60; i += 1) {
+  for (let i = 0; i < 64; i += 1) {
     const st = state.bgStars[i];
-    const sy = st.y * horizonY * 1.1;
-    if (sy > horizonY - 14) continue;
+    const sy = st.y * horizonY * 1.08;
+    if (sy > horizonY - 12) continue;
     const tw = 0.3 + 0.7 * Math.sin(t * 1.7 + st.fase);
-    ctx.fillStyle = `rgba(${sR}, ${sG}, ${sB}, ${(tw * (esClaro ? 0.34 : 0.4)).toFixed(3)})`;
+    ctx.fillStyle = `rgba(${sR}, ${sG}, ${sB}, ${(tw * (esClaro ? 0.34 : 0.42)).toFixed(3)})`;
     ctx.fillRect(st.x * ancho, sy, 1.5, 1.5);
   }
 
-  // 2. Balizas geométricas low-poly (octaedros 3D reales girando suavemente en los márgenes)
-  dibujarOctaedro3D(ctx, ancho * 0.075, alto * 0.22 + Math.sin(t * 0.9) * 8, 22, t * 0.45, t * 0.75, `${sR}, ${sG}, ${sB}`, esClaro ? 0.36 : 0.42);
-  dibujarOctaedro3D(ctx, ancho * 0.94, alto * 0.24 + Math.cos(t * 0.8) * 8, 19, -t * 0.5, t * 0.65, `${pR}, ${pG}, ${pB}`, esClaro ? 0.36 : 0.42);
+  // 2. Balizas geométricas low-poly (octaedros 3D girando en los márgenes superiores)
+  dibujarOctaedro3D(
+    ctx,
+    ancho * 0.07,
+    alto * 0.21 + Math.sin(t * 0.9) * 8,
+    21,
+    t * 0.45,
+    t * 0.75,
+    `${sR}, ${sG}, ${sB}`,
+    esClaro ? 0.36 : 0.42,
+  );
+  dibujarOctaedro3D(
+    ctx,
+    ancho * 0.48,
+    alto * 0.14 + Math.cos(t * 0.85) * 7,
+    17,
+    -t * 0.5,
+    t * 0.65,
+    `${pR}, ${pG}, ${pB}`,
+    esClaro ? 0.34 : 0.4,
+  );
 
-  // 3. Sol Retro Synthwave segmentado con bandas horizontales en el horizonte izquierdo-bajo
-  const sunX = ancho * 0.13;
-  const sunY = horizonY - 4;
-  const sunR = Math.min(ancho, alto) * 0.095;
-  const sunHalo = ctx.createRadialGradient(sunX, sunY, sunR * 0.4, sunX, sunY, sunR * 2.8);
-  sunHalo.addColorStop(0, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.2 : 0.24})`);
-  sunHalo.addColorStop(0.55, `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.08 : 0.1})`);
+  // 3. Sol Retro Synthwave completo, alto y a la derecha con cortes horizontales clásicos
+  const sunX = ancho * (0.9 + (mouse.x - 0.5) * 0.04);
+  const sunR = Math.min(ancho, alto) * 0.115;
+  const sunY = alto * 0.19;
+
+  const sunHalo = ctx.createRadialGradient(sunX, sunY, sunR * 0.35, sunX, sunY, sunR * 2.9);
+  sunHalo.addColorStop(0, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.26 : 0.3})`);
+  sunHalo.addColorStop(0.55, `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.1 : 0.13})`);
   sunHalo.addColorStop(1, `rgba(${bgR}, ${bgG}, ${bgB}, 0)`);
   ctx.fillStyle = sunHalo;
-  ctx.fillRect(0, 0, ancho, horizonY + 30);
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, sunR * 2.9, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.save();
   ctx.beginPath();
-  ctx.arc(sunX, sunY, sunR, Math.PI, Math.PI * 2);
+  ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
   ctx.clip();
-  const sunGrad = ctx.createLinearGradient(sunX, sunY - sunR, sunX, sunY);
-  sunGrad.addColorStop(0, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.72 : 0.82})`);
-  sunGrad.addColorStop(1, `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.42 : 0.52})`);
+  const sunGrad = ctx.createLinearGradient(sunX, sunY - sunR, sunX, sunY + sunR);
+  sunGrad.addColorStop(0, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.76 : 0.88})`);
+  sunGrad.addColorStop(0.65, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.48 : 0.58})`);
+  sunGrad.addColorStop(1, `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.34 : 0.44})`);
   ctx.fillStyle = sunGrad;
-  ctx.fillRect(sunX - sunR, sunY - sunR, sunR * 2, sunR);
-  // Cortes horizontales retro synthwave
+  ctx.fillRect(sunX - sunR, sunY - sunR, sunR * 2, sunR * 2);
+  // Cortes horizontales estilo osciloscopio retro en la mitad inferior del sol
   ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
-  for (let sl = 0; sl < 6; sl += 1) {
-    const sy = sunY - sunR * (0.1 + sl * 0.13);
-    const sh = 1.6 + (5 - sl) * 0.7;
-    ctx.fillRect(sunX - sunR, sy, sunR * 2, sh);
+  for (let i = 0; i < 6; i += 1) {
+    const sy = sunY + sunR * (0.04 + i * 0.16);
+    ctx.fillRect(sunX - sunR, sy, sunR * 2, 2 + i * 1.15);
   }
   ctx.restore();
 
-  // Resplandor horizontal del horizonte
-  const horG = ctx.createLinearGradient(0, horizonY - 60, 0, horizonY + 12);
+  // Resplandor atmosférico sobre el horizonte
+  const horG = ctx.createLinearGradient(0, horizonY - 72, 0, horizonY + 14);
   horG.addColorStop(0, `rgba(${pR}, ${pG}, ${pB}, 0)`);
-  horG.addColorStop(1, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.15 : 0.18})`);
+  horG.addColorStop(1, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.16 : 0.19})`);
   ctx.fillStyle = horG;
-  ctx.fillRect(0, horizonY - 60, ancho, 72);
+  ctx.fillRect(0, horizonY - 72, ancho, 86);
 
-  // 4. Malla 3D de cañón montañoso en perspectiva (líneas transversales + longitudinales + oclusión real)
-  const rows = 20;
-  const cols = 38;
-  const speed = t * 1.18;
-  const scanRow = (t * 6.5) % rows;
-  const mesh: Point2D[][] = [];
+  // 4. Malla 3D de montañas de ALTO RELIEVE en perspectiva real (combina proyección fov/wz + líneas cruzadas)
+  const rows = 18;
+  const cols = 34;
+  const fov = Math.min(ancho, alto) * 0.74;
+  const speedZ = t * 1.25;
+  const zOffset = speedZ % 1;
+  const rowIndexShift = Math.floor(speedZ);
+  const scanRow = rows - ((t * 5.5) % rows);
 
-  for (let r = 0; r < rows; r += 1) {
-    const zNorm = (r + (speed % 1)) / rows;
-    const persp = Math.pow(zNorm, 1.85);
-    const yBase = horizonY + persp * (alto - horizonY + 86);
-    const rowIdx = Math.floor(speed) - r;
-    const rowPts: Point2D[] = [];
+  const project = (wx: number, wy: number, wz: number) => {
+    const scale = fov / Math.max(0.65, wz);
+    return {
+      x: ancho * 0.5 + (wx - (mouse.x - 0.5) * 3.4) * scale,
+      y: horizonY + (wy + 2.35) * scale,
+    };
+  };
+
+  // Precalcular todas las filas de atrás hacia adelante para dibujar líneas longitudinales + transversales
+  const meshRows: { x: number; y: number; boost: number; ridge: number }[][] = [];
+  for (let r = rows; r >= 1; r -= 1) {
+    const wz = r - zOffset + 1.15;
+    const worldRow = r + rowIndexShift;
+    const pts: { x: number; y: number; boost: number; ridge: number }[] = [];
 
     for (let c = 0; c <= cols; c += 1) {
-      const u = c / cols;
-      const worldX = (u - 0.5) * 2.55;
-      const sx = vanishX + worldX * (ancho * (0.34 + persp * 0.92));
+      const u = c / cols - 0.5;
+      const wx = u * 27;
+      // Valle legible en el centro + cordilleras montañosas muy pronunciadas en ambos costados
+      const valley = Math.min(1, Math.pow(Math.abs(u) * 2.25, 1.25));
+      const rawWave =
+        Math.sin(wx * 0.4 + worldRow * 0.36) * 1.35 +
+        Math.cos(wx * 0.82 - worldRow * 0.24) * 0.82 +
+        Math.sin((wx + worldRow) * 0.26) * 0.95;
+      const ridge = Math.max(-0.35, rawWave) * (0.48 + valley * 1.48);
 
-      // Cañón central más despejado para texto, cordilleras escarpadas en ambos costados
-      const valley = Math.pow(Math.min(1, Math.abs(worldX) * 0.92), 1.62);
-      const ridge =
-        (Math.sin(worldX * 4.4 + rowIdx * 0.38) * 0.55 +
-          Math.cos(worldX * 8.6 - rowIdx * 0.25) * 0.35 +
-          Math.sin(worldX * 14 + rowIdx * 0.16) * 0.15 +
-          0.92) *
-        valley *
-        (46 + persp * 175);
+      const baseP = project(wx, -ridge, wz);
 
-      // Deformación física 3D por pulso sísmico al tocar el fondo
-      let sonarLift = 0;
+      // Sonar sísmico 3D exclusivo al tocar: levanta físicamente los picos montañosos
+      let boost = 0;
       for (const tap of taps) {
         const p = (t - tap.born) / 2.2;
         if (p < 0 || p > 1) continue;
-        const d = Math.hypot(sx - tap.x, yBase - ridge - tap.y);
-        const wave = 16 + p * 440;
-        if (Math.abs(d - wave) < 42) {
-          sonarLift += Math.cos(((d - wave) / 42) * (Math.PI * 0.5)) * (1 - p) * 34;
+        const d = Math.hypot(baseP.x - tap.x, baseP.y - tap.y);
+        const wave = 14 + p * 430;
+        const band = Math.abs(d - wave);
+        if (band < 68) {
+          boost = Math.max(boost, (1 - band / 68) * (1 - p));
         }
       }
 
-      rowPts.push({ x: sx, y: yBase - ridge - sonarLift });
+      const lifted = boost > 0.02 ? project(wx, -(ridge + boost * 1.85), wz) : baseP;
+      pts.push({ x: lifted.x, y: lifted.y, boost, ridge });
     }
-    mesh.push(rowPts);
+    meshRows.push(pts);
   }
 
-  // Dibujar de atrás hacia adelante con algoritmo del pintor (oclusión limpia)
-  for (let r = 0; r < rows; r += 1) {
-    const pts = mesh[r];
-    const zNorm = r / rows;
-    const isScan = Math.abs(r - scanRow) < 1.15;
+  for (let i = 0; i < meshRows.length; i += 1) {
+    const pts = meshRows[i];
+    const r = rows - i; // r=rows (fondo) -> r=1 (frente)
+    const depth = 1 - r / (rows + 1);
+    const isScan = Math.abs(r - scanRow) < 1.1;
 
+    // Polígono de oclusión con el fondo del tema (algoritmo del pintor)
     ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
     ctx.beginPath();
-    ctx.moveTo(pts[0].x, alto + 10);
-    for (let c = 0; c <= cols; c += 1) ctx.lineTo(pts[c].x, pts[c].y);
-    ctx.lineTo(pts[cols].x, alto + 10);
+    ctx.moveTo(pts[0].x, alto + 12);
+    for (let c = 0; c < pts.length; c += 1) ctx.lineTo(pts[c].x, pts[c].y);
+    ctx.lineTo(pts[pts.length - 1].x, alto + 12);
     ctx.closePath();
     ctx.fill();
 
-    // Líneas longitudinales que conectan esta fila con la anterior
-    if (r > 0) {
-      const prev = mesh[r - 1];
-      ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, ${(0.12 + zNorm * 0.28).toFixed(3)})`;
-      ctx.lineWidth = 0.85 + zNorm * 0.45;
+    // Líneas longitudinales 3D conectando hacia la fila trasera
+    if (i > 0) {
+      const back = meshRows[i - 1];
+      ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, ${(0.14 + depth * 0.3).toFixed(3)})`;
+      ctx.lineWidth = 0.8 + depth * 0.45;
       ctx.beginPath();
-      for (let c = 0; c <= cols; c += 2) {
-        ctx.moveTo(prev[c].x, prev[c].y);
+      for (let c = 0; c < pts.length; c += 2) {
+        ctx.moveTo(back[c].x, back[c].y);
         ctx.lineTo(pts[c].x, pts[c].y);
       }
       ctx.stroke();
     }
 
-    // Cresta transversal con brillo de escáner
+    // Cresta montañosa transversal con brillo de escáner
     const col = isScan ? `${pR}, ${pG}, ${pB}` : r % 3 === 0 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
-    const alpha = isScan ? 0.82 : (esClaro ? 0.22 : 0.24) + zNorm * 0.44;
+    const alpha = isScan ? 0.85 : (esClaro ? 0.24 : 0.26) + depth * 0.48;
     ctx.strokeStyle = `rgba(${col}, ${alpha.toFixed(3)})`;
-    ctx.lineWidth = isScan ? 2.2 : 1.0 + zNorm * 0.65;
+    ctx.lineWidth = isScan ? 2.2 : 1.0 + depth * 0.75;
     ctx.beginPath();
-    for (let c = 0; c <= cols; c += 1) {
+    for (let c = 0; c < pts.length; c += 1) {
       if (c === 0) ctx.moveTo(pts[c].x, pts[c].y);
       else ctx.lineTo(pts[c].x, pts[c].y);
     }
     ctx.stroke();
 
-    // Nodos brillantes de vértice sobre las cimas altas
-    if (r % 2 === 0) {
-      for (let c = 2; c < cols; c += 4) {
-        if (pts[c].y < horizonY - 12) {
-          ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${(0.35 + zNorm * 0.45).toFixed(3)})`;
-          ctx.fillRect(pts[c].x - 1.5, pts[c].y - 1.5, 3, 3);
-        }
+    // Nodos brillantes en cimas pronunciadas o en la onda del sonar sísmico
+    for (let c = 1; c < pts.length - 1; c += 2) {
+      if (pts[c].boost > 0.16) {
+        ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${Math.min(0.96, pts[c].boost * 1.15).toFixed(3)})`;
+        ctx.save();
+        ctx.translate(pts[c].x, pts[c].y);
+        ctx.rotate(Math.PI * 0.25);
+        ctx.fillRect(-3.2, -3.2, 6.4, 6.4);
+        ctx.restore();
+      } else if (i % 2 === 0 && pts[c].ridge > 1.85) {
+        ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${(0.35 + depth * 0.42).toFixed(3)})`;
+        ctx.fillRect(pts[c].x - 1.5, pts[c].y - 1.5, 3, 3);
       }
     }
   }
 
-  // 5. Pulso sísmico 3D interactivo al tocar (ilumina nodos de malla en diamante)
+  // Onda elíptica visual del pulso sísmico
   for (const tap of taps) {
     const p = (t - tap.born) / 2.2;
     if (p < 0 || p > 1) continue;
     const fade = 1 - p;
-    const wave = 16 + p * 440;
-
-    ctx.strokeStyle = `rgba(${pR}, ${pG}, ${pB}, ${(fade * 0.72).toFixed(3)})`;
-    ctx.lineWidth = 2;
+    const wave = 14 + p * 430;
+    ctx.strokeStyle = `rgba(${pR}, ${pG}, ${pB}, ${(fade * 0.68).toFixed(3)})`;
+    ctx.lineWidth = 1.9;
     ctx.beginPath();
-    ctx.ellipse(tap.x, tap.y, wave, wave * 0.38, 0, 0, Math.PI * 2);
+    ctx.ellipse(tap.x, tap.y, wave, wave * 0.36, 0, 0, Math.PI * 2);
     ctx.stroke();
-
-    ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${(fade * 0.94).toFixed(3)})`;
-    for (let r = 0; r < rows; r += 2) {
-      for (let c = 0; c <= cols; c += 2) {
-        const pt = mesh[r][c];
-        const d = Math.hypot(pt.x - tap.x, pt.y - tap.y);
-        if (Math.abs(d - wave) < 26) {
-          ctx.save();
-          ctx.translate(pt.x, pt.y);
-          ctx.rotate(Math.PI * 0.25);
-          ctx.fillRect(-3, -3, 6, 6);
-          ctx.restore();
-        }
-      }
-    }
   }
 }
 
 // ============================================================================
-// 5. LLUVIA NEÓN — Metrópolis 3 capas + monorriel luminoso + carteles + lluvia con salpicaduras + gotas
+// 5. LLUVIA NEÓN — Rascacielos arquitectónicos escalonados + monorriel + lluvia + gotas en cristal
 // ============================================================================
 export function dibujarLluviaNeon(
   ctx: CanvasRenderingContext2D,
@@ -614,7 +634,18 @@ export function dibujarLluviaNeon(
   ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
   ctx.fillRect(0, 0, ancho, alto);
 
-  // 1. Destello atmosférico ocasional muy sutil de relámpago lejano en las nubes altas
+  // Colores arquitectónicos sólidos bien integrados con el tema (siluetas reales de edificios)
+  const farFill = esClaro
+    ? `rgb(${Math.max(0, bgR - 22)}, ${Math.max(0, bgG - 20)}, ${Math.max(0, bgB - 14)})`
+    : `rgb(${Math.max(0, bgR - 5)}, ${Math.max(0, bgG - 5)}, ${Math.max(0, bgB - 3)})`;
+  const midFill = esClaro
+    ? `rgb(${Math.max(0, bgR - 38)}, ${Math.max(0, bgG - 34)}, ${Math.max(0, bgB - 24)})`
+    : `rgb(${Math.max(0, bgR - 9)}, ${Math.max(0, bgG - 9)}, ${Math.max(0, bgB - 6)})`;
+  const frontFill = esClaro
+    ? `rgb(${Math.max(0, bgR - 56)}, ${Math.max(0, bgG - 52)}, ${Math.max(0, bgB - 38)})`
+    : `rgb(${Math.max(0, Math.round(bgR * 0.45))}, ${Math.max(0, Math.round(bgG * 0.45))}, ${Math.max(0, Math.round(bgB * 0.55))})`;
+
+  // 1. Destello lejano muy sutil en las nubes altas
   const boltPhase = t % 11.4;
   if (boltPhase < 0.14 || (boltPhase > 0.22 && boltPhase < 0.3)) {
     const fg = ctx.createRadialGradient(ancho * 0.22, alto * 0.06, 10, ancho * 0.22, alto * 0.06, ancho * 0.45);
@@ -624,13 +655,13 @@ export function dibujarLluviaNeon(
     ctx.fillRect(0, 0, ancho, alto * 0.45);
   }
 
-  // 2. Resplandor neón urbano elevándose desde la avenida inferior
-  const haze = ctx.createLinearGradient(0, alto * 0.62, 0, alto);
+  // 2. Resplandor neón urbano elevándose desde detrás del skyline (siluetea los rascacielos)
+  const haze = ctx.createLinearGradient(0, alto * 0.56, 0, alto);
   haze.addColorStop(0, `rgba(${bgR}, ${bgG}, ${bgB}, 0)`);
-  haze.addColorStop(0.6, `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.1 : 0.12})`);
-  haze.addColorStop(1, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.14 : 0.18})`);
+  haze.addColorStop(0.55, `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.12 : 0.15})`);
+  haze.addColorStop(1, `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.16 : 0.2})`);
   ctx.fillStyle = haze;
-  ctx.fillRect(0, alto * 0.62, ancho, alto * 0.38);
+  ctx.fillRect(0, alto * 0.56, ancho, alto * 0.44);
 
   // 3. Cables catenarios superiores con pulsos de datos veloces
   for (let c = 0; c < 3; c += 1) {
@@ -644,7 +675,7 @@ export function dibujarLluviaNeon(
     ctx.quadraticCurveTo(ancho * 0.5, (yL + yR) * 0.5 + sag, ancho, yR);
     ctx.stroke();
 
-    const u = ((t * (0.2 + c * 0.08) + c * 0.33) % 1);
+    const u = (t * (0.2 + c * 0.08) + c * 0.33) % 1;
     const inv = 1 - u;
     const px = u * ancho;
     const py = inv * inv * yL + 2 * inv * u * ((yL + yR) * 0.5 + sag) + u * u * yR;
@@ -655,100 +686,170 @@ export function dibujarLluviaNeon(
     ctx.fill();
   }
 
-  // 4. Capa lejana (3er plano) de megatorres envueltas en neblina
-  ctx.fillStyle = esClaro ? `rgba(${sR}, ${sG}, ${sB}, 0.09)` : 'rgba(6, 10, 20, 0.36)';
-  for (const b of state.cityFar) {
-    const bx = b.xNorm * ancho;
-    const bw = b.wNorm * ancho;
-    const bh = b.hNorm * alto;
-    ctx.fillRect(bx, alto - bh, bw, bh);
+  // 4. Horizonte lejano: torres escalonadas suaves detrás de la niebla
+  for (let i = 0; i < state.cityFar.length; i += 1) {
+    const b = state.cityFar[i];
+    const bx = Math.round(b.xNorm * ancho);
+    const bw = Math.round(b.wNorm * ancho) + 2;
+    const bh = Math.round(b.hNorm * alto);
+    const by = alto - bh;
+    ctx.fillStyle = farFill;
+    ctx.fillRect(bx, by, bw, bh);
+    // Remate escalonado superior en torres pares
+    if (i % 2 === 0) {
+      const capW = Math.round(bw * 0.56);
+      ctx.fillRect(bx + Math.round((bw - capW) * 0.5), by - 14, capW, 14);
+    }
+    ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.14 : 0.13})`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh);
   }
 
-  // 5. Capa intermedia de rascacielos con agujas, balizas parpadeantes y tanques de agua
-  for (const b of state.cityBack) {
-    const bx = b.xNorm * ancho;
-    const bw = b.wNorm * ancho;
-    const bh = b.hNorm * alto;
+  // 5. Plano intermedio: rascacielos arquitectónicos reales (Art Déco escalonados, techos inclinados y agujas)
+  for (let i = 0; i < state.cityBack.length; i += 1) {
+    const b = state.cityBack[i];
+    const bx = Math.round(b.xNorm * ancho);
+    const bw = Math.round(b.wNorm * ancho) + 2;
+    const bh = Math.round(b.hNorm * alto);
     const by = alto - bh;
+    const style = i % 3; // 0 = escalonado Art-Deco, 1 = techo diagonal futurista, 2 = torre con corona iluminada
 
-    ctx.fillStyle = esClaro ? `rgba(${sR}, ${sG}, ${sB}, 0.14)` : 'rgba(8, 12, 22, 0.54)';
-    ctx.fillRect(bx, by, bw, bh);
-
-    // Borde superior iluminado por el neón
-    ctx.fillStyle = `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.24 : 0.26})`;
-    ctx.fillRect(bx, by, bw, 1.5);
-
-    if (b.hasSpire) {
-      const sx = bx + bw * 0.5;
-      ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, 0.42)`;
-      ctx.lineWidth = 1.2;
+    ctx.fillStyle = midFill;
+    if (style === 1) {
+      // Techo inclinado biselado moderno
+      const slant = 22;
       ctx.beginPath();
-      ctx.moveTo(sx, by);
-      ctx.lineTo(sx, by - 36);
+      ctx.moveTo(bx, alto);
+      ctx.lineTo(bx, by + slant);
+      ctx.lineTo(bx + bw, by);
+      ctx.lineTo(bx + bw, alto);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.34 : 0.36})`;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(bx, by + slant);
+      ctx.lineTo(bx + bw, by);
+      ctx.stroke();
+    } else {
+      ctx.fillRect(bx, by, bw, bh);
+      // Retranqueo arquitectónico (setback) + penthouse
+      const tier1W = Math.round(bw * 0.68);
+      const tier1X = bx + Math.round((bw - tier1W) * 0.5);
+      ctx.fillRect(tier1X, by - 16, tier1W, 16);
+      if (style === 0) {
+        const tier2W = Math.round(bw * 0.36);
+        const tier2X = bx + Math.round((bw - tier2W) * 0.5);
+        ctx.fillRect(tier2X, by - 28, tier2W, 12);
+      }
+      // Cornisa luminosa de azotea
+      ctx.fillStyle = `rgba(${style === 2 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`}, ${esClaro ? 0.45 : 0.48})`;
+      ctx.fillRect(bx, by, bw, 2);
+      ctx.fillRect(tier1X, by - 16, tier1W, 1.5);
+    }
+
+    // Luz de borde lateral (rim light) que da volumen real a cada edificio
+    ctx.fillStyle = `rgba(${sR}, ${sG}, ${sB}, ${esClaro ? 0.24 : 0.22})`;
+    ctx.fillRect(bx, by + (style === 1 ? 22 : 0), 1.5, bh);
+
+    // Aguja de telecomunicaciones con baliza parpadeante o tanque de azotea
+    if (b.hasSpire) {
+      const sx = bx + Math.round(bw * 0.5);
+      const spireBase = style === 0 ? by - 28 : style === 1 ? by + 4 : by - 16;
+      ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, 0.52)`;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(sx, spireBase);
+      ctx.lineTo(sx, spireBase - 34);
       ctx.stroke();
       const blink = 0.25 + 0.75 * Math.sin(t * 3.8 + b.seed);
       ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${blink.toFixed(3)})`;
       ctx.beginPath();
-      ctx.arc(sx, by - 38, 2.4, 0, Math.PI * 2);
+      ctx.arc(sx, spireBase - 36, 2.5, 0, Math.PI * 2);
       ctx.fill();
-    } else if (b.hasTank) {
-      ctx.fillStyle = esClaro ? `rgba(${sR}, ${sG}, ${sB}, 0.22)` : 'rgba(12, 18, 32, 0.7)';
-      ctx.fillRect(bx + bw * 0.28, by - 14, bw * 0.34, 10);
-      ctx.fillRect(bx + bw * 0.34, by - 4, 2, 4);
-      ctx.fillRect(bx + bw * 0.52, by - 4, 2, 4);
+    } else if (b.hasTank && style !== 1) {
+      ctx.fillStyle = frontFill;
+      ctx.fillRect(bx + Math.round(bw * 0.24), by - 26, Math.round(bw * 0.3), 10);
+      ctx.fillRect(bx + Math.round(bw * 0.3), by - 16, 2, 5);
+      ctx.fillRect(bx + Math.round(bw * 0.46), by - 16, 2, 5);
     }
 
-    // Ventanas encendidas
-    for (let wy = by + 10; wy < alto - 22; wy += 12) {
-      for (let wx = bx + 6; wx < bx + bw - 8; wx += 10) {
-        const h = (Math.floor(wx) * 19 + Math.floor(wy) * 13 + b.seed) % 19;
-        if (h < 4) {
-          const col = h === 0 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
-          ctx.fillStyle = `rgba(${col}, ${esClaro ? 0.34 : 0.4})`;
-          ctx.fillRect(wx, wy, 4.2, 6);
+    // Pisos de oficinas estructurados en hileras limpias (con pilares oscuros entre ventanas)
+    const winStart = by + (style === 1 ? 28 : 10);
+    for (let wy = winStart; wy < alto - 18; wy += 11) {
+      const floorLit = ((Math.floor(wy) * 7 + b.seed) % 11) === 0;
+      for (let wx = bx + 6; wx < bx + bw - 9; wx += 9) {
+        const hash = (Math.floor(wx) * 19 + Math.floor(wy) * 13 + b.seed) % 17;
+        if (floorLit || hash < 5) {
+          const isWarm = hash === 0 || (floorLit && hash % 3 === 0);
+          const col = isWarm ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
+          ctx.fillStyle = `rgba(${col}, ${floorLit ? (esClaro ? 0.52 : 0.58) : (esClaro ? 0.28 : 0.34)})`;
+          ctx.fillRect(wx, wy, 5, 4.5);
         }
       }
     }
   }
 
-  // 6. Monorriel elevado deslizándose suavemente por el viaducto urbano
-  const railY = alto - 56;
-  ctx.fillStyle = esClaro ? `rgba(${sR}, ${sG}, ${sB}, 0.22)` : 'rgba(10, 15, 28, 0.76)';
-  ctx.fillRect(0, railY, ancho, 4);
+  // 6. Monorriel elevado deslizándose suavemente por el viaducto urbano con pilares
+  const railY = alto - 52;
+  ctx.fillStyle = frontFill;
+  ctx.fillRect(0, railY, ancho, 5);
+  for (let px = 40; px < ancho; px += 120) {
+    ctx.fillRect(px, railY + 5, 8, 52);
+  }
+  ctx.fillStyle = `rgba(${sR}, ${sG}, ${sB}, 0.32)`;
+  ctx.fillRect(0, railY, ancho, 1.2);
+
   const trainX = (((t * 0.14) % 1.35) - 0.18) * ancho;
-  const trainLen = 140;
-  // Estela luminosa del tren
-  const trailG = ctx.createLinearGradient(trainX - 85, railY, trainX, railY);
+  const trainLen = 148;
+  const trailG = ctx.createLinearGradient(trainX - 90, railY, trainX, railY);
   trailG.addColorStop(0, `rgba(${pR}, ${pG}, ${pB}, 0)`);
   trailG.addColorStop(1, `rgba(${pR}, ${pG}, ${pB}, 0.45)`);
   ctx.fillStyle = trailG;
-  ctx.fillRect(trainX - 85, railY - 6, 85, 5);
-  // Vagones + ventanas iluminadas
-  ctx.fillStyle = esClaro ? `rgba(${sR}, ${sG}, ${sB}, 0.55)` : 'rgba(16, 22, 38, 0.94)';
+  ctx.fillRect(trainX - 90, railY - 6, 90, 5);
+  ctx.fillStyle = frontFill;
+  ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, 0.55)`;
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.roundRect(trainX, railY - 11, trainLen, 10, [4, 6, 1, 1]);
+  ctx.roundRect(trainX, railY - 12, trainLen, 11, [4, 7, 1, 1]);
   ctx.fill();
-  ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, 0.92)`;
+  ctx.stroke();
+  ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, 0.94)`;
   for (let w = 0; w < 8; w += 1) {
-    ctx.fillRect(trainX + 10 + w * 15, railY - 8.5, 9, 3.8);
+    ctx.fillRect(trainX + 10 + w * 16, railY - 9, 10, 4);
   }
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-  ctx.fillRect(trainX + trainLen - 5, railY - 6, 5, 2.5);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+  ctx.fillRect(trainX + trainLen - 5, railY - 6.5, 5, 2.5);
 
-  // 7. Capa frontal de edificios + carteles neón holográficos verticales
-  for (const b of state.cityFront) {
-    const bx = b.xNorm * ancho;
-    const bw = b.wNorm * ancho;
-    const bh = b.hNorm * alto;
+  // 7. Primer plano de edificios bajos con fachadas nítidas y letreros neón verticales
+  for (let i = 0; i < state.cityFront.length; i += 1) {
+    const b = state.cityFront[i];
+    const bx = Math.round(b.xNorm * ancho);
+    const bw = Math.round(b.wNorm * ancho) + 1;
+    const bh = Math.round(b.hNorm * alto);
     const by = alto - bh;
 
-    ctx.fillStyle = esClaro ? `rgba(${pR}, ${pG}, ${pB}, 0.13)` : 'rgba(4, 7, 15, 0.78)';
+    ctx.fillStyle = frontFill;
     ctx.fillRect(bx, by, bw, bh);
+    // Cornisa superior definida
+    ctx.fillStyle = `rgba(${pR}, ${pG}, ${pB}, ${esClaro ? 0.34 : 0.32})`;
+    ctx.fillRect(bx, by, bw, 1.8);
+    // Ventanas estructuradas del bloque frontal
+    for (let wy = by + 9; wy < alto - 10; wy += 10) {
+      for (let wx = bx + 6; wx < bx + bw - 8; wx += 10) {
+        const h = (Math.floor(wx) * 11 + Math.floor(wy) * 17 + b.seed) % 13;
+        if (h < 3) {
+          const col = h === 0 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
+          ctx.fillStyle = `rgba(${col}, ${esClaro ? 0.36 : 0.44})`;
+          ctx.fillRect(wx, wy, 5.5, 4);
+        }
+      }
+    }
 
-    // Chispitas de lluvia golpeando los techos
-    if (!estatico && ((Math.floor(t * 14) + b.seed) % 9 === 0)) {
-      const sx = bx + ((b.seed * 7) % Math.max(8, Math.floor(bw)));
-      ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, 0.55)`;
+    // Chispitas de lluvia golpeando las azoteas
+    if (!estatico && (Math.floor(t * 14) + b.seed) % 9 === 0) {
+      const sx = bx + ((b.seed * 7) % Math.max(8, bw));
+      ctx.strokeStyle = `rgba(${sR}, ${sG}, ${sB}, 0.58)`;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(sx - 3, by - 3);
@@ -757,18 +858,18 @@ export function dibujarLluviaNeon(
       ctx.stroke();
     }
 
+    // Letrero neón holográfico vertical fijado a la fachada
     if (b.hasSign) {
-      const sx = bx + bw * 0.2;
+      const sx = bx + Math.round(bw * 0.16);
       const sy = by + 10;
-      const flicker = Math.sin(t * 8 + b.seed) > -0.78 ? 1 : 0.3;
+      const flicker = Math.sin(t * 8 + b.seed) > -0.78 ? 1 : 0.32;
       const col = b.seed % 2 === 0 ? `${pR}, ${pG}, ${pB}` : `${sR}, ${sG}, ${sB}`;
-      ctx.strokeStyle = `rgba(${col}, ${(0.76 * flicker).toFixed(3)})`;
+      ctx.strokeStyle = `rgba(${col}, ${(0.82 * flicker).toFixed(3)})`;
       ctx.fillStyle = `rgba(${col}, ${(0.18 * flicker).toFixed(3)})`;
       ctx.lineWidth = 1.4;
       ctx.fillRect(sx, sy, 10, 32);
       ctx.strokeRect(sx, sy, 10, 32);
-      // Glifos horizontales tipo letrero neón
-      ctx.fillStyle = `rgba(${col}, ${(0.88 * flicker).toFixed(3)})`;
+      ctx.fillStyle = `rgba(${col}, ${(0.9 * flicker).toFixed(3)})`;
       for (let g = 0; g < 4; g += 1) {
         ctx.fillRect(sx + 2.5, sy + 5 + g * 6.5, 5, 2);
       }
