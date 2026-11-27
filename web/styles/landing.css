@@ -943,6 +943,75 @@
   border: 1px solid color-mix(in srgb, var(--logo-spark) 40%, transparent);
 }
 
+/* Ruta visual en 3 pasos para niños */
+.lp-path-strip {
+  max-width: 960px;
+  margin: 0 auto 32px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lp-path-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border-subtle));
+  color: var(--ink-primary);
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.lp-path-step:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.lp-path-step.is-project {
+  border-color: color-mix(in srgb, var(--logo-spark) 42%, var(--border-subtle));
+}
+
+.lp-path-step.is-project:hover {
+  border-color: var(--logo-spark);
+}
+
+.lp-path-step strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--ink-primary);
+}
+
+.lp-path-step small {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--ink-secondary);
+}
+
+.lp-path-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel);
+  font-weight: 700;
+  font-size: 0.96rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.lp-path-num.is-project {
+  background: var(--info-bg);
+  color: var(--info);
+  border: 1.5px solid var(--logo-spark);
+}
+
 /* ==========================================================================
    CONSTRUCTOR MÁGICO DE BLOQUES EN 3 CLICS (PARA NIÑOS)
    ========================================================================== */
@@ -1289,9 +1358,13 @@
   padding: 14px 18px;
   margin-bottom: 18px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--accent) 5%,
+    color-mix(in srgb, var(--bg-surface) 88%, transparent)
+  );
   backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid color-mix(in srgb, var(--accent) 46%, var(--border-subtle));
 }
 
 .lp-xp-track {
@@ -1327,8 +1400,31 @@
   gap: 10px;
 }
 
+.lp-bento-card.is-mission {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border-subtle));
+  border-top: 3px solid var(--accent);
+  background: color-mix(
+    in srgb,
+    var(--accent) 6%,
+    color-mix(in srgb, var(--bg-surface) 88%, transparent)
+  );
+}
+
+.lp-bento-tag.is-mission {
+  color: var(--accent-soft-ink);
+}
+
+.lp-cta-mission {
+  border-color: color-mix(in srgb, var(--accent) 64%, var(--border-strong));
+}
+
+.lp-cta-mission:hover {
+  border-color: var(--accent);
+}
+
 .lp-bento-card.is-done {
   border-color: var(--ok);
+  border-top-color: var(--ok);
 }
 
 .lp-bento-card.is-project {
@@ -1518,11 +1614,13 @@
 [data-theme^='high-contrast'] .lp-code-ticker,
 [data-theme^='high-contrast'] .lp-shader-chip:not([aria-pressed='true']),
 [data-theme^='high-contrast'] .lp-hero-panel,
+[data-theme^='high-contrast'] .lp-path-step,
 [data-theme^='high-contrast'] .lp-toy-card,
 [data-theme^='high-contrast'] .lp-pipe-source,
 [data-theme^='high-contrast'] .lp-stage-card,
 [data-theme^='high-contrast'] .lp-xp-bar-card,
 [data-theme^='high-contrast'] .lp-bento-card,
+[data-theme^='high-contrast'] .lp-bento-card.is-mission,
 [data-theme^='high-contrast'] .lp-bento-card.is-project,
 [data-theme^='high-contrast'] .lp-closing-card {
   background: var(--bg-surface);
@@ -1578,7 +1676,8 @@
     padding: 34px 16px 42px;
   }
 
-  .lp-toy-card {
+  .lp-toy-card,
+  .lp-path-strip {
     grid-template-columns: 1fr;
   }
 

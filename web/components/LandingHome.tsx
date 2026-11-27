@@ -247,6 +247,28 @@ interface SalidaDemo {
   texto: string;
 }
 
+const MUNDO_STORAGE_KEY = 'chispa_edu_mundo_v1';
+const MUNDOS_VALIDOS = new Set<ModoFondoContinuo>([
+  'koi',
+  'luciernagas',
+  'cosmos',
+  'vector',
+  'lluvia',
+  'acropolis',
+]);
+
+function leerMundoInicial(): ModoFondoContinuo {
+  try {
+    const guardado = localStorage.getItem(MUNDO_STORAGE_KEY) as ModoFondoContinuo | null;
+    if (guardado && MUNDOS_VALIDOS.has(guardado)) {
+      return guardado;
+    }
+  } catch {
+    // ignorar si localStorage no está disponible
+  }
+  return 'koi';
+}
+
 export const LandingHome: React.FC<LandingHomeProps> = ({
   tema,
   movimientoReducido,
@@ -258,8 +280,16 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   onEntrarConMision,
   onEntrarConGuia,
 }) => {
-  const [modoFondo, setModoFondo] = useState<ModoFondoContinuo>('koi');
+  const [modoFondo, setModoFondo] = useState<ModoFondoContinuo>(leerMundoInicial);
   const [navScrolled, setNavScrolled] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MUNDO_STORAGE_KEY, modoFondo);
+    } catch {
+      // ignorar
+    }
+  }, [modoFondo]);
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 14);
@@ -654,7 +684,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   <div className="lp-runner-body">
                     <div className="lp-runner-bar">
                       <span className="mono" style={{ fontSize: '0.76rem' }}>
-                        laboratorio · {compilacionDemo.tokens.length} tokens
+                        mi_programa.edu · prueba rápida
                       </span>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button
@@ -662,7 +692,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                           className="lp-mini-btn"
                           onClick={() => setRunSeq((n) => n + 1)}
                         >
-                          <Play size={12} aria-hidden="true" /> Ejecutar
+                          <Play size={12} aria-hidden="true" /> Probar otra vez
                         </button>
                         <button
                           type="button"
@@ -848,8 +878,32 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           </div>
         </section>
 
-        {/* SECCIÓN 2: ESTUDIO INTERACTIVO PARA NIÑOS (CONSTRUCTOR DE BLOQUES + 4 PASOS AMIGABLES) */}
+        {/* SECCIÓN 2: ESTUDIO INTERACTIVO PARA NIÑOS (RUTA CLARA + CONSTRUCTOR DE BLOQUES + 4 PASOS) */}
         <section id="estudio" className="lp-section" aria-labelledby="estudio-heading">
+          <nav className="lp-path-strip" aria-label="Tu aventura en 3 pasos">
+            <a href="#estudio" className="lp-path-step">
+              <span className="lp-path-num">1</span>
+              <span>
+                <strong>Juega aquí</strong>
+                <small>Arma un programa en 3 clics</small>
+              </span>
+            </a>
+            <a href="#misiones" className="lp-path-step">
+              <span className="lp-path-num">2</span>
+              <span>
+                <strong>Supera misiones</strong>
+                <small>Gana puntos XP y medallas</small>
+              </span>
+            </a>
+            <a href="#proyectos" className="lp-path-step is-project">
+              <span className="lp-path-num is-project">3</span>
+              <span>
+                <strong>Abre juegos listos</strong>
+                <small>Modifica y crea los tuyos</small>
+              </span>
+            </a>
+          </nav>
+
           <div className="lp-section-head">
             <span className="lp-kicker">
               <ScrambleText
@@ -1164,10 +1218,10 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   key={m.id}
                   delay={idx * 0.04}
                   desactivarAnimacion={movimientoReducido}
-                  className={`lp-bento-card ${ok ? 'is-done' : ''}`}
+                  className={`lp-bento-card is-mission ${ok ? 'is-done' : ''}`}
                 >
                   <div className="lp-bento-head">
-                    <span className="lp-bento-tag">
+                    <span className="lp-bento-tag is-mission">
                       <Blocks size={13} aria-hidden="true" />
                       Misión · {m.etiquetaNivel}
                     </span>
@@ -1184,7 +1238,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                     </span>
                     <button
                       type="button"
-                      className="lp-cta-surface lp-cta-xs"
+                      className="lp-cta-surface lp-cta-mission lp-cta-xs"
                       onClick={() => onEntrarConMision(m)}
                     >
                       <span>{ok ? 'Repetir misión' : 'Abrir misión'}</span>
