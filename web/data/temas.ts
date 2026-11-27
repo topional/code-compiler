@@ -1,11 +1,11 @@
 /**
- * Catálogo de 27 temas visuales diseñados a mano y verificados con WCAG AA/AAA:
- * 15 Oscuros + 9 Claros (3×3) + 3 Accesibilidad (AAA).
+ * Catálogo de 33 temas visuales diseñados a mano y verificados con WCAG AA/AAA:
+ * 18 Oscuros (6×3) + 12 Claros (4×3) + 3 Accesibilidad (1×3).
  * Regla simétrica del logo <✦>: muestras[2] = corchetes < >, muestras[3] = estrella ✦.
  */
 
 export type TemaId =
-  // 15 Oscuros
+  // 18 Oscuros
   | 'gojs-dark'
   | 'dracula'
   | 'tokyo-night'
@@ -21,7 +21,10 @@ export type TemaId =
   | 'solarized-dark'
   | 'ayu-mirage'
   | 'synthwave-84'
-  // 9 Claros
+  | 'vesper'
+  | 'poimandres'
+  | 'night-owl'
+  // 12 Claros
   | 'cuaderno'
   | 'catppuccin-latte'
   | 'bosque-menta'
@@ -31,6 +34,9 @@ export type TemaId =
   | 'github-light'
   | 'tokyo-day'
   | 'everforest-light'
+  | 'flexoki-light'
+  | 'light-owl'
+  | 'ayu-light'
   // 3 Accesibilidad
   | 'high-contrast'
   | 'high-contrast-light'
@@ -313,6 +319,57 @@ export const TEMAS_CATALOGO: TemaMeta[] = [
       comment: '#b29fd6',
     },
   },
+  {
+    id: 'vesper',
+    nombre: 'Vesper',
+    grupo: 'Oscuros',
+    descripcion: 'Minimalismo obsidiana de alto contraste con albaricoque y menta fría.',
+    metaColor: '#101010',
+    muestras: ['#101010', '#161616', '#ffc799', '#99ffe4'],
+    sintaxis: {
+      editorBg: '#0d0d0d',
+      ink: '#f5f5f5',
+      kw: '#a0a0a0',
+      str: '#99ffe4',
+      num: '#ffc799',
+      fn: '#ffc799',
+      comment: '#8b8b8b',
+    },
+  },
+  {
+    id: 'poimandres',
+    nombre: 'Poimandres',
+    grupo: 'Oscuros',
+    descripcion: 'Crepúsculo azul arándano minimalista con menta brillante y cielo.',
+    metaColor: '#171922',
+    muestras: ['#171922', '#1b1e28', '#5de4c7', '#add7ff'],
+    sintaxis: {
+      editorBg: '#14161f',
+      ink: '#e4f0fb',
+      kw: '#add7ff',
+      str: '#5de4c7',
+      num: '#fffac2',
+      fn: '#89ddff',
+      comment: '#91b4d5',
+    },
+  },
+  {
+    id: 'night-owl',
+    nombre: 'Night Owl',
+    grupo: 'Oscuros',
+    descripcion: 'Océano nocturno diseñado para programar de noche sin fatiga visual.',
+    metaColor: '#011627',
+    muestras: ['#011627', '#072038', '#c792ea', '#7fdbca'],
+    sintaxis: {
+      editorBg: '#011221',
+      ink: '#eef6ff',
+      kw: '#c792ea',
+      str: '#ecc48d',
+      num: '#f78c6c',
+      fn: '#82aaff',
+      comment: '#7e9bb8',
+    },
+  },
 
   // ===================== 9 TEMAS CLAROS (3×3) =====================
   {
@@ -466,6 +523,57 @@ export const TEMAS_CATALOGO: TemaMeta[] = [
       num: '#9c4b75',
       fn: '#256c85',
       comment: '#58675c',
+    },
+  },
+  {
+    id: 'flexoki-light',
+    nombre: 'Flexoki Paper',
+    grupo: 'Claros',
+    descripcion: 'Inspirado en tinta de imprenta y papel editorial cálido sin reflejos.',
+    metaColor: '#fffcf0',
+    muestras: ['#fffcf0', '#ffffff', '#1c6d75', '#bc5215'],
+    sintaxis: {
+      editorBg: '#fcfaf0',
+      ink: '#100f0f',
+      kw: '#3a6b24',
+      str: '#1c6d75',
+      num: '#9c430e',
+      fn: '#205ea6',
+      comment: '#575653',
+    },
+  },
+  {
+    id: 'light-owl',
+    nombre: 'Light Owl',
+    grupo: 'Claros',
+    descripcion: 'Versión diurna de Night Owl con violeta editorial y verde océano.',
+    metaColor: '#f8fafc',
+    muestras: ['#f8fafc', '#ffffff', '#6d28d9', '#0a6e5c'],
+    sintaxis: {
+      editorBg: '#fbfcfe',
+      ink: '#1d2b44',
+      kw: '#6d28d9',
+      str: '#0a6e5c',
+      num: '#9a4a00',
+      fn: '#1d56a8',
+      comment: '#52627d',
+    },
+  },
+  {
+    id: 'ayu-light',
+    nombre: 'Ayu Light',
+    grupo: 'Claros',
+    descripcion: 'Blanco luminoso y limpio con ámbar profundo y azul acero.',
+    metaColor: '#fafafa',
+    muestras: ['#fafafa', '#ffffff', '#b54d00', '#1c6ea4'],
+    sintaxis: {
+      editorBg: '#fdfdfd',
+      ink: '#262c36',
+      kw: '#b54d00',
+      str: '#2c6e2f',
+      num: '#7e3ca8',
+      fn: '#1c6ea4',
+      comment: '#596373',
     },
   },
 

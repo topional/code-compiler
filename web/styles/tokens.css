@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Chispa · Code Compiler — Sistema de 27 Temas WCAG Verificados
+   Chispa · Code Compiler — Sistema de 33 Temas WCAG Verificados
    ========================================================================== */
 
 :root {
@@ -2012,6 +2012,450 @@
   --logo-ink: #fff4cc;
   --logo-badge-bg: #ffb703;
   --logo-badge-ink: #000000;
+}
+
+/* 28. Vesper */
+[data-theme='vesper'] {
+  color-scheme: dark;
+  --bg-canvas: #101010;
+  --bg-surface: #161616;
+  --bg-surface-alt: #1f1f1f;
+  --bg-surface-hover: #2a2a2a;
+  --bg-editor: #0d0d0d;
+  --bg-editor-gutter: #161616;
+  --bg-dot: rgba(255, 199, 153, 0.16);
+  --hero-pixel-glow: rgba(255, 199, 153, 0.28);
+  --hero-pixel-glow-2: rgba(153, 255, 228, 0.22);
+
+  --ink-primary: #f5f5f5;
+  --ink-secondary: #d4d4d4;
+  --ink-muted: #a6a6a6;
+  --ink-inverse: #101010;
+
+  --accent: #ffc799;
+  --accent-bright: #ffd9ba;
+  --accent-hover: #f2b480;
+  --accent-ink: #101010;
+  --accent-soft: rgba(255, 199, 153, 0.16);
+  --accent-soft-ink: #ffd7b5;
+
+  --border-subtle: #2b2b2b;
+  --border-strong: #525252;
+  --shadow-card: 0 3px 0 rgba(0, 0, 0, 0.55), 0 14px 32px rgba(0, 0, 0, 0.42);
+  --shadow-pop: 0 8px 0 rgba(0, 0, 0, 0.62), 0 24px 56px rgba(0, 0, 0, 0.56);
+  --shadow-btn: 0 3px 0 rgba(0, 0, 0, 0.6);
+
+  --cat-variable: #ffc799;
+  --cat-variable-bg: rgba(255, 199, 153, 0.15);
+  --cat-io: #d4bfff;
+  --cat-io-bg: rgba(212, 191, 255, 0.15);
+  --cat-control: #ffc799;
+  --cat-control-bg: rgba(255, 199, 153, 0.15);
+  --cat-operador: #99ffe4;
+  --cat-operador-bg: rgba(153, 255, 228, 0.15);
+  --cat-funcion: #99ffe4;
+  --cat-funcion-bg: rgba(153, 255, 228, 0.15);
+
+  --ok: #99ffe4;
+  --ok-ink: #0c1f1a;
+  --ok-bg: rgba(153, 255, 228, 0.15);
+  --warn: #ffc799;
+  --warn-bg: rgba(255, 199, 153, 0.16);
+  --err: #ff8080;
+  --err-bg: rgba(255, 128, 128, 0.18);
+  --info: #99ffe4;
+  --info-bg: rgba(153, 255, 228, 0.15);
+
+  --line-active-bg: rgba(255, 199, 153, 0.2);
+  --line-active-border: #ffc799;
+  --line-hover-bg: rgba(153, 255, 228, 0.16);
+  --line-error-bg: rgba(255, 128, 128, 0.2);
+  --comment-ink: #949494;
+  --string-ink: #99ffe4;
+  --number-ink: #ffc799;
+
+  --focus-ring: #ffc799;
+  --scroll-track: #101010;
+  --scroll-thumb: #363636;
+  --scroll-thumb-hover: #5c5c5c;
+
+  --logo-frame: #ffc799;
+  --logo-body: #161616;
+  --logo-wing: #ffc799;
+  --logo-spark: #99ffe4;
+  --logo-ink: #f5f5f5;
+  --logo-badge-bg: #ffc799;
+  --logo-badge-ink: #101010;
+}
+
+/* 29. Poimandres */
+[data-theme='poimandres'] {
+  color-scheme: dark;
+  --bg-canvas: #171922;
+  --bg-surface: #1b1e28;
+  --bg-surface-alt: #242836;
+  --bg-surface-hover: #30364a;
+  --bg-editor: #14161f;
+  --bg-editor-gutter: #1b1e28;
+  --bg-dot: rgba(93, 228, 199, 0.16);
+  --hero-pixel-glow: rgba(93, 228, 199, 0.28);
+  --hero-pixel-glow-2: rgba(173, 215, 255, 0.22);
+
+  --ink-primary: #e4f0fb;
+  --ink-secondary: #c5d4e8;
+  --ink-muted: #9eb0cc;
+  --ink-inverse: #171922;
+
+  --accent: #5de4c7;
+  --accent-bright: #8cf0da;
+  --accent-hover: #42cfb1;
+  --accent-ink: #101820;
+  --accent-soft: rgba(93, 228, 199, 0.16);
+  --accent-soft-ink: #9bf2df;
+
+  --border-subtle: #2e3447;
+  --border-strong: #505b78;
+  --shadow-card: 0 3px 0 rgba(0, 0, 0, 0.48), 0 14px 32px rgba(0, 0, 0, 0.36);
+  --shadow-pop: 0 8px 0 rgba(0, 0, 0, 0.56), 0 24px 56px rgba(0, 0, 0, 0.5);
+  --shadow-btn: 0 3px 0 rgba(0, 0, 0, 0.54);
+
+  --cat-variable: #fffac2;
+  --cat-variable-bg: rgba(255, 250, 194, 0.15);
+  --cat-io: #d0a9f5;
+  --cat-io-bg: rgba(208, 169, 245, 0.15);
+  --cat-control: #add7ff;
+  --cat-control-bg: rgba(173, 215, 255, 0.15);
+  --cat-operador: #5de4c7;
+  --cat-operador-bg: rgba(93, 228, 199, 0.15);
+  --cat-funcion: #89ddff;
+  --cat-funcion-bg: rgba(137, 221, 255, 0.15);
+
+  --ok: #5de4c7;
+  --ok-ink: #0f1c19;
+  --ok-bg: rgba(93, 228, 199, 0.16);
+  --warn: #fffac2;
+  --warn-bg: rgba(255, 250, 194, 0.15);
+  --err: #f07b9a;
+  --err-bg: rgba(240, 123, 154, 0.18);
+  --info: #89ddff;
+  --info-bg: rgba(137, 221, 255, 0.16);
+
+  --line-active-bg: rgba(93, 228, 199, 0.2);
+  --line-active-border: #5de4c7;
+  --line-hover-bg: rgba(173, 215, 255, 0.18);
+  --line-error-bg: rgba(240, 123, 154, 0.2);
+  --comment-ink: #91b4d5;
+  --string-ink: #5de4c7;
+  --number-ink: #fffac2;
+
+  --focus-ring: #5de4c7;
+  --scroll-track: #171922;
+  --scroll-thumb: #363c52;
+  --scroll-thumb-hover: #535d7d;
+
+  --logo-frame: #5de4c7;
+  --logo-body: #1b1e28;
+  --logo-wing: #5de4c7;
+  --logo-spark: #add7ff;
+  --logo-ink: #e4f0fb;
+  --logo-badge-bg: #5de4c7;
+  --logo-badge-ink: #101820;
+}
+
+/* 30. Night Owl */
+[data-theme='night-owl'] {
+  color-scheme: dark;
+  --bg-canvas: #011627;
+  --bg-surface: #072038;
+  --bg-surface-alt: #0e2d4a;
+  --bg-surface-hover: #173c5e;
+  --bg-editor: #011221;
+  --bg-editor-gutter: #072038;
+  --bg-dot: rgba(199, 146, 234, 0.18);
+  --hero-pixel-glow: rgba(199, 146, 234, 0.28);
+  --hero-pixel-glow-2: rgba(127, 219, 202, 0.22);
+
+  --ink-primary: #eef6ff;
+  --ink-secondary: #c8def5;
+  --ink-muted: #98b7d9;
+  --ink-inverse: #011627;
+
+  --accent: #c792ea;
+  --accent-bright: #dcb2f5;
+  --accent-hover: #b277db;
+  --accent-ink: #0a1020;
+  --accent-soft: rgba(199, 146, 234, 0.16);
+  --accent-soft-ink: #dec0f5;
+
+  --border-subtle: #183d5e;
+  --border-strong: #3c6d99;
+  --shadow-card: 0 3px 0 rgba(0, 10, 20, 0.55), 0 14px 34px rgba(0, 0, 0, 0.42);
+  --shadow-pop: 0 8px 0 rgba(0, 10, 20, 0.62), 0 24px 58px rgba(0, 0, 0, 0.55);
+  --shadow-btn: 0 3px 0 rgba(0, 10, 20, 0.6);
+
+  --cat-variable: #f78c6c;
+  --cat-variable-bg: rgba(247, 140, 108, 0.16);
+  --cat-io: #c792ea;
+  --cat-io-bg: rgba(199, 146, 234, 0.16);
+  --cat-control: #ecc48d;
+  --cat-control-bg: rgba(236, 196, 141, 0.16);
+  --cat-operador: #addb67;
+  --cat-operador-bg: rgba(173, 219, 103, 0.15);
+  --cat-funcion: #82aaff;
+  --cat-funcion-bg: rgba(130, 170, 255, 0.16);
+
+  --ok: #addb67;
+  --ok-ink: #111d08;
+  --ok-bg: rgba(173, 219, 103, 0.16);
+  --warn: #ecc48d;
+  --warn-bg: rgba(236, 196, 141, 0.16);
+  --err: #ff757f;
+  --err-bg: rgba(255, 117, 127, 0.18);
+  --info: #7fdbca;
+  --info-bg: rgba(127, 219, 202, 0.16);
+
+  --line-active-bg: rgba(199, 146, 234, 0.22);
+  --line-active-border: #c792ea;
+  --line-hover-bg: rgba(127, 219, 202, 0.18);
+  --line-error-bg: rgba(255, 117, 127, 0.2);
+  --comment-ink: #89a7c7;
+  --string-ink: #ecc48d;
+  --number-ink: #f78c6c;
+
+  --focus-ring: #7fdbca;
+  --scroll-track: #011627;
+  --scroll-thumb: #1d466b;
+  --scroll-thumb-hover: #356c9c;
+
+  --logo-frame: #c792ea;
+  --logo-body: #072038;
+  --logo-wing: #c792ea;
+  --logo-spark: #7fdbca;
+  --logo-ink: #eef6ff;
+  --logo-badge-bg: #c792ea;
+  --logo-badge-ink: #0a1020;
+}
+
+/* 31. Flexoki Paper */
+[data-theme='flexoki-light'] {
+  color-scheme: light;
+  --bg-canvas: #fffcf0;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f2f0e5;
+  --bg-surface-hover: #e6e4d9;
+  --bg-editor: #fcfaf0;
+  --bg-editor-gutter: #f2f0e5;
+  --bg-dot: rgba(16, 15, 15, 0.08);
+  --hero-pixel-glow: rgba(28, 109, 117, 0.2);
+  --hero-pixel-glow-2: rgba(188, 82, 21, 0.18);
+
+  --ink-primary: #100f0f;
+  --ink-secondary: #3d3b38;
+  --ink-muted: #575653;
+  --ink-inverse: #ffffff;
+
+  --accent: #1c6d75;
+  --accent-bright: #24837b;
+  --accent-hover: #14545b;
+  --accent-ink: #ffffff;
+  --accent-soft: #d9f0f2;
+  --accent-soft-ink: #124b52;
+
+  --border-subtle: #dad8ce;
+  --border-strong: #403e3c;
+  --shadow-card: 0 3px 0 rgba(16, 15, 15, 0.11), 0 12px 26px rgba(16, 15, 15, 0.06);
+  --shadow-pop: 0 6px 0 rgba(16, 15, 15, 0.17), 0 22px 42px rgba(16, 15, 15, 0.11);
+  --shadow-btn: 0 3px 0 rgba(16, 15, 15, 0.2);
+
+  --cat-variable: #9c430e;
+  --cat-variable-bg: #fcead8;
+  --cat-io: #5e409d;
+  --cat-io-bg: #ebe4f7;
+  --cat-control: #1c6d75;
+  --cat-control-bg: #d9f0f2;
+  --cat-operador: #3a6b24;
+  --cat-operador-bg: #e1f2d8;
+  --cat-funcion: #205ea6;
+  --cat-funcion-bg: #dceafa;
+
+  --ok: #3a6b24;
+  --ok-ink: #ffffff;
+  --ok-bg: #e1f2d8;
+  --warn: #8f5c00;
+  --warn-bg: #fcead8;
+  --err: #af3029;
+  --err-bg: #fae0de;
+  --info: #205ea6;
+  --info-bg: #dceafa;
+
+  --line-active-bg: rgba(28, 109, 117, 0.14);
+  --line-active-border: #1c6d75;
+  --line-hover-bg: rgba(188, 82, 21, 0.11);
+  --line-error-bg: rgba(175, 48, 41, 0.12);
+  --comment-ink: #575653;
+  --string-ink: #1c6d75;
+  --number-ink: #9c430e;
+
+  --focus-ring: #1c6d75;
+  --scroll-track: #f2f0e5;
+  --scroll-thumb: #b7b5ac;
+  --scroll-thumb-hover: #878580;
+
+  --logo-frame: #1c6d75;
+  --logo-body: #fffcf0;
+  --logo-wing: #1c6d75;
+  --logo-spark: #bc5215;
+  --logo-ink: #100f0f;
+  --logo-badge-bg: #100f0f;
+  --logo-badge-ink: #fffcf0;
+}
+
+/* 32. Light Owl */
+[data-theme='light-owl'] {
+  color-scheme: light;
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #edf1f7;
+  --bg-surface-hover: #dfe6f0;
+  --bg-editor: #fbfcfe;
+  --bg-editor-gutter: #edf1f7;
+  --bg-dot: rgba(29, 43, 68, 0.08);
+  --hero-pixel-glow: rgba(109, 40, 217, 0.2);
+  --hero-pixel-glow-2: rgba(10, 110, 92, 0.18);
+
+  --ink-primary: #1d2b44;
+  --ink-secondary: #3e4e68;
+  --ink-muted: #52627d;
+  --ink-inverse: #ffffff;
+
+  --accent: #6d28d9;
+  --accent-bright: #7c3aed;
+  --accent-hover: #5b21b6;
+  --accent-ink: #ffffff;
+  --accent-soft: #ede9fe;
+  --accent-soft-ink: #4c1d95;
+
+  --border-subtle: #d1d9e6;
+  --border-strong: #3e4e68;
+  --shadow-card: 0 3px 0 rgba(29, 43, 68, 0.11), 0 12px 26px rgba(29, 43, 68, 0.06);
+  --shadow-pop: 0 6px 0 rgba(29, 43, 68, 0.17), 0 22px 42px rgba(29, 43, 68, 0.11);
+  --shadow-btn: 0 3px 0 rgba(29, 43, 68, 0.2);
+
+  --cat-variable: #9a4a00;
+  --cat-variable-bg: #ffedd5;
+  --cat-io: #6d28d9;
+  --cat-io-bg: #ede9fe;
+  --cat-control: #1d56a8;
+  --cat-control-bg: #dbeafe;
+  --cat-operador: #0a6e5c;
+  --cat-operador-bg: #d1fae5;
+  --cat-funcion: #b81d62;
+  --cat-funcion-bg: #fce7f3;
+
+  --ok: #0a6e5c;
+  --ok-ink: #ffffff;
+  --ok-bg: #d1fae5;
+  --warn: #92400e;
+  --warn-bg: #fef3c7;
+  --err: #c2253d;
+  --err-bg: #ffe4e6;
+  --info: #1d56a8;
+  --info-bg: #dbeafe;
+
+  --line-active-bg: rgba(109, 40, 217, 0.14);
+  --line-active-border: #6d28d9;
+  --line-hover-bg: rgba(10, 110, 92, 0.11);
+  --line-error-bg: rgba(194, 37, 61, 0.12);
+  --comment-ink: #52627d;
+  --string-ink: #0a6e5c;
+  --number-ink: #9a4a00;
+
+  --focus-ring: #6d28d9;
+  --scroll-track: #edf1f7;
+  --scroll-thumb: #b4bfd1;
+  --scroll-thumb-hover: #8998b0;
+
+  --logo-frame: #6d28d9;
+  --logo-body: #ffffff;
+  --logo-wing: #6d28d9;
+  --logo-spark: #0a6e5c;
+  --logo-ink: #1d2b44;
+  --logo-badge-bg: #1d2b44;
+  --logo-badge-ink: #ffffff;
+}
+
+/* 33. Ayu Light */
+[data-theme='ayu-light'] {
+  color-scheme: light;
+  --bg-canvas: #fafafa;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #eef0f4;
+  --bg-surface-hover: #e1e5ec;
+  --bg-editor: #fdfdfd;
+  --bg-editor-gutter: #eef0f4;
+  --bg-dot: rgba(38, 44, 54, 0.08);
+  --hero-pixel-glow: rgba(181, 77, 0, 0.18);
+  --hero-pixel-glow-2: rgba(28, 110, 164, 0.18);
+
+  --ink-primary: #262c36;
+  --ink-secondary: #485261;
+  --ink-muted: #596373;
+  --ink-inverse: #ffffff;
+
+  --accent: #b54d00;
+  --accent-bright: #d9640b;
+  --accent-hover: #943e00;
+  --accent-ink: #ffffff;
+  --accent-soft: #ffedd5;
+  --accent-soft-ink: #7c3400;
+
+  --border-subtle: #d5dae3;
+  --border-strong: #485261;
+  --shadow-card: 0 3px 0 rgba(38, 44, 54, 0.11), 0 12px 26px rgba(38, 44, 54, 0.06);
+  --shadow-pop: 0 6px 0 rgba(38, 44, 54, 0.17), 0 22px 42px rgba(38, 44, 54, 0.11);
+  --shadow-btn: 0 3px 0 rgba(38, 44, 54, 0.2);
+
+  --cat-variable: #9e4700;
+  --cat-variable-bg: #ffedd5;
+  --cat-io: #7e3ca8;
+  --cat-io-bg: #f3e8ff;
+  --cat-control: #b54d00;
+  --cat-control-bg: #ffedd5;
+  --cat-operador: #2c6e2f;
+  --cat-operador-bg: #dcfce7;
+  --cat-funcion: #1c6ea4;
+  --cat-funcion-bg: #e0f2fe;
+
+  --ok: #2c6e2f;
+  --ok-ink: #ffffff;
+  --ok-bg: #dcfce7;
+  --warn: #944800;
+  --warn-bg: #fef3c7;
+  --err: #c42b2b;
+  --err-bg: #fee2e2;
+  --info: #1c6ea4;
+  --info-bg: #e0f2fe;
+
+  --line-active-bg: rgba(181, 77, 0, 0.14);
+  --line-active-border: #b54d00;
+  --line-hover-bg: rgba(28, 110, 164, 0.11);
+  --line-error-bg: rgba(196, 43, 43, 0.12);
+  --comment-ink: #596373;
+  --string-ink: #2c6e2f;
+  --number-ink: #7e3ca8;
+
+  --focus-ring: #b54d00;
+  --scroll-track: #eef0f4;
+  --scroll-thumb: #b6becb;
+  --scroll-thumb-hover: #8c96a8;
+
+  --logo-frame: #b54d00;
+  --logo-body: #ffffff;
+  --logo-wing: #b54d00;
+  --logo-spark: #1c6ea4;
+  --logo-ink: #262c36;
+  --logo-badge-bg: #262c36;
+  --logo-badge-ink: #ffffff;
 }
 
 /* Escalado de texto accesible */

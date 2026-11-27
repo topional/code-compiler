@@ -472,15 +472,22 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               </div>
 
               {temaMeta.grupo !== 'Accesibilidad' && (
-                <div className="lp-shader-bar" role="group" aria-label="Cambiar textura del fondo continuo">
+                <div
+                  className="lp-shader-bar"
+                  role="group"
+                  aria-label="Cambiar fondo interactivo continuo"
+                  title="Toca o haz clic en el fondo para activar su animación exclusiva"
+                >
                   <span className="lp-shader-label">
                     <Waves size={13} aria-hidden="true" /> Fondo:
                   </span>
                   {(
                     [
-                      { id: 'halftone', label: 'Halftone' },
-                      { id: 'plotter', label: 'Plotter' },
-                      { id: 'braille', label: 'Braille' },
+                      { id: 'halftone', label: 'Halftone', hint: 'Toque: onda risográfica' },
+                      { id: 'plotter', label: 'Plotter', hint: 'Toque: sello topográfico' },
+                      { id: 'braille', label: 'Braille', hint: 'Toque: red de constelación' },
+                      { id: 'mosaico', label: 'Mosaico', hint: 'Toque: cascada de teselas' },
+                      { id: 'estelas', label: 'Estelas', hint: 'Toque: vórtice de chispas' },
                     ] as const
                   ).map((s) => (
                     <button
@@ -488,6 +495,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       type="button"
                       className="lp-shader-chip"
                       aria-pressed={modoFondo === s.id}
+                      title={s.hint}
                       onClick={() => setModoFondo(s.id)}
                     >
                       {s.label}
