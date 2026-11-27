@@ -135,7 +135,7 @@ interface NodoParticula {
   glifo?: string;
 }
 
-const GLIFOS_EDU = ['si', 'fin', '.edu', 'IR', '=>', '42', '{}'];
+const GLIFOS_CODIGO = ['si', 'fin', 'IR', '=>', '42', '{}', '()'];
 
 export const InteractiveShaderBg: React.FC<InteractiveShaderBgProps> = ({
   tema,
@@ -172,7 +172,7 @@ export const InteractiveShaderBg: React.FC<InteractiveShaderBgProps> = ({
       vx: (Math.random() - 0.5) * 0.55,
       vy: (Math.random() - 0.5) * 0.55,
       r: i % 5 === 0 ? 2.6 : 1.7,
-      glifo: i % 4 === 0 ? GLIFOS_EDU[i % GLIFOS_EDU.length] : undefined,
+      glifo: i % 4 === 0 ? GLIFOS_CODIGO[i % GLIFOS_CODIGO.length] : undefined,
     }));
 
     const redimensionar = () => {

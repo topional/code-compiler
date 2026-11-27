@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
   Blocks,
+  ChevronDown,
   Code2,
   Cpu,
   MessageSquare,
@@ -21,7 +22,7 @@ import {
 
 import { EJEMPLOS_EDU, type EjemploEdu } from '../data/ejemplos';
 import { MISIONES_EDU, type MisionEdu } from '../data/misiones';
-import { obtenerTema, TEMAS_CATALOGO, type TemaId } from '../data/temas';
+import { obtenerTema, type TemaId } from '../data/temas';
 import { compilarEdu } from '../engine/compilador';
 import { ejecutarIntermedio } from '../engine/interprete';
 import type { VariableMemoria } from '../engine/types';
@@ -39,7 +40,6 @@ import {
 interface LandingHomeProps {
   tema: TemaId;
   movimientoReducido: boolean;
-  onSeleccionarTema: (tema: TemaId) => void;
   onAbrirGaleriaTemas: () => void;
   misionesCompletadas: string[];
   onEntrarIde: () => void;
@@ -55,7 +55,7 @@ const FRASES_CINETICAS_HERO = [
   'Compila en español',
   'Bloques a código real',
   'Rayos X en vivo',
-  'Crea juegos con .edu',
+  'Crea juegos y algoritmos',
 ];
 
 const LINEAS_CODE_TYPEWRITER = [
@@ -71,7 +71,7 @@ asignar piloto valor de "Nova"
 crear variable energia
 asignar energia valor de numero aleatorio entre 40 y 100
 
-mostrar "¡Motor .edu encendido!"
+mostrar "¡Motor Chispa encendido!"
 mostrar piloto
 mostrar energia
 
@@ -125,7 +125,7 @@ const RESPUESTAS_CHISPA: {
   {
     patron: /ciclo|repetir|mientras|bucle|loop/i,
     texto:
-      'En .edu puedes repetir acciones con "repetir N veces ... fin" o con "mientras condicion hacer ... fin". Mira este contador:',
+      'Puedes repetir acciones con "repetir N veces ... fin" o con "mientras condicion hacer ... fin". Mira este contador:',
     snippet: {
       nombre: 'ciclo_rapido.edu',
       codigo: `crear variable cuenta\nasignar cuenta valor de 5\nrepetir 5 veces\n    mostrar cuenta\n    asignar cuenta valor de cuenta - 1\nfin\nmostrar "¡Listo!"`,
@@ -161,7 +161,7 @@ const RESPUESTAS_CHISPA: {
   {
     patron: /ir|compilador|rayos|token|parser/i,
     texto:
-      'El compilador pasa tu código por 4 fases reales: Léxico (tokens) → Sintáctico (árbol) → Semántico (tipos) → IR JSON v1.',
+      'Code Compiler pasa tu código por 4 fases reales: Léxico (tokens) → Sintáctico (árbol) → Semántico (tipos) → IR JSON v1.',
     snippet: {
       nombre: 'rayos_x_demo.edu',
       codigo: `crear variable x\nasignar x valor de 12 + 30\nmostrar x`,
@@ -179,8 +179,8 @@ function responderChispa(consulta: string): Omit<MensajeChat, 'id' | 'rol'> {
     texto:
       'Puedo ayudarte con variables, ciclos (repetir/mientras), decisiones (si/sino), funciones o juegos con azar. Aquí tienes una plantilla lista:',
     snippet: {
-      nombre: 'hola_edu.edu',
-      codigo: `crear variable nombre\nasignar nombre valor de "Explorador"\nmostrar "Hola desde .edu:"\nmostrar nombre`,
+      nombre: 'hola.edu',
+      codigo: `crear variable nombre\nasignar nombre valor de "Explorador"\nmostrar "Hola desde Chispa:"\nmostrar nombre`,
     },
   };
 }
@@ -194,7 +194,6 @@ interface SalidaDemo {
 export const LandingHome: React.FC<LandingHomeProps> = ({
   tema,
   movimientoReducido,
-  onSeleccionarTema,
   onAbrirGaleriaTemas,
   misionesCompletadas,
   onEntrarIde,
@@ -216,7 +215,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
       id: 1,
       rol: 'chispa',
       texto:
-        '¡Hola! Pregúntame cómo escribir ciclos, decisiones, funciones o juegos en .edu y te genero código listo para abrir en el IDE.',
+        '¡Hola! Pregúntame cómo escribir ciclos, decisiones, funciones o juegos y te genero código listo para abrir en Code Compiler.',
     },
   ]);
   const [inputChat, setInputChat] = useState('');
@@ -228,12 +227,10 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   // Catálogo filtrable
   const [filtroCatalogo, setFiltroCatalogo] = useState<FiltroCatalogo>('todos');
 
-  // AutoAnimate de awesome-design-stack
   const [outputAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 200 });
   const [chatAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 220 });
   const [gridAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 260 });
 
-  // Lenis smooth scroll
   useEffect(() => {
     if (movimientoReducido) return;
     const lenis = new Lenis({ duration: 1.0, smoothWheel: true });
@@ -252,7 +249,6 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   const temaMeta = obtenerTema(tema);
   const compilacionDemo = useMemo(() => compilarEdu(codigoDemo, 'intermedio'), [codigoDemo]);
 
-  // Ejecuta el mini-compilador del hero en tiempo real
   useEffect(() => {
     let cancelado = false;
     const t0 = performance.now();
@@ -289,7 +285,6 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
     };
   }, [compilacionDemo, runSeq]);
 
-  // Simulador en vivo de las 4 fases del compilador
   const presetPipe =
     PRESETS_PIPELINE.find((p) => p.id === presetPipeId) ?? PRESETS_PIPELINE[0];
   const compPipe = useMemo(() => compilarEdu(presetPipe.codigo, 'intermedio'), [presetPipe.codigo]);
@@ -334,17 +329,14 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
 
   return (
     <div className="lp-root">
-      {/* BARRA DE NAVEGACIÓN FLOTANTE */}
+      {/* BARRA DE NAVEGACIÓN PRINCIPAL */}
       <header className="lp-nav">
         <div className="lp-nav-inner">
-          <a href="#inicio-top" className="lp-brand" aria-label="Code Compiler Chispa .edu, Inicio">
+          <a href="#inicio-top" className="lp-brand" aria-label="Chispa, página principal">
             <span className="lp-brand-mark" aria-hidden="true">
               <Zap size={16} />
             </span>
-            <span className="lp-brand-text">
-              <span className="lp-brand-title">Code Compiler</span>
-              <span className="lp-brand-badge">.edu</span>
-            </span>
+            <span className="lp-brand-title">Chispa</span>
           </a>
 
           <nav className="lp-nav-links" aria-label="Navegación principal">
@@ -354,9 +346,6 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
             <a href="#retos" className="lp-nav-link">
               Retos y proyectos
             </a>
-            <a href="#temas" className="lp-nav-link">
-              10 Temas
-            </a>
           </nav>
 
           <div className="lp-nav-actions">
@@ -365,10 +354,11 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               className="lp-theme-trigger"
               onClick={onAbrirGaleriaTemas}
               aria-label={`Cambiar tema visual. Actual: ${temaMeta.nombre}`}
-              title="Abrir galería de 10 temas"
+              title="Cambiar tema visual"
             >
               <Palette size={15} aria-hidden="true" />
               <span className="lp-theme-trigger-label">{temaMeta.nombre}</span>
+              <ChevronDown size={13} aria-hidden="true" className="lp-theme-trigger-label" />
             </button>
 
             <motion.button
@@ -378,7 +368,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               whileTap={movimientoReducido ? undefined : { scale: 0.96 }}
               onClick={onEntrarIde}
             >
-              <span>Abrir IDE</span>
+              <span>Code Compiler</span>
               <ArrowRight size={15} aria-hidden="true" />
             </motion.button>
           </div>
@@ -386,8 +376,8 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
       </header>
 
       <main id="inicio-top">
-        {/* HERO ORIGINAL CON SHADERS WEBGL INTERACTIVOS + TIPOGRAFÍA CINÉTICA + STUDIO CARD */}
-        <section className="lp-hero-stage" aria-label="Presentación interactiva de Code Compiler .edu">
+        {/* HERO PRINCIPAL DE CHISPA CON SHADERS WEBGL + TIPOGRAFÍA CINÉTICA */}
+        <section className="lp-hero-stage" aria-label="Presentación de Chispa">
           <InteractiveShaderBg
             tema={tema}
             modo={modoShader}
@@ -396,18 +386,18 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           <div className="lp-hero-overlay" aria-hidden="true" />
 
           <div className="lp-hero-grid">
-            {/* COLUMNA IZQUIERDA: TIPOGRAFÍA CINÉTICA LETRA POR LETRA + CONTROLES */}
+            {/* COLUMNA IZQUIERDA */}
             <div className="lp-hero-copy">
               <div className="lp-status-pill">
                 <span className="lp-live-dot" aria-hidden="true" />
                 <ScrambleText
-                  texto="MOTOR .EDU EN NAVEGADOR · IR v1"
+                  texto="ENTORNO DE PROGRAMACIÓN EN ESPAÑOL"
                   desactivarAnimacion={movimientoReducido}
                 />
               </div>
 
               <h1 className="lp-kinetic-h1">
-                <span className="lp-h1-prefix">Code Compiler .edu</span>
+                <span className="lp-h1-prefix">Chispa</span>
                 <KineticLetterStage
                   frases={FRASES_CINETICAS_HERO}
                   desactivarAnimacion={movimientoReducido}
@@ -416,13 +406,12 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               </h1>
 
               <p className="lp-hero-desc">
-                Escribe código en español con autocompletado inteligente, bloques visuales tipo
-                Scratch y un compilador completo que te muestra tokens, árbol, memoria y salida en
-                milisegundos.
+                Aprende a programar en español con bloques visuales tipo Scratch y entra directo a{' '}
+                <strong>Code Compiler</strong>: un compilador real que te muestra tokens, árbol,
+                memoria y salida en milisegundos.
               </p>
 
-              {/* CINTA DE CÓDIGO TYPEWRITER EN VIVO */}
-              <div className="lp-code-ticker" aria-label="Ejemplo animado de sintaxis .edu">
+              <div className="lp-code-ticker" aria-label="Ejemplo animado de código">
                 <span className="lp-ticker-prompt" aria-hidden="true">
                   &gt;_
                 </span>
@@ -441,7 +430,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   onClick={onEntrarIde}
                 >
                   <Play size={16} aria-hidden="true" />
-                  <span>Empezar a programar</span>
+                  <span>Abrir Code Compiler</span>
                   <ArrowRight size={16} aria-hidden="true" />
                 </motion.button>
 
@@ -451,7 +440,6 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                 </a>
               </div>
 
-              {/* SELECTOR DE SHADER WEBGL INTERACTIVO (PAPER SHADERS) */}
               <div className="lp-shader-bar" role="group" aria-label="Cambiar fondo shader interactivo">
                 <span className="lp-shader-label">
                   <Waves size={13} aria-hidden="true" /> Fondo GPU:
@@ -476,7 +464,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: TARJETA STUDIO INTERACTIVA (EJECUTOR .EDU + CHAT CHISPA) */}
+            {/* COLUMNA DERECHA: PRUEBA EN VIVO + CHAT CON CHISPA */}
             <div className="lp-hero-panel-wrap lp-beam-frame">
               <div className="lp-hero-panel">
                 <div className="lp-panel-tabs" role="tablist" aria-label="Herramienta interactiva de portada">
@@ -497,7 +485,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                     )}
                     <span className="lp-tab-inner">
                       <Terminal size={14} aria-hidden="true" />
-                      <span>Probar .edu vivo</span>
+                      <span>Probar código vivo</span>
                     </span>
                   </button>
 
@@ -527,7 +515,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   <div className="lp-runner-body">
                     <div className="lp-runner-bar">
                       <span className="mono" style={{ fontSize: '0.76rem' }}>
-                        laboratorio.edu · {compilacionDemo.tokens.length} tokens
+                        laboratorio · {compilacionDemo.tokens.length} tokens
                       </span>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button
@@ -550,7 +538,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                     </div>
 
                     <label htmlFor="lp-mini-editor" className="sr-only">
-                      Editor interactivo .edu
+                      Editor interactivo de código
                     </label>
                     <textarea
                       id="lp-mini-editor"
@@ -558,7 +546,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       value={codigoDemo}
                       onChange={(e) => setCodigoDemo(e.target.value)}
                       spellCheck={false}
-                      aria-label="Editor interactivo .edu"
+                      aria-label="Editor interactivo de código"
                     />
 
                     <div className="lp-runner-out-head">
@@ -579,7 +567,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       ref={outputAnimRef}
                       className="lp-runner-out"
                       tabIndex={0}
-                      aria-label="Resultado del mini compilador"
+                      aria-label="Resultado del compilador"
                     >
                       {compilacionDemo.diagnosticos.length > 0
                         ? compilacionDemo.diagnosticos.map((d, i) => (
@@ -615,7 +603,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                         className="lp-cta-primary lp-cta-xs"
                         onClick={() => onEntrarConCodigo('laboratorio.edu', codigoDemo)}
                       >
-                        <span>Llevar al IDE</span>
+                        <span>Llevar a Code Compiler</span>
                         <ArrowRight size={13} aria-hidden="true" />
                       </button>
                     </div>
@@ -625,7 +613,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                     <div className="lp-chat-head">
                       <ChispaMascota estado="feliz" size={32} />
                       <div>
-                        <strong style={{ fontSize: '0.86rem' }}>Asistente interactivo .edu</strong>
+                        <strong style={{ fontSize: '0.86rem' }}>Asistente interactivo Chispa</strong>
                         <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
                           Respuestas instantáneas con código ejecutable
                         </div>
@@ -670,7 +658,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                                 }
                               >
                                 <Play size={11} aria-hidden="true" />
-                                <span>Abrir en el IDE</span>
+                                <span>Abrir en Code Compiler</span>
                               </button>
                             </div>
                           )}
@@ -686,7 +674,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       }}
                     >
                       <label htmlFor="lp-chat-input" className="sr-only">
-                        Escribe una pregunta sobre el lenguaje .edu
+                        Escribe una pregunta de programación
                       </label>
                       <input
                         id="lp-chat-input"
@@ -694,7 +682,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                         className="lp-chat-input"
                         value={inputChat}
                         onChange={(e) => setInputChat(e.target.value)}
-                        placeholder="Pregunta sobre ciclos, funciones, IR v1..."
+                        placeholder="Pregunta sobre ciclos, funciones, decisiones..."
                       />
                       <button
                         type="submit"
@@ -727,8 +715,8 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               />
             </h2>
             <p className="lp-lead">
-              Toca un programa de prueba y mira cómo responde cada etapa real del motor{' '}
-              <code>topional/code-compiler</code> en tu navegador.
+              Toca un ejemplo y mira cómo responde cada etapa real de <strong>Code Compiler</strong>{' '}
+              directamente en tu navegador.
             </p>
           </div>
 
@@ -761,7 +749,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               className="lp-cta-primary lp-cta-xs"
               onClick={() => onEntrarConCodigo(`${presetPipe.id}.edu`, presetPipe.codigo)}
             >
-              <span>Editar en IDE</span>
+              <span>Editar en Code Compiler</span>
               <ArrowRight size={13} aria-hidden="true" />
             </button>
           </div>
@@ -793,7 +781,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               <p>
                 {compPipe.diagnosticos.some((d) => d.etapa === 'gramatica')
                   ? 'Se detectó un error de gramática antes de continuar.'
-                  : `Gramática .edu válida con ${compPipe.arbolVisual?.hijos.length ?? 0} sentencia(s) raíz.`}
+                  : `Gramática válida con ${compPipe.arbolVisual?.hijos.length ?? 0} sentencia(s) raíz.`}
               </p>
             </SpotlightCard>
 
@@ -847,30 +835,30 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 22 }}>
             <button type="button" className="lp-cta-surface" onClick={onEntrarConRayosX}>
               <Cpu size={16} aria-hidden="true" />
-              <span>Explorar Rayos X completo en el IDE</span>
+              <span>Explorar Rayos X en Code Compiler</span>
               <ArrowRight size={15} aria-hidden="true" />
             </button>
           </div>
         </section>
 
-        {/* SECCIÓN 3: RETOS GUIADOS CON XP Y PROYECTOS OFICIALES (BENTO STUDIO) */}
+        {/* SECCIÓN 3: RETOS GUIADOS CON XP Y PROYECTOS */}
         <section id="retos" className="lp-section" aria-labelledby="retos-heading">
           <div className="lp-section-head">
             <span className="lp-kicker">
               <ScrambleText
-                texto="// práctica guiada y repositorio oficial"
+                texto="// práctica guiada y proyectos listos"
                 desactivarAnimacion={movimientoReducido}
               />
             </span>
             <h2 id="retos-heading" className="lp-h2">
               <SplitRevealText
-                texto="Retos verificados con XP y programas de examples/"
+                texto="Retos verificados con XP y programas de práctica"
                 desactivarAnimacion={movimientoReducido}
               />
             </h2>
             <p className="lp-lead">
-              Cada tarjeta abre directamente el entorno IDE con bloques Scratch, verificador
-              automático y ejecución paso a paso.
+              Cada tarjeta abre directamente <strong>Code Compiler</strong> con bloques Scratch,
+              verificador automático y depuración paso a paso.
             </p>
           </div>
 
@@ -918,7 +906,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               [
                 { id: 'todos', label: `Todo (${MISIONES_EDU.length + ejemplosMostrar.length})` },
                 { id: 'misiones', label: `Retos XP (${MISIONES_EDU.length})` },
-                { id: 'ejemplos', label: `Ejemplos .edu (${ejemplosMostrar.length})` },
+                { id: 'ejemplos', label: `Proyectos (${ejemplosMostrar.length})` },
               ] as const
             ).map((f) => (
               <button
@@ -992,7 +980,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   <div className="lp-bento-head">
                     <span className="lp-bento-tag">
                       <Code2 size={13} aria-hidden="true" />
-                      {ej.archivo}
+                      Proyecto práctico
                     </span>
                     <span className="lp-bento-xp">{ej.nivel}</span>
                   </div>
@@ -1019,55 +1007,12 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                 </SpotlightCard>
               ))}
           </div>
-        </section>
-
-        {/* SECCIÓN 4: 10 TEMAS QUE TRANSFORMAN INTERFAZ + SHADERS GPU */}
-        <section id="temas" className="lp-section" aria-labelledby="temas-heading">
-          <div className="lp-section-head">
-            <span className="lp-kicker">
-              <ScrambleText
-                texto="// 10 paletas sincronizadas con los shaders"
-                desactivarAnimacion={movimientoReducido}
-              />
-            </span>
-            <h2 id="temas-heading" className="lp-h2">
-              <SplitRevealText
-                texto="Cambia de tema y transforma toda la atmósfera"
-                desactivarAnimacion={movimientoReducido}
-              />
-            </h2>
-            <p className="lp-lead">
-              Cada paleta adapta simultáneamente el editor CodeMirror, los shaders WebGL, el
-              contraste WCAG y el entorno IDE.
-            </p>
-          </div>
-
-          <div className="lp-themes-grid" role="group" aria-label="Selector rápido de 10 temas">
-            {TEMAS_CATALOGO.map((t) => (
-              <motion.button
-                key={t.id}
-                type="button"
-                className="lp-theme-chip"
-                aria-pressed={tema === t.id}
-                whileHover={movimientoReducido ? undefined : { y: -2, scale: 1.03 }}
-                whileTap={movimientoReducido ? undefined : { scale: 0.96 }}
-                onClick={() => onSeleccionarTema(t.id)}
-              >
-                <span className="lp-swatches" aria-hidden="true">
-                  {t.muestras.map((hex, i) => (
-                    <span key={i} className="lp-swatch" style={{ backgroundColor: hex }} />
-                  ))}
-                </span>
-                <span>{t.nombre}</span>
-              </motion.button>
-            ))}
-          </div>
 
           <div className="lp-closing-card">
             <Sparkles size={26} style={{ color: 'var(--accent)' }} aria-hidden="true" />
-            <h2 className="lp-h2">Abre el IDE y escribe tu primer programa .edu</h2>
+            <h2 className="lp-h2">Abre Code Compiler y crea tu primer programa</h2>
             <p className="lp-lead">
-              Sin cuentas ni descargas: editor CodeMirror 6, bloques Scratch, Rayos X y ejecución
+              Sin cuentas ni descargas: editor inteligente, bloques Scratch, Rayos X y ejecución
               paso a paso en un clic.
             </p>
             <motion.button
@@ -1078,7 +1023,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               onClick={onEntrarIde}
             >
               <Play size={16} aria-hidden="true" />
-              <span>Entrar al IDE ahora</span>
+              <span>Entrar a Code Compiler</span>
               <ArrowRight size={16} aria-hidden="true" />
             </motion.button>
           </div>
@@ -1088,18 +1033,14 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
       <footer className="lp-footer">
         <div className="lp-footer-inner">
           <span>
-            <strong>Code Compiler · Chispa .edu</strong> — TypeScript, React, Paper Shaders, Motion,
-            Lenis y Auto-Animate.
+            <strong>Chispa</strong> · Entorno <strong>Code Compiler</strong>
           </span>
           <div className="lp-footer-links">
             <button type="button" onClick={onEntrarIde}>
-              Entrar al IDE
+              Code Compiler
             </button>
             <button type="button" onClick={onEntrarConRayosX}>
               Rayos X
-            </button>
-            <button type="button" onClick={onAbrirGaleriaTemas}>
-              10 Temas
             </button>
             <a
               href="https://github.com/topional/code-compiler"

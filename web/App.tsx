@@ -644,7 +644,6 @@ export function App() {
             <LandingHome
               tema={tema}
               movimientoReducido={movimientoReducido}
-              onSeleccionarTema={setTema}
               onAbrirGaleriaTemas={() => setTemasAbiertos(true)}
               misionesCompletadas={misionesCompletadas}
               onEntrarIde={() => setVistaApp('ide')}
@@ -1249,7 +1248,7 @@ export function App() {
               title="Repositorio topional/code-compiler"
             >
               <Zap size={12} aria-hidden="true" style={{ color: 'var(--accent)' }} />
-              <span>Code Compiler · Chispa .edu</span>
+              <span>Code Compiler · Chispa</span>
             </a>
 
             <span>{modoMotor === 'navegador' ? 'Navegador' : 'API Python'}</span>
@@ -1281,7 +1280,7 @@ export function App() {
               <ChevronDown size={12} aria-hidden="true" />
             </button>
 
-            <span>.edu IR v1</span>
+            <span>IR v1</span>
           </div>
         </footer>
 
