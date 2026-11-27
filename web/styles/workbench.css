@@ -1,0 +1,1428 @@
+/* ==========================================================================
+   Code Compiler · Chispa .edu — Arquitectura IDE 100dvh (GoJS × Scratch × Codédex)
+   Cero herencia de sitio web con scroll: entorno de paneles flotantes tipo gestor de ventanas.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  font-size: calc(15px * var(--text-scale));
+  background: var(--bg-canvas);
+  color: var(--ink-primary);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar fino estilo IDE coherente con los 10 temas */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--font-mono);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* ==========================================================================
+   SHELL PRINCIPAL DEL WORKBENCH (100dvh, paneles flotantes con gap 6px)
+   ========================================================================== */
+.wb-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  background: var(--bg-canvas);
+  padding: 6px 6px 0;
+  gap: 6px;
+}
+
+.wb-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 6px;
+}
+
+/* Panel flotante base estilo GoJS.app / Zed */
+.wb-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+[data-theme='high-contrast'] .wb-pane {
+  border-width: 2px;
+}
+
+.wb-pane-header {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 8px 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.wb-pane-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   CARRIL SCRATCH IZQUIERDO (60px) + FLYOUT DE FICHAS ROMPECABEZAS
+   ========================================================================== */
+.scratch-rail {
+  width: 60px;
+  min-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  gap: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.rail-brand {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+
+.rail-brand:hover {
+  background: var(--bg-surface-hover);
+}
+
+.rail-divider {
+  width: 30px;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 2px 0;
+  flex-shrink: 0;
+}
+
+.scratch-cat-btn {
+  width: 50px;
+  min-height: 50px;
+  padding: 5px 2px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.14s ease, color 0.14s ease;
+}
+
+.scratch-cat-btn:hover {
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+}
+
+.scratch-cat-btn[aria-pressed='true'] {
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+  border-color: var(--border-subtle);
+}
+
+.scratch-cat-btn[aria-pressed='true']::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 99px;
+  background: var(--cat-color, var(--accent));
+}
+
+.scratch-cat-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--cat-color, var(--accent));
+  border: 2px solid color-mix(in srgb, var(--ink-primary) 24%, transparent);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--cat-color, var(--accent)) 45%, transparent);
+}
+
+.scratch-cat-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+/* Flyout de fichas rompecabezas */
+.blocks-flyout {
+  width: 248px;
+  min-width: 248px;
+  flex-shrink: 0;
+}
+
+.blocks-flyout-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.blocks-flyout-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  line-height: 1.4;
+}
+
+/* Ficha táctil estilo bloque de Scratch */
+.puzzle-block {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  padding: 9px 11px;
+  border-radius: 8px 10px 10px 4px;
+  border: 1.5px solid var(--cat-color, var(--accent));
+  border-left-width: 5px;
+  background: var(--cat-bg, var(--bg-surface-alt));
+  color: var(--ink-primary);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.14s ease;
+}
+
+.puzzle-block::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 14px;
+  width: 18px;
+  height: 4px;
+  border-radius: 0 0 4px 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--cat-color, var(--accent));
+  border-top: none;
+}
+
+.puzzle-block:hover {
+  transform: translateX(2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.puzzle-block:active {
+  transform: scale(0.985);
+}
+
+.puzzle-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+}
+
+.puzzle-slot {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--cat-color, var(--accent));
+  border: 1px solid var(--border-subtle);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.puzzle-sub {
+  font-size: 0.72rem;
+  color: var(--ink-secondary);
+  line-height: 1.3;
+}
+
+/* ==========================================================================
+   ÁREA CENTRAL DIVISIBLE (EDITOR + SALIDA/ESCENARIO — HORIZONTAL O VERTICAL)
+   ========================================================================== */
+.wb-center {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.wb-center.layout-vertical {
+  flex-direction: column;
+}
+
+.wb-editor-pane {
+  flex: 1.35;
+}
+
+.wb-output-pane {
+  flex: 0.95;
+}
+
+/* Pestañas compactas de archivos dentro del header del editor (38px) */
+.tab-strip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  overflow-x: auto;
+  flex: 1;
+}
+
+.file-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.file-tab:hover {
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+}
+
+.file-tab[aria-current='true'] {
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+  border-color: var(--border-subtle);
+}
+
+.file-tab-ext {
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent-soft-ink);
+}
+
+.file-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.file-tab-close:hover {
+  background: var(--bg-surface-hover);
+  color: var(--ink-primary);
+}
+
+/* Botones compactos de barra de herramientas IDE */
+.ide-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ide-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 7px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.ide-icon-btn:hover:not(:disabled) {
+  background: var(--bg-surface-hover);
+  color: var(--ink-primary);
+  border-color: var(--border-subtle);
+}
+
+.ide-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ide-icon-btn.run-btn {
+  background: var(--ok);
+  color: var(--ok-ink, #000000);
+  border-color: transparent;
+  padding: 0 10px;
+}
+
+.ide-icon-btn.run-btn:hover:not(:disabled) {
+  background: var(--ok);
+  color: var(--ok-ink, #000000);
+  filter: brightness(0.92);
+}
+
+.ide-icon-btn.accent-btn {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+  padding: 0 9px;
+}
+
+.ide-icon-btn.accent-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  color: var(--accent-ink);
+}
+
+.ide-icon-btn.active-toggle {
+  background: var(--ok-bg);
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+/* Banner de misión activa acoplado dentro del editor */
+.mission-strip {
+  padding: 8px 12px;
+  background: var(--bg-surface-alt);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* CodeMirror 6 a toda altura dentro del panel flotante */
+.edu-cm-wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  background: var(--bg-editor);
+  overflow: hidden;
+}
+
+.edu-cm-wrapper .cm-editor {
+  height: 100%;
+  background: var(--bg-editor);
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.edu-cm-wrapper .cm-scroller {
+  overflow: auto;
+  line-height: 1.62;
+  padding-top: 6px;
+}
+
+.edu-cm-wrapper .cm-editor.cm-focused {
+  outline: none;
+}
+
+.edu-cm-wrapper .cm-gutters {
+  background: var(--bg-editor);
+  color: var(--ink-muted);
+  border-right: 1px solid var(--border-subtle);
+  padding-right: 4px;
+}
+
+.edu-cm-wrapper .cm-activeLine {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.edu-cm-wrapper .cm-activeLineGutter {
+  background: transparent;
+  color: var(--ink-primary);
+  font-weight: 700;
+}
+
+.edu-cm-wrapper .cm-line.cm-exec-line {
+  background: var(--line-active-bg);
+  box-shadow: inset 3px 0 0 var(--line-active-border);
+}
+
+.edu-cm-wrapper .cm-line.cm-hover-line {
+  background: var(--line-hover-bg);
+  box-shadow: inset 3px 0 0 var(--info);
+}
+
+.edu-cm-wrapper .cm-line.cm-err-line {
+  background: var(--line-error-bg);
+  text-decoration: underline wavy var(--err);
+  text-underline-offset: 3px;
+}
+
+.tok-edu-variable { color: var(--cat-variable); font-weight: 600; }
+.tok-edu-io { color: var(--cat-io); font-weight: 600; }
+.tok-edu-control { color: var(--cat-control); font-weight: 600; }
+.tok-edu-operador { color: var(--cat-operador); font-weight: 600; }
+.tok-edu-funcion { color: var(--cat-funcion); font-weight: 600; }
+.tok-edu-string { color: var(--string-ink); }
+.tok-edu-number { color: var(--number-ink); font-weight: 600; }
+.tok-edu-comment { color: var(--comment-ink); font-style: italic; }
+
+/* ==========================================================================
+   PANEL DE SALIDA ANCLADA POR LÍNEA + MINI ESCENARIO CHISPA + MEMORIA
+   ========================================================================== */
+.stage-hero-strip {
+  padding: 10px 12px;
+  background: var(--bg-surface-alt);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.stage-bubble {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 11px;
+  border-radius: 12px 12px 12px 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.82rem;
+  color: var(--ink-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Flujo de salida estilo GoJS.app: número de línea a la izquierda + valor coloreado */
+.output-stream {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+
+.output-empty {
+  margin: auto;
+  padding: 20px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-family: var(--font-ui);
+  font-size: 0.84rem;
+}
+
+.output-row {
+  width: 100%;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+.output-row:hover {
+  background: var(--bg-surface-alt);
+  border-color: var(--border-subtle);
+}
+
+.output-ln {
+  text-align: right;
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+  user-select: none;
+}
+
+.output-val {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--string-ink);
+}
+
+.output-row.is-number .output-val {
+  color: var(--number-ink);
+  font-weight: 600;
+}
+
+.output-row.is-bool .output-val {
+  color: var(--cat-operador);
+  font-weight: 700;
+}
+
+.output-row.is-pregunta .output-val {
+  color: var(--info);
+}
+
+.output-row.is-respuesta {
+  background: var(--accent-soft);
+}
+.output-row.is-respuesta .output-val {
+  color: var(--accent-soft-ink);
+  font-weight: 700;
+}
+
+.output-row.is-aviso {
+  background: var(--warn-bg);
+}
+.output-row.is-aviso .output-val {
+  color: var(--warn);
+}
+
+.output-row.is-motivacion {
+  background: var(--cat-io-bg);
+}
+.output-row.is-motivacion .output-val {
+  color: var(--cat-io);
+}
+
+/* Prompt inline de preguntar */
+.inline-prompt {
+  margin: 6px 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--info-bg);
+  border: 1.5px solid var(--info);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.inline-prompt-form {
+  display: flex;
+  gap: 6px;
+}
+
+.ide-input {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  font-size: 0.85rem;
+}
+
+/* Diagnósticos con pistas pedagógicas dentro del panel de salida */
+.diag-stack {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border-subtle);
+  max-height: 45%;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.diag-item {
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: var(--err-bg);
+  border: 1px solid var(--err);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.diag-hint-box {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.77rem;
+  color: var(--ink-secondary);
+}
+
+/* Cajitas de memoria acopladas abajo de la salida */
+.memory-dock {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+  padding: 8px 10px;
+  flex-shrink: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.memory-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.memory-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mem-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+}
+
+.mem-chip.changed {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.mem-chip-name {
+  color: var(--cat-variable);
+  font-weight: 700;
+}
+
+.mem-chip-val {
+  color: var(--ink-primary);
+  font-weight: 700;
+}
+
+.mem-chip-type {
+  font-size: 0.64rem;
+  color: var(--ink-muted);
+}
+
+/* ==========================================================================
+   PANEL LATERAL DERECHO (MISIONES / RAYOS X / GUÍA / EJEMPLOS / HISTORIAL)
+   ========================================================================== */
+.wb-drawer {
+  width: 325px;
+  min-width: 300px;
+  flex-shrink: 0;
+}
+
+.drawer-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drawer-card {
+  padding: 11px 12px;
+  border-radius: 8px;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.drawer-card.done {
+  border-color: var(--ok);
+}
+
+.pill-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--bg-surface);
+  color: var(--ink-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.pill-mini.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--ok);
+  transition: width 0.25s ease;
+}
+
+.sub-tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.sub-pill {
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+  color: var(--ink-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sub-pill[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+
+.xray-table-wrap {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: auto;
+  background: var(--bg-editor);
+}
+
+.xray-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+}
+
+.xray-table th,
+.xray-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+}
+
+.xray-table th {
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+  position: sticky;
+  top: 0;
+}
+
+.tree-node {
+  margin-left: 12px;
+  padding-left: 8px;
+  border-left: 1px dashed var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.code-mini {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--bg-editor);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.74rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--ink-primary);
+}
+
+/* ==========================================================================
+   DOCK VERTICAL DERECHO (46px EN DESKTOP — IGUAL QUE GOJS.APP/APP/)
+   ========================================================================== */
+.wb-dock {
+  width: 46px;
+  min-width: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.dock-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dock-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.dock-btn:hover {
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+}
+
+.dock-btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-soft-ink);
+  border-color: var(--accent);
+}
+
+.dock-dot-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+
+/* ==========================================================================
+   BARRA DE ESTADO INFERIOR IDE (28px — FIRMA VISUAL DE GOJS.APP/APP/)
+   ========================================================================== */
+.wb-statusbar {
+  height: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+
+.status-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.status-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-primary);
+  font-weight: 700;
+  text-decoration: none;
+  padding: 2px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.status-link:hover {
+  background: var(--bg-surface-alt);
+}
+
+.status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.status-btn:hover {
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+}
+
+.status-ok {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.status-err {
+  color: var(--err);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   MODALES NATIVOS (<dialog>: 10 Temas, Ctrl+K, Ajustes)
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-strong);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  color: var(--accent-ink);
+}
+
+.btn-ok {
+  background: var(--ok);
+  color: var(--ok-ink, #000000);
+  border-color: transparent;
+}
+
+.btn-ok:hover:not(:disabled) {
+  background: var(--ok);
+  color: var(--ok-ink, #000000);
+  filter: brightness(0.92);
+}
+
+.btn-icon {
+  min-width: 36px;
+  padding: 0 8px;
+}
+
+.btn-sm {
+  min-height: 30px;
+  padding: 4px 9px;
+  font-size: 0.76rem;
+}
+
+.text-input {
+  min-height: 38px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+  font-size: 0.88rem;
+}
+
+dialog.native-dialog {
+  padding: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  box-shadow: var(--shadow-pop);
+  width: min(520px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+}
+
+dialog.native-dialog::backdrop {
+  background: rgba(6, 10, 20, 0.68);
+  backdrop-filter: blur(4px);
+}
+
+.dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+}
+
+.dialog-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  max-height: calc(100dvh - 110px);
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.setting-label {
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.section-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.seg-btn {
+  min-height: 38px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+  color: var(--ink-secondary);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.seg-btn[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+
+dialog.theme-dialog {
+  width: min(700px, calc(100vw - 24px));
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.theme-card {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+  color: var(--ink-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.theme-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-surface-hover);
+}
+
+.theme-card.active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.theme-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.swatch-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  display: inline-block;
+}
+
+dialog.cmd-dialog {
+  width: min(580px, calc(100vw - 24px));
+  overflow: hidden;
+}
+
+.cmd-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+}
+
+.cmd-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--ink-primary);
+  font-size: 0.94rem;
+  min-height: 36px;
+  outline: none;
+}
+
+.cmd-list {
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cmd-item {
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-primary);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+}
+
+.cmd-item:hover,
+.cmd-item:focus-visible {
+  background: var(--bg-surface-alt);
+  border-color: var(--accent);
+}
+
+.cmd-item-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-subtle);
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   MÓVIL & TABLET (< 960px): DOCK INFERIOR DE 48px COMO EN GOJS.APP/APP/
+   ========================================================================== */
+.mobile-bottom-dock {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .wb-root {
+    padding: 4px;
+    gap: 4px;
+  }
+  .scratch-rail,
+  .wb-dock,
+  .wb-statusbar {
+    display: none;
+  }
+  .wb-body {
+    flex-direction: column;
+  }
+  .blocks-flyout,
+  .wb-drawer,
+  .wb-center,
+  .wb-editor-pane,
+  .wb-output-pane {
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+  }
+  .wb-pane.mobile-hidden,
+  .wb-center.mobile-hidden {
+    display: none;
+  }
+  .mobile-bottom-dock {
+    height: 50px;
+    min-height: 50px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: center;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+  .mob-dock-btn {
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 0.64rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .mob-dock-btn[aria-pressed='true'] {
+    background: var(--accent-soft);
+    color: var(--accent-soft-ink);
+    border-color: var(--accent);
+  }
+  .theme-grid {
+    grid-template-columns: 1fr;
+  }
+  .hide-narrow {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+[data-reduced-motion='true'] *,
+[data-reduced-motion='true'] *::before,
+[data-reduced-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}

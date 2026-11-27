@@ -212,6 +212,7 @@ interface EduEditorProps {
   ariaLabel?: string;
   onShortcutRun?: () => void;
   onShortcutFormat?: () => void;
+  onCursorChange?: (linea: number, columna: number) => void;
 }
 
 export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function EduEditor(
@@ -225,6 +226,7 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
     ariaLabel = 'Editor de código en lenguaje educativo .edu',
     onShortcutRun,
     onShortcutFormat,
+    onCursorChange,
   },
   ref,
 ) {
@@ -233,9 +235,11 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
   const onChangeRef = useRef(onChange);
   const onRunRef = useRef(onShortcutRun);
   const onFormatRef = useRef(onShortcutFormat);
+  const onCursorRef = useRef(onCursorChange);
   onChangeRef.current = onChange;
   onRunRef.current = onShortcutRun;
   onFormatRef.current = onShortcutFormat;
+  onCursorRef.current = onCursorChange;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -282,10 +286,16 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
           if (update.docChanged) {
             onChangeRef.current(update.state.doc.toString());
           }
+          if (update.selectionSet || update.docChanged) {
+            const head = update.state.selection.main.head;
+            const line = update.state.doc.lineAt(head);
+            onCursorRef.current?.(line.number, head - line.from + 1);
+          }
         }),
       ],
     });
 
+    view.scrollDOM.setAttribute('tabindex', '0');
     viewRef.current = view;
     return () => {
       view.destroy();
