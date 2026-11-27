@@ -1,6 +1,5 @@
 /**
- * Programas oficiales de `examples/` + plantilla de bienvenida rápida.
- * Cada código fuente coincide exactamente con los archivos `.edu` del repositorio.
+ * Juegos 2D interactivos y proyectos de práctica listos para jugar y modificar en Code Compiler.
  */
 
 export interface EjemploEdu {
@@ -9,17 +8,18 @@ export interface EjemploEdu {
   subtitulo: string;
   nivel: 'Inicio' | 'Intermedio' | 'Avanzado' | 'Reto';
   archivo: string;
+  escena?: 'rpg' | 'aventura' | 'torneo' | 'cohete' | 'chispa';
   etiquetas: string[];
   codigo: string;
 }
 
-export const CODIGO_HERO_DEFAULT = `# ¡Tu primer código en español!
+export const CODIGO_HERO_DEFAULT = `# ¡Tu primer juego del Dado Mágico!
 crear variable nombre
 asignar nombre valor de "Explorador"
 crear variable dado
 asignar dado valor de numero aleatorio entre 1 y 6
 
-mostrar "¡Hola, bienvenido a Chispa .edu!"
+mostrar "¡Bienvenido a Chispa!"
 mostrar nombre
 mostrar "Lanzando tu dado mágico..."
 mostrar dado
@@ -32,50 +32,139 @@ fin`;
 
 export const EJEMPLOS_EDU: EjemploEdu[] = [
   {
-    id: 'basico',
-    titulo: 'Hola y primer ciclo',
-    subtitulo: 'Variables, decisiones y un contador con repetir',
+    id: 'duelo_rpg',
+    titulo: 'Duelo RPG Chispa',
+    subtitulo: 'Batalla 2D estilo Pokémon con ataques, pociones y barras de vida',
     nivel: 'Inicio',
-    archivo: 'examples/basico.edu',
-    etiquetas: ['variables', 'si/sino', 'repetir'],
-    codigo: `# Programa básico: variables, operaciones, decisiones y repeticiones.
-crear variable nombre
-asignar nombre valor de "Ana"
-crear variable edad
-asignar edad valor de 12
+    archivo: 'duelo_rpg',
+    escena: 'rpg',
+    etiquetas: ['juego 2D', 'RPG', 'azar'],
+    codigo: `# ¡Duelo RPG estilo Pokémon! Edita la vida o el ataque y prueba tu estrategia
+crear variable vida_heroe
+asignar vida_heroe valor de 100
+crear variable vida_rival
+asignar vida_rival valor de 80
+crear variable jugada
+asignar jugada valor de 0
+crear variable dano
+asignar dano valor de 0
 
-mostrar "Hola"
-mostrar nombre
-mostrar "El próximo año tendrás"
-mostrar edad + 1
-
-si edad es mayor o igual que 12 entonces
-    mostrar "Ya puedes programar con texto"
-sino
-    mostrar "Practica primero con bloques"
+mostrar "¡Un Slime Rey salvaje apareció!"
+mientras vida_heroe es mayor que 0 y vida_rival es mayor que 0 hacer
+    mostrar "1: Rayo Chispa | 2: Llamarada | 3: Pocion (+25)"
+    preguntar "Elige tu ataque (1, 2 o 3)" guardar en jugada
+    si jugada es igual a 1 entonces
+        asignar dano valor de numero aleatorio entre 18 y 28
+        asignar vida_rival valor de vida_rival - dano
+        mostrar "¡Usaste Rayo Chispa!"
+        mostrar dano
+    sino
+        si jugada es igual a 2 entonces
+            asignar dano valor de numero aleatorio entre 12 y 38
+            asignar vida_rival valor de vida_rival - dano
+            mostrar "¡Llamarada solar!"
+            mostrar dano
+        sino
+            asignar vida_heroe valor de vida_heroe + 25
+            mostrar "¡Poción mágica! +25 vida"
+        fin
+    fin
+    si vida_rival es mayor que 0 entonces
+        asignar dano valor de numero aleatorio entre 10 y 22
+        asignar vida_heroe valor de vida_heroe - dano
+        mostrar "¡Slime Rey contraataca!"
+        mostrar dano
+    fin
 fin
 
-crear variable contador
-asignar contador valor de 1
-repetir 3 veces
-    mostrar contador
-    asignar contador valor de contador + 1
+si vida_rival es menor o igual que 0 entonces
+    mostrar "¡Victoria! Derrotaste al Slime Rey"
+sino
+    mostrar "¡Buen combate! Edita tu ataque y vuelve a intentar"
 fin`,
   },
   {
+    id: 'piedra_papel_tijera',
+    titulo: 'Torneo Piedra, Papel o Tijera',
+    subtitulo: 'Duelo arcade 2D animado contra el rival de la computadora',
+    nivel: 'Inicio',
+    archivo: 'piedra_papel_tijera',
+    escena: 'torneo',
+    etiquetas: ['juego 2D', 'arcade', 'lógica'],
+    codigo: `# Torneo arcade: 1 = piedra, 2 = papel, 3 = tijera.
+crear variable jugador
+asignar jugador valor de 0
+
+crear variable computadora
+asignar computadora valor de numero aleatorio entre 1 y 3
+
+mostrar "Piedra, papel o tijera"
+mostrar "1: Piedra | 2: Papel | 3: Tijera"
+
+preguntar "Elige tu jugada (1, 2 o 3)" guardar en jugador
+
+si jugador es igual a 1 o jugador es igual a 2 o jugador es igual a 3 entonces
+    mostrar "El rival eligió:"
+
+    si computadora es igual a 1 entonces
+        mostrar "Piedra"
+    sino
+        si computadora es igual a 2 entonces
+            mostrar "Papel"
+        sino
+            mostrar "Tijera"
+        fin
+    fin
+
+    si jugador es igual a computadora entonces
+        mostrar "¡Empate!"
+    sino
+        si (jugador es igual a 1 y computadora es igual a 3) o (jugador es igual a 2 y computadora es igual a 1) o (jugador es igual a 3 y computadora es igual a 2) entonces
+            mostrar "¡Ganaste el torneo!"
+        sino
+            mostrar "Perdiste esta ronda, ¡intenta otra vez!"
+        fin
+    fin
+sino
+    mostrar "Elige 1, 2 o 3 para jugar"
+fin`,
+  },
+  {
+    id: 'mision_cohete',
+    titulo: 'Despegue Espacial 3-2-1',
+    subtitulo: 'Cuenta regresiva animada para lanzar el cohete Chispa-1 al espacio',
+    nivel: 'Inicio',
+    archivo: 'mision_cohete',
+    escena: 'cohete',
+    etiquetas: ['juego 2D', 'repetir', 'cohete'],
+    codigo: `# ¡Programa el despegue del cohete Chispa-1!
+crear variable piloto
+asignar piloto valor de "Nova"
+crear variable cuenta
+asignar cuenta valor de 5
+
+mostrar "¡Cohete listo en la plataforma!"
+mostrar piloto
+repetir 5 veces
+    mostrar cuenta
+    asignar cuenta valor de cuenta - 1
+fin
+mostrar "¡DESPEGUE AL ESPACIO!"`,
+  },
+  {
     id: 'principal',
-    titulo: 'Adivina el número',
-    subtitulo: 'El clásico juego de Scratch escrito en texto',
+    titulo: 'Adivina el número secreto',
+    subtitulo: 'El clásico juego de pistas con números aleatorios y ciclos',
     nivel: 'Intermedio',
-    archivo: 'examples/principal.edu',
-    etiquetas: ['juego', 'aleatorio', 'funciones', 'preguntar'],
-    codigo: `# Adivina el número: el proyecto clásico de Scratch escrito con texto.
-# Usa funciones, números aleatorios, entrada, ciclos y decisiones.
+    archivo: 'adivina_numero',
+    escena: 'chispa',
+    etiquetas: ['juego 2D', 'azar', 'funciones'],
+    codigo: `# Adivina el número secreto del 1 al 10 con pistas en vivo
 definir pista(numero intento, numero secreto) devuelve texto
     si intento es menor que secreto entonces
-        devolver "Es mayor"
+        devolver "Pista: es un número más grande"
     sino
-        devolver "Es menor"
+        devolver "Pista: es un número más pequeño"
     fin
 fin
 
@@ -94,7 +183,7 @@ asignar terminado valor de falso
 
 mostrar "Adivina el número del 1 al 10"
 mientras no terminado hacer
-    preguntar "Tu número" guardar en intento
+    preguntar "Tu número (1 al 10)" guardar en intento
     asignar intentos valor de intentos + 1
     si acerto(intento, secreto) entonces
         asignar terminado valor de verdadero
@@ -107,60 +196,24 @@ mostrar "¡Adivinaste! Intentos usados:"
 mostrar intentos`,
   },
   {
-    id: 'piedra_papel_tijera',
-    titulo: 'Piedra, papel o tijera',
-    subtitulo: 'Duelo interactivo contra la computadora',
-    nivel: 'Intermedio',
-    archivo: 'examples/piedra_papel_tijera.edu',
-    etiquetas: ['juego', 'aleatorio', 'lógica'],
-    codigo: `# Una partida: 1 = piedra, 2 = papel, 3 = tijera.
-crear variable jugador
-asignar jugador valor de 0
-
-crear variable computadora
-asignar computadora valor de numero aleatorio entre 1 y 3
-
-mostrar "Piedra, papel o tijera"
-mostrar "1: Piedra"
-mostrar "2: Papel"
-mostrar "3: Tijera"
-
-preguntar "Elige una opcion" guardar en jugador
-
-si jugador es igual a 1 o jugador es igual a 2 o jugador es igual a 3 entonces
-    mostrar "La computadora eligio:"
-
-    si computadora es igual a 1 entonces
-        mostrar "Piedra"
-    sino
-        si computadora es igual a 2 entonces
-            mostrar "Papel"
-        sino
-            mostrar "Tijera"
-        fin
-    fin
-
-    si jugador es igual a computadora entonces
-        mostrar "Empate"
-    sino
-        si (jugador es igual a 1 y computadora es igual a 3) o (jugador es igual a 2 y computadora es igual a 1) o (jugador es igual a 3 y computadora es igual a 2) entonces
-            mostrar "Ganaste"
-        sino
-            mostrar "Perdiste"
-        fin
-    fin
-sino
-    mostrar "Opcion invalida. Debes elegir 1, 2 o 3"
-fin`,
+    id: 'basico',
+    titulo: 'Aventura del Dado Mágico',
+    subtitulo: 'Variables, decisiones y un tablero interactivo con dado',
+    nivel: 'Inicio',
+    archivo: 'dado_magico',
+    escena: 'aventura',
+    etiquetas: ['juego 2D', 'variables', 'si/sino'],
+    codigo: CODIGO_HERO_DEFAULT,
   },
   {
     id: 'calculadora',
-    titulo: 'Calculadora interactiva',
+    titulo: 'Calculadora Mágica',
     subtitulo: 'Suma, resta, multiplica y divide cuidando el cero',
     nivel: 'Intermedio',
-    archivo: 'examples/calculadora.edu',
+    archivo: 'calculadora',
+    escena: 'chispa',
     etiquetas: ['matemática', 'preguntar', 'si/sino'],
-    codigo: `# Calculadora de una operacion con dos numeros.
+    codigo: `# Calculadora mágica con 4 operaciones
 crear variable opcion
 asignar opcion valor de 0
 
@@ -170,13 +223,10 @@ asignar primero valor de 0
 crear variable segundo
 asignar segundo valor de 0
 
-mostrar "Calculadora"
-mostrar "1: Suma"
-mostrar "2: Resta"
-mostrar "3: Multiplicacion"
-mostrar "4: Division"
+mostrar "Calculadora Mágica"
+mostrar "1: Suma | 2: Resta | 3: Multiplicar | 4: Dividir"
 
-preguntar "Elige una operacion" guardar en opcion
+preguntar "Elige una operacion (1 a 4)" guardar en opcion
 
 si opcion es igual a 1 o opcion es igual a 2 o opcion es igual a 3 o opcion es igual a 4 entonces
     preguntar "Escribe el primer numero" guardar en primero
@@ -202,98 +252,7 @@ si opcion es igual a 1 o opcion es igual a 2 o opcion es igual a 3 o opcion es i
         fin
     fin
 sino
-    mostrar "Opcion invalida. Debes elegir 1, 2, 3 o 4"
-fin`,
-  },
-  {
-    id: 'avanzado',
-    titulo: 'Laboratorio de recursión',
-    subtitulo: 'Factorial, Fibonacci, paridad y tabla de multiplicar',
-    nivel: 'Avanzado',
-    archivo: 'examples/avanzado.edu',
-    etiquetas: ['funciones', 'recursión', 'ciclos anidados'],
-    codigo: `# Programa avanzado: recursión, funciones lógicas y ciclos anidados.
-definir factorial(numero n) devuelve numero
-    si n es menor o igual que 1 entonces
-        devolver 1
-    fin
-    devolver n * factorial(n - 1)
-fin
-
-definir fibonacci(numero n) devuelve numero
-    si n es menor que 2 entonces
-        devolver n
-    fin
-    devolver fibonacci(n - 1) + fibonacci(n - 2)
-fin
-
-definir es_par(numero n) devuelve logico
-    si n es igual a 0 entonces
-        devolver verdadero
-    fin
-    devolver no es_par(n - 1)
-fin
-
-definir clasificar(numero n) devuelve texto
-    si es_par(n) entonces
-        devolver "par"
-    fin
-    devolver "impar"
-fin
-
-mostrar "n, factorial, fibonacci y paridad"
-crear variable i
-asignar i valor de 1
-mientras i es menor o igual que 5 hacer
-    mostrar i
-    mostrar factorial(i)
-    mostrar fibonacci(i)
-    mostrar clasificar(i)
-    si i es igual a 1 o i es igual a 5 entonces
-        mostrar "extremo"
-    fin
-    asignar i valor de i + 1
-fin
-
-mostrar "Tabla de multiplicar de 3 x 3"
-crear variable fila
-asignar fila valor de 1
-crear variable columna
-repetir 3 veces
-    asignar columna valor de 1
-    repetir 3 veces
-        mostrar fila * columna
-        asignar columna valor de columna + 1
-    fin
-    asignar fila valor de fila + 1
-fin`,
-  },
-  {
-    id: 'con_errores',
-    titulo: '¡Caza los 7 errores!',
-    subtitulo: 'Programa con 7 errores semánticos para aprender a depurar',
-    nivel: 'Reto',
-    archivo: 'examples/con_errores.edu',
-    etiquetas: ['depuración', 'semántica', 'tipos'],
-    codigo: `# Programa con errores: el compilador los detecta todos y no genera código.
-crear variable puntos
-asignar puntos valor de 10
-asignar puntos valor de "diez"
-mostrar vidas
-crear variable puntos
-
-si puntos entonces
-    mostrar "Ganaste"
-fin
-
-definir doble(numero x) devuelve numero
-    devolver x * 2
-fin
-mostrar doble("cinco")
-mostrar triple(3)
-
-repetir 2.5 veces
-    mostrar "Hola"
+    mostrar "Elige 1, 2, 3 o 4"
 fin`,
   },
 ];

@@ -630,7 +630,7 @@ textarea {
 }
 
 .edu-cm-wrapper .cm-line.cm-exec-line {
-  background: var(--line-active-bg);
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
   box-shadow: inset 3px 0 0 var(--line-active-border);
 }
 
@@ -1631,6 +1631,110 @@ dialog.cmd-dialog {
 }
 
 /* ==========================================================================
+   ESCENARIO 2D ANIMADO DE JUEGOS (PIXEL ART CANVAS + ACCIONES 1 CLIC)
+   ========================================================================== */
+.game-stage-shell {
+  margin: 8px 8px 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+.game-stage-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.game-stage-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--ink-primary);
+  letter-spacing: 0.02em;
+}
+
+.game-stage-modes {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.stage-mode-pill {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-alt);
+  color: var(--ink-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.stage-mode-pill:hover {
+  border-color: var(--accent);
+  color: var(--ink-primary);
+}
+
+.stage-mode-pill[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+
+.game-stage-canvas {
+  display: block;
+  width: 100%;
+  height: 224px;
+  image-rendering: pixelated;
+  cursor: pointer;
+  background: var(--bg-app);
+}
+
+.quick-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.quick-choice-btn {
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 110ms ease, filter 110ms ease;
+}
+
+.quick-choice-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.quick-choice-btn:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
    MÓVIL & TABLET (< 960px): DOCK INFERIOR DE 48px COMO EN GOJS.APP/APP/
    ========================================================================== */
 .mobile-bottom-dock {
@@ -1638,6 +1742,9 @@ dialog.cmd-dialog {
 }
 
 @media (max-width: 960px) {
+  .game-stage-canvas {
+    height: 196px;
+  }
   .wb-root {
     padding: 4px;
     gap: 4px;

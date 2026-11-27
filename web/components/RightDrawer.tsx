@@ -1,9 +1,8 @@
 /**
  * Panel lateral derecho acoplado al Dock de iconos (estilo GoJS.app + Codédex):
  * - Misiones guiadas con XP y comprobación en vivo
- * - Rayos X del Compilador (Tokens, Árbol, Símbolos, IR v1)
- * - Guía rápida Scratch ↔ .edu con búsqueda Fuse.js
- * - Ejemplos oficiales + Importar / Exportar archivos
+ * - Guía rápida de bloques con búsqueda Fuse.js
+ * - Juegos 2D y archivos (Importar / Exportar)
  * - Historial de instantáneas
  */
 
@@ -14,7 +13,6 @@ import {
   BookOpen,
   CheckCircle2,
   Code2,
-  Cpu,
   Download,
   FolderOpen,
   History,
@@ -32,10 +30,9 @@ import {
 import { BLOQUES_EDU } from '../data/bloques';
 import { EJEMPLOS_EDU } from '../data/ejemplos';
 import { MISIONES_EDU, type MisionEdu } from '../data/misiones';
-import type { NodoArbolVisual, ResultadoCompilacion } from '../engine/types';
 import { ContainerOverlayScrollbar } from './OverlayScrollbar';
 
-export type PanelDerechoTipo = 'misiones' | 'rayosx' | 'guia' | 'ejemplos' | 'historial' | null;
+export type PanelDerechoTipo = 'misiones' | 'guia' | 'ejemplos' | 'historial' | null;
 
 export interface InstantaneaCodigo {
   id: string;
@@ -49,7 +46,6 @@ export interface InstantaneaCodigo {
 interface RightDrawerProps {
   panel: PanelDerechoTipo;
   onCerrar: () => void;
-  compilacion: ResultadoCompilacion;
   misionesCompletadas: string[];
   misionActiva: MisionEdu | null;
   onIniciarMision: (m: MisionEdu) => void;
@@ -59,7 +55,6 @@ interface RightDrawerProps {
   onAbrirCodigoNuevo: (nombre: string, codigo: string) => void;
   onImportarArchivo: () => void;
   onExportarEdu: () => void;
-  onExportarIr: () => void;
   historial: InstantaneaCodigo[];
   onGuardarInstantanea: () => void;
   onRestaurarInstantanea: (codigo: string) => void;
@@ -67,31 +62,9 @@ interface RightDrawerProps {
   mobileVisible?: boolean;
 }
 
-function ArbolNodo({ nodo, profundidad = 0 }: { nodo: NodoArbolVisual; profundidad?: number }) {
-  return (
-    <div className={profundidad > 0 ? 'tree-node' : 'mono'} style={{ marginTop: 3 }}>
-      <div>
-        <strong style={{ color: 'var(--accent)' }}>{nodo.etiqueta}</strong>
-        {nodo.detalle && (
-          <span style={{ color: 'var(--ink-secondary)', marginLeft: 5 }}>{nodo.detalle}</span>
-        )}
-        {nodo.linea && (
-          <span style={{ color: 'var(--ink-muted)', marginLeft: 5, fontSize: '0.68rem' }}>
-            L{nodo.linea}
-          </span>
-        )}
-      </div>
-      {nodo.hijos.map((h, i) => (
-        <ArbolNodo key={`${h.etiqueta}-${i}`} nodo={h} profundidad={profundidad + 1} />
-      ))}
-    </div>
-  );
-}
-
 export function RightDrawer({
   panel,
   onCerrar,
-  compilacion,
   misionesCompletadas,
   misionActiva,
   onIniciarMision,
@@ -101,14 +74,12 @@ export function RightDrawer({
   onAbrirCodigoNuevo,
   onImportarArchivo,
   onExportarEdu,
-  onExportarIr,
   historial,
   onGuardarInstantanea,
   onRestaurarInstantanea,
   nombrePestanaActual,
   mobileVisible = false,
 }: RightDrawerProps) {
-  const [subRayosX, setSubRayosX] = useState<'tokens' | 'arbol' | 'simbolos' | 'ir'>('tokens');
   const drawerScrollRef = useRef<HTMLDivElement | null>(null);
   const [busquedaGuia, setBusquedaGuia] = useState('');
 
@@ -162,9 +133,8 @@ export function RightDrawer({
 
   const titulos: Record<Exclude<PanelDerechoTipo, null>, { texto: string; icono: React.ReactNode }> = {
     misiones: { texto: 'Misiones', icono: <Trophy size={14} aria-hidden="true" /> },
-    rayosx: { texto: 'Rayos X del Compilador', icono: <Cpu size={14} aria-hidden="true" /> },
-    guia: { texto: 'Guía Scratch ↔ .edu', icono: <BookOpen size={14} aria-hidden="true" /> },
-    ejemplos: { texto: 'Ejemplos y Archivos', icono: <FolderOpen size={14} aria-hidden="true" /> },
+    guia: { texto: 'Guía de Bloques', icono: <BookOpen size={14} aria-hidden="true" /> },
+    ejemplos: { texto: 'Juegos 2D y Archivos', icono: <FolderOpen size={14} aria-hidden="true" /> },
     historial: { texto: 'Historial', icono: <History size={14} aria-hidden="true" /> },
   };
 
@@ -291,143 +261,7 @@ export function RightDrawer({
         </div>
       )}
 
-      {/* 2. RAYOS X DEL COMPILADOR */}
-      {panel === 'rayosx' && (
-        <div ref={drawerScrollRef} className="drawer-scroll">
-          <div className="sub-tabs-row" role="group" aria-label="Etapa del compilador">
-            {(
-              [
-                ['tokens', `Tokens (${Math.max(0, compilacion.tokens.length - 1)})`],
-                ['arbol', 'Árbol'],
-                ['simbolos', `Símbolos (${compilacion.simbolos.length})`],
-                ['ir', `IR (${compilacion.intermedio?.instrucciones.length ?? 0})`],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                className="sub-pill"
-                aria-pressed={subRayosX === id}
-                onClick={() => setSubRayosX(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {subRayosX === 'tokens' && (
-            <div className="xray-table-wrap" tabIndex={0}>
-              <table className="xray-table">
-                <thead>
-                  <tr>
-                    <th>Pos</th>
-                    <th>Token</th>
-                    <th>Lexema</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {compilacion.tokens
-                    .filter((t) => t.tipo !== 'EOF' && t.tipo !== 'SALTO_LINEA')
-                    .slice(0, 180)
-                    .map((t, i) => (
-                      <tr key={i}>
-                        <td>{t.linea}:{t.columna}</td>
-                        <td>{t.tipo}</td>
-                        <td>{t.texto}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {subRayosX === 'arbol' && (
-            <div className="xray-table-wrap" style={{ padding: 10 }} tabIndex={0}>
-              {compilacion.arbolVisual ? (
-                <ArbolNodo nodo={compilacion.arbolVisual} />
-              ) : (
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
-                  Corrige los errores léxicos o sintácticos para ver el árbol sintáctico.
-                </p>
-              )}
-            </div>
-          )}
-
-          {subRayosX === 'simbolos' && (
-            <div className="xray-table-wrap" tabIndex={0}>
-              <table className="xray-table">
-                <thead>
-                  <tr>
-                    <th>Símbolo</th>
-                    <th>Tipo</th>
-                    <th>Ámbito</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {compilacion.simbolos.length === 0 ? (
-                    <tr>
-                      <td colSpan={3}>Sin variables ni funciones declaradas.</td>
-                    </tr>
-                  ) : (
-                    compilacion.simbolos.map((s, i) => (
-                      <tr key={i}>
-                        <td>{s.esFuncion ? s.firma : s.nombre}</td>
-                        <td>{s.tipo}</td>
-                        <td>{s.ambito}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {subRayosX === 'ir' && (
-            <>
-              <button
-                type="button"
-                className="btn btn-sm"
-                disabled={!compilacion.intermedio}
-                onClick={onExportarIr}
-              >
-                <Download size={13} aria-hidden="true" /> Exportar código intermedio (.ir.json)
-              </button>
-              <div className="xray-table-wrap" tabIndex={0}>
-                {compilacion.intermedio ? (
-                  <table className="xray-table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Op</th>
-                        <th>A1</th>
-                        <th>A2</th>
-                        <th>Dest</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {compilacion.intermedio.instrucciones.map((ins, i) => (
-                        <tr key={i}>
-                          <td>{i}</td>
-                          <td>{ins.operacion}</td>
-                          <td>{ins.argumento1 ?? '—'}</td>
-                          <td>{ins.argumento2 ?? '—'}</td>
-                          <td>{ins.resultado ?? '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p style={{ padding: 10, margin: 0, fontSize: '0.8rem', color: 'var(--ink-muted)' }}>
-                    El código IR v1 se genera al pasar el análisis semántico sin errores.
-                  </p>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* 3. GUÍA VISUAL SCRATCH <-> .EDU CON FUSE.JS */}
+      {/* 2. GUÍA VISUAL DE BLOQUES CON FUSE.JS */}
       {panel === 'guia' && (
         <div ref={drawerScrollRef} className="drawer-scroll">
           <div style={{ position: 'relative' }}>
@@ -490,31 +324,23 @@ export function RightDrawer({
       {panel === 'ejemplos' && (
         <div ref={drawerScrollRef} className="drawer-scroll">
           <div className="drawer-card">
-            <strong style={{ fontSize: '0.84rem' }}>Archivos locales</strong>
+            <strong style={{ fontSize: '0.84rem' }}>Tus archivos</strong>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button type="button" className="btn btn-sm" onClick={onImportarArchivo}>
-                <Upload size={13} aria-hidden="true" /> Abrir .edu
+                <Upload size={13} aria-hidden="true" /> Importar archivo
               </button>
               <button type="button" className="btn btn-sm" onClick={onExportarEdu}>
-                <Download size={13} aria-hidden="true" /> Guardar .edu
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm"
-                disabled={!compilacion.intermedio}
-                onClick={onExportarIr}
-              >
-                <Download size={13} aria-hidden="true" /> .ir.json
+                <Download size={13} aria-hidden="true" /> Descargar código
               </button>
             </div>
           </div>
 
-          <span className="section-tag">// programas de ejemplo .edu</span>
+          <span className="section-tag">// juegos 2D listos para jugar</span>
           {EJEMPLOS_EDU.map((ej) => (
             <article key={ej.id} className="drawer-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
                 <strong style={{ fontSize: '0.88rem' }}>{ej.titulo}</strong>
-                <span className="pill-mini">{ej.nivel}</span>
+                <span className="pill-mini ok">{ej.nivel}</span>
               </div>
               <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--ink-secondary)' }}>
                 {ej.subtitulo}
@@ -522,9 +348,9 @@ export function RightDrawer({
               <button
                 type="button"
                 className="btn btn-primary btn-sm"
-                onClick={() => onAbrirCodigoNuevo(`${ej.id}.edu`, ej.codigo)}
+                onClick={() => onAbrirCodigoNuevo(ej.id, ej.codigo)}
               >
-                <Play size={13} aria-hidden="true" /> Abrir en nueva pestaña
+                <Play size={13} aria-hidden="true" /> Jugar en nueva pestaña
               </button>
             </article>
           ))}

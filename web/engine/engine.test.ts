@@ -111,8 +111,31 @@ describe('Paridad 100 % con la batería de pruebas .edu del repositorio', () => 
 });
 
 describe('Ejecución exacta de programas .edu (examples/ y catálogo)', () => {
-  it('ejecuta basico.edu', async () => {
-    const res = await correrPrograma(codigoEjemplo('basico'));
+  it('ejecuta programa básico de variables, decisiones y repetir', async () => {
+    const codigo = `# Programa básico: variables, operaciones, decisiones y repeticiones.
+crear variable nombre
+asignar nombre valor de "Ana"
+crear variable edad
+asignar edad valor de 12
+
+mostrar "Hola"
+mostrar nombre
+mostrar "El próximo año tendrás"
+mostrar edad + 1
+
+si edad es mayor o igual que 12 entonces
+    mostrar "Ya puedes programar con texto"
+sino
+    mostrar "Practica primero con bloques"
+fin
+
+crear variable contador
+asignar contador valor de 1
+repetir 3 veces
+    mostrar contador
+    asignar contador valor de contador + 1
+fin`;
+    const res = await correrPrograma(codigo);
     expect(res.errores).toEqual([]);
     expect(res.salidas).toEqual([
       'Hola',
@@ -126,8 +149,63 @@ describe('Ejecución exacta de programas .edu (examples/ y catálogo)', () => {
     ]);
   });
 
-  it('ejecuta avanzado.edu (recursión, lógica y ciclos anidados)', async () => {
-    const res = await correrPrograma(codigoEjemplo('avanzado'));
+  it('ejecuta programa avanzado (recursión, lógica y ciclos anidados)', async () => {
+    const codigo = `# Programa avanzado: recursión, funciones lógicas y ciclos anidados.
+definir factorial(numero n) devuelve numero
+    si n es menor o igual que 1 entonces
+        devolver 1
+    fin
+    devolver n * factorial(n - 1)
+fin
+
+definir fibonacci(numero n) devuelve numero
+    si n es menor que 2 entonces
+        devolver n
+    fin
+    devolver fibonacci(n - 1) + fibonacci(n - 2)
+fin
+
+definir es_par(numero n) devuelve logico
+    si n es igual a 0 entonces
+        devolver verdadero
+    fin
+    devolver no es_par(n - 1)
+fin
+
+definir clasificar(numero n) devuelve texto
+    si es_par(n) entonces
+        devolver "par"
+    fin
+    devolver "impar"
+fin
+
+mostrar "n, factorial, fibonacci y paridad"
+crear variable i
+asignar i valor de 1
+mientras i es menor o igual que 5 hacer
+    mostrar i
+    mostrar factorial(i)
+    mostrar fibonacci(i)
+    mostrar clasificar(i)
+    si i es igual a 1 o i es igual a 5 entonces
+        mostrar "extremo"
+    fin
+    asignar i valor de i + 1
+fin
+
+mostrar "Tabla de multiplicar de 3 x 3"
+crear variable fila
+asignar fila valor de 1
+crear variable columna
+repetir 3 veces
+    asignar columna valor de 1
+    repetir 3 veces
+        mostrar fila * columna
+        asignar columna valor de columna + 1
+    fin
+    asignar fila valor de fila + 1
+fin`;
+    const res = await correrPrograma(codigo);
     expect(res.errores).toEqual([]);
     expect(res.salidas).toEqual([
       'n, factorial, fibonacci y paridad',
@@ -139,6 +217,25 @@ describe('Ejecución exacta de programas .edu (examples/ y catálogo)', () => {
       'Tabla de multiplicar de 3 x 3',
       '1', '2', '3', '2', '4', '6', '3', '6', '9',
     ]);
+  });
+
+  it('ejecuta los nuevos juegos 2D del catálogo (duelo_rpg, mision_cohete y dado_magico)', async () => {
+    const cohete = await correrPrograma(codigoEjemplo('mision_cohete'));
+    expect(cohete.errores).toEqual([]);
+    expect(cohete.salidas).toEqual([
+      '¡Cohete listo en la plataforma!',
+      'Nova',
+      '5', '4', '3', '2', '1',
+      '¡DESPEGUE AL ESPACIO!',
+    ]);
+
+    const dado = await correrPrograma(codigoEjemplo('basico'));
+    expect(dado.errores).toEqual([]);
+    expect(dado.salidas[0]).toBe('¡Bienvenido a Chispa!');
+
+    const rpg = await correrPrograma(codigoEjemplo('duelo_rpg'), ['1', '1', '1', '1', '1', '1', '1', '1']);
+    expect(rpg.errores).toEqual([]);
+    expect(rpg.salidas[0]).toBe('¡Un Slime Rey salvaje apareció!');
   });
 
   it('ejecuta examples/calculadora.edu con reintento de entrada inválida', async () => {
@@ -168,8 +265,27 @@ describe('Ejecución exacta de programas .edu (examples/ y catálogo)', () => {
     expect(['Empate', 'Ganaste', 'Perdiste']).toContain(res.salidas.at(-1));
   });
 
-  it('detecta los 7 errores semánticos exactos de con_errores.edu', () => {
-    const res = compilarEdu(codigoEjemplo('con_errores'), 'intermedio');
+  it('detecta los 7 errores semánticos exactos de depuración', () => {
+    const codigo = `crear variable puntos
+asignar puntos valor de 10
+asignar puntos valor de "diez"
+mostrar vidas
+crear variable puntos
+
+si puntos entonces
+    mostrar "Ganaste"
+fin
+
+definir doble(numero x) devuelve numero
+    devolver x * 2
+fin
+mostrar doble("cinco")
+mostrar triple(3)
+
+repetir 2.5 veces
+    mostrar "Hola"
+fin`;
+    const res = compilarEdu(codigo, 'intermedio');
     expect(res.intermedio).toBeNull();
     expect(res.diagnosticos.length).toBe(7);
     expect(res.diagnosticos.every((d) => d.etapa === 'semantica')).toBe(true);

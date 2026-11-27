@@ -4,7 +4,6 @@ import {
   BookOpen,
   Code2,
   Columns2,
-  Cpu,
   FolderOpen,
   History,
   Palette,
@@ -22,7 +21,7 @@ import type { PanelDerechoTipo } from './RightDrawer';
 
 interface AccionComando {
   id: string;
-  grupo: 'Herramientas' | 'Temas' | 'Ejemplos .edu' | 'Misiones';
+  grupo: 'Herramientas' | 'Temas' | 'Juegos 2D' | 'Misiones';
   titulo: string;
   subtitulo: string;
   ejecutar: () => void;
@@ -76,24 +75,17 @@ export function CommandPalette({
         ejecutar: () => onAbrirPanel('misiones'),
       },
       {
-        id: 'panel-rayosx',
-        grupo: 'Herramientas',
-        titulo: 'Abrir Rayos X del Compilador',
-        subtitulo: 'Tokens, Árbol Sintáctico, Símbolos y Código IR v1',
-        ejecutar: () => onAbrirPanel('rayosx'),
-      },
-      {
         id: 'panel-guia',
         grupo: 'Herramientas',
-        titulo: 'Abrir Guía Scratch ↔ .edu',
+        titulo: 'Abrir Guía de Bloques',
         subtitulo: 'Diccionario buscable de comandos en español',
         ejecutar: () => onAbrirPanel('guia'),
       },
       {
         id: 'panel-ejemplos',
         grupo: 'Herramientas',
-        titulo: 'Abrir Ejemplos y Archivos',
-        subtitulo: 'Cargar programas de examples/ o importar .edu',
+        titulo: 'Abrir Juegos 2D y Archivos',
+        subtitulo: 'Cargar juegos 2D listos o importar archivos',
         ejecutar: () => onAbrirPanel('ejemplos'),
       },
       {
@@ -106,7 +98,7 @@ export function CommandPalette({
       {
         id: 'cmd-format',
         grupo: 'Herramientas',
-        titulo: 'Formatear código .edu automáticamente',
+        titulo: 'Ordenar código automáticamente',
         subtitulo: 'Indenta bloques si, repetir, mientras y definir',
         ejecutar: onFormatear,
       },
@@ -114,7 +106,7 @@ export function CommandPalette({
         id: 'cmd-layout',
         grupo: 'Herramientas',
         titulo: 'Alternar división Horizontal / Vertical',
-        subtitulo: 'Cambia la orientación de Editor y Salida',
+        subtitulo: 'Cambia la orientación de Editor y Escenario 2D',
         ejecutar: onAlternarLayout,
       },
       ...TEMAS_CATALOGO.map((t) => ({
@@ -126,10 +118,10 @@ export function CommandPalette({
       })),
       ...EJEMPLOS_EDU.map((ej) => ({
         id: `ej-${ej.id}`,
-        grupo: 'Ejemplos .edu' as const,
-        titulo: `Abrir ${ej.titulo} (${ej.archivo})`,
+        grupo: 'Juegos 2D' as const,
+        titulo: `Jugar ${ej.titulo}`,
         subtitulo: ej.subtitulo,
-        ejecutar: () => onAbrirEjemplo(ej.codigo, `${ej.id}.edu`),
+        ejecutar: () => onAbrirEjemplo(ej.codigo, ej.archivo),
       })),
       ...MISIONES_EDU.map((m) => ({
         id: `mis-${m.id}`,
@@ -152,14 +144,13 @@ export function CommandPalette({
   }, [acciones, fuse, query]);
 
   const iconoDe = (item: AccionComando) => {
-    if (item.id === 'panel-rayosx') return <Cpu size={15} aria-hidden="true" />;
     if (item.id === 'panel-guia') return <BookOpen size={15} aria-hidden="true" />;
     if (item.id === 'panel-ejemplos') return <FolderOpen size={15} aria-hidden="true" />;
     if (item.id === 'panel-historial') return <History size={15} aria-hidden="true" />;
     if (item.id === 'cmd-format') return <Wand2 size={15} aria-hidden="true" />;
     if (item.id === 'cmd-layout') return <Columns2 size={15} aria-hidden="true" />;
     if (item.grupo === 'Temas') return <Palette size={15} aria-hidden="true" />;
-    if (item.grupo === 'Ejemplos .edu') return <Code2 size={15} aria-hidden="true" />;
+    if (item.grupo === 'Juegos 2D') return <Code2 size={15} aria-hidden="true" />;
     return <Trophy size={15} aria-hidden="true" />;
   };
 

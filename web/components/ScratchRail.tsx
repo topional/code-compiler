@@ -101,13 +101,13 @@ export function ScratchRail({
   return (
     <>
       {/* Carril vertical izquierdo con círculos de color estilo Scratch */}
-      <nav className="scratch-rail" aria-label="Categorías de bloques .edu">
+      <nav className="scratch-rail" aria-label="Categorías de bloques">
         <button
           type="button"
           className="rail-brand"
           onClick={onAbrirEjemplos}
-          title="Chispa .edu · Code Compiler — Abrir ejemplos"
-          aria-label="Chispa .edu Code Compiler — Ver ejemplos"
+          title="Chispa · Code Compiler — Abrir juegos 2D"
+          aria-label="Chispa Code Compiler — Ver juegos 2D"
         >
           <ChispaLogo compact />
         </button>

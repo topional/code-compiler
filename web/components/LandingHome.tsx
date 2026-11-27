@@ -45,7 +45,6 @@ interface LandingHomeProps {
   onEntrarIde: () => void;
   onEntrarConCodigo: (nombre: string, codigo: string) => void;
   onEntrarConMision: (mision: MisionEdu) => void;
-  onEntrarConRayosX?: () => void;
   onEntrarConGuia: () => void;
 }
 

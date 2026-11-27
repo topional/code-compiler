@@ -9,9 +9,9 @@ import {
   ChevronDown,
   Code2,
   Columns2,
-  Cpu,
   Download,
   FolderOpen,
+  Gamepad2,
   History,
   Home,
   Lightbulb,
@@ -36,6 +36,7 @@ import {
 import { ChispaMascota } from './components/ChispaLogo';
 import { CommandPalette } from './components/CommandPalette';
 import { EduEditor, type EduEditorHandle } from './components/EduEditor';
+import { GameStage2D } from './components/GameStage2D';
 import { LandingHome } from './components/LandingHome';
 import { ContainerOverlayScrollbar } from './components/OverlayScrollbar';
 import {
@@ -83,13 +84,13 @@ interface PreguntaPendiente {
   resolver: (valor: string | null) => void;
 }
 
-type VistaMovil = 'editor' | 'salida' | 'bloques' | 'misiones' | 'rayosx';
+type VistaMovil = 'editor' | 'salida' | 'bloques' | 'misiones';
 
 const STORAGE_KEYS = {
   tema: 'chispa_edu_tema_v2',
   escala: 'chispa_edu_escala',
   movimiento: 'chispa_edu_reduced_motion',
-  pestanas: 'chispa_edu_wb_pestanas_v3',
+  pestanas: 'chispa_edu_wb_pestanas_v5',
   misiones: 'chispa_edu_misiones_ok',
 };
 
@@ -106,9 +107,10 @@ function leerPestanasIniciales(): PestanaCodigo[] {
     // ignorar
   }
   return [
-    { id: 'tab-dado', nombre: 'dado_magico.edu', codigo: CODIGO_HERO_DEFAULT },
-    { id: 'tab-basico', nombre: 'basico.edu', codigo: EJEMPLOS_EDU[0].codigo },
-    { id: 'tab-adivina', nombre: 'adivina.edu', codigo: EJEMPLOS_EDU[1].codigo },
+    { id: 'tab-dado', nombre: 'dado', codigo: CODIGO_HERO_DEFAULT },
+    { id: 'tab-rpg', nombre: 'duelo_rpg', codigo: EJEMPLOS_EDU[0].codigo },
+    { id: 'tab-torneo', nombre: 'torneo', codigo: EJEMPLOS_EDU[1].codigo },
+    { id: 'tab-cohete', nombre: 'cohete', codigo: EJEMPLOS_EDU[2].codigo },
   ];
 }
 
@@ -151,8 +153,8 @@ export function App() {
     window.location.hash === '#ide' ? 'ide' : 'inicio',
   );
 
-  // Layout del Workbench (GoJS × Scratch)
-  const [categoriaScratch, setCategoriaScratch] = useState<CategoriaBloque | null>('variables');
+  // Layout del Workbench (espacioso 2 columnas por defecto: Editor + Escenario 2D)
+  const [categoriaScratch, setCategoriaScratch] = useState<CategoriaBloque | null>(null);
   const [panelDerecho, setPanelDerecho] = useState<PanelDerechoTipo>(null);
   const [layoutVertical, setLayoutVertical] = useState(false);
   const [vistaMovil, setVistaMovil] = useState<VistaMovil>('editor');
@@ -479,12 +481,13 @@ export function App() {
   const abrirNuevaPestana = (nombre?: string, codigo?: string) => {
     detenerEjecucion();
     const id = `tab-${Date.now()}`;
+    const nombreLimpio = (nombre ?? `mi_juego_${pestanas.length + 1}`).replace(/\.edu$/i, '');
     setPestanas((prev) => [
       ...prev,
       {
         id,
-        nombre: nombre ?? `nuevo_${prev.length + 1}.edu`,
-        codigo: codigo ?? '# Nuevo programa .edu\nmostrar "¡Hola desde Chispa .edu!"\n',
+        nombre: nombreLimpio,
+        codigo: codigo ?? '# ¡Crea tu juego aquí!\nmostrar "¡Hola desde Chispa!"\n',
       },
     ]);
     setPestanaActivaId(id);
@@ -535,16 +538,54 @@ export function App() {
     if (f !== pestanaActual.codigo) actualizarCodigoActual(f);
   };
 
-  const enviarRespuesta = (e: React.FormEvent) => {
-    e.preventDefault();
+  const enviarValorRespuesta = (val: string) => {
     if (!preguntaPendiente) return;
-    const val = textoRespuesta;
     const { resolver } = preguntaPendiente;
     setPreguntaPendiente(null);
     setTextoRespuesta('');
     agregarSalida('respuesta', val);
     resolver(val);
   };
+
+  const enviarRespuesta = (e: React.FormEvent) => {
+    e.preventDefault();
+    enviarValorRespuesta(textoRespuesta);
+  };
+
+  const opcionesRapidasPregunta = useMemo(() => {
+    if (!preguntaPendiente) return [];
+    const msg = preguntaPendiente.mensaje.toLowerCase();
+    const src = pestanaActual.codigo.toLowerCase();
+    if (/ataque|jugada/.test(msg) && /rayo|llamarada|slime|pocion/.test(src)) {
+      return [
+        { val: '1', label: '1 · Rayo Chispa' },
+        { val: '2', label: '2 · Llamarada' },
+        { val: '3', label: '3 · Poción +25' },
+      ];
+    }
+    if (/piedra|tijera|papel/.test(src) && /jugada|opcion/.test(msg)) {
+      return [
+        { val: '1', label: '1 · Piedra' },
+        { val: '2', label: '2 · Papel' },
+        { val: '3', label: '3 · Tijera' },
+      ];
+    }
+    if (/operacion/.test(msg) && /suma|resta/.test(src)) {
+      return [
+        { val: '1', label: '1 · Suma (+)' },
+        { val: '2', label: '2 · Resta (-)' },
+        { val: '3', label: '3 · Multiplicar (×)' },
+        { val: '4', label: '4 · Dividir (÷)' },
+      ];
+    }
+    if (/1 al 10|tu número|tu numero/.test(msg)) {
+      return Array.from({ length: 10 }, (_, i) => ({
+        val: String(i + 1),
+        label: String(i + 1),
+      }));
+    }
+    return [];
+  }, [preguntaPendiente, pestanaActual.codigo]);
 
   const descargarArchivo = (nombre: string, contenido: string, tipoMime: string) => {
     const blob = new Blob([contenido], { type: tipoMime });
@@ -667,10 +708,6 @@ export function App() {
                 iniciarMision(m);
                 setVistaApp('ide');
               }}
-              onEntrarConRayosX={() => {
-                setPanelDerecho('rayosx');
-                setVistaApp('ide');
-              }}
               onEntrarConGuia={() => {
                 setPanelDerecho('guia');
                 setVistaApp('ide');
@@ -741,11 +778,13 @@ export function App() {
                         aria-current={tab.id === pestanaActual.id ? 'true' : undefined}
                         onClick={() => {
                           detenerEjecucion();
+                          setSalidas([]);
+                          setVariables([]);
                           setPestanaActivaId(tab.id);
                         }}
                       >
-                        <span className="file-tab-ext">EDU</span>
-                        <span>{tab.nombre}</span>
+                        <span className="file-tab-ext">2D</span>
+                        <span>{tab.nombre.replace(/\.edu$/i, '')}</span>
                       </button>
                       {pestanas.length > 1 && (
                         <button
@@ -763,8 +802,8 @@ export function App() {
                     type="button"
                     className="ide-icon-btn"
                     onClick={() => abrirNuevaPestana()}
-                    aria-label="Nueva pestaña .edu"
-                    title="Nueva pestaña"
+                    aria-label="Nuevo juego o programa"
+                    title="Nuevo programa"
                   >
                     <Plus size={15} aria-hidden="true" />
                   </button>
@@ -776,10 +815,10 @@ export function App() {
                     className="ide-icon-btn run-btn"
                     onClick={() => void iniciarEjecucion(false)}
                     disabled={compilacion.diagnosticos.length > 0 && modoMotor === 'navegador'}
-                    title="Ejecutar programa (Ctrl + Enter)"
+                    title="Jugar y ejecutar programa (Ctrl + Enter)"
                   >
                     <Play size={13} aria-hidden="true" />
-                    <span>Ejecutar</span>
+                    <span>Jugar</span>
                   </button>
 
                   <button
@@ -951,9 +990,67 @@ export function App() {
                 </div>
               </div>
 
-              {/* Mini Escenario de Chispa */}
+              {/* ESCENARIO 2D INTERACTIVO ANIMADO (ESTILO SCRATCH × POKÉMON × MAKECODE) */}
+              <GameStage2D
+                tema={tema}
+                nombrePrograma={pestanaActual.nombre}
+                codigo={pestanaActual.codigo}
+                salidas={salidas}
+                variables={variables}
+                estadoEjec={estadoEjec}
+                desactivarAnimacion={movimientoReducido}
+              />
+
+              {/* Entrada interactiva para `preguntar` (con botones rápidos de juego 2D!) */}
+              {preguntaPendiente && (
+                <div className="inline-prompt" role="region" aria-label="Responder pregunta del juego">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                    <strong style={{ fontSize: '0.84rem' }}>{preguntaPendiente.mensaje}</strong>
+                    <span className="pill-mini ok">Tu turno</span>
+                  </div>
+                  {opcionesRapidasPregunta.length > 0 && (
+                    <div className="quick-choice-row" role="group" aria-label="Opciones rápidas del juego">
+                      {opcionesRapidasPregunta.map((op) => (
+                        <button
+                          key={op.val}
+                          type="button"
+                          className="quick-choice-btn"
+                          onClick={() => enviarValorRespuesta(op.val)}
+                        >
+                          {op.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <form className="inline-prompt-form" onSubmit={enviarRespuesta}>
+                    <label htmlFor="wb-prompt-input" className="sr-only">
+                      Tu respuesta
+                    </label>
+                    <input
+                      id="wb-prompt-input"
+                      type="text"
+                      className="ide-input"
+                      value={textoRespuesta}
+                      onChange={(e) => setTextoRespuesta(e.target.value)}
+                      placeholder={
+                        preguntaPendiente.tipo === 'numero'
+                          ? 'O escribe un número...'
+                          : preguntaPendiente.tipo === 'logico'
+                            ? 'verdadero o falso'
+                            : 'Escribe aquí...'
+                      }
+                      autoFocus
+                    />
+                    <button type="submit" className="btn btn-primary btn-sm">
+                      <Send size={13} aria-hidden="true" /> Enviar
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {/* Mini barra de ánimo de Chispa */}
               <div className="stage-hero-strip" aria-live="polite">
-                <ChispaMascota estado={estadoMascota} size={36} />
+                <ChispaMascota estado={estadoMascota} size={30} />
                 <div className="stage-bubble" title={textoBurbujaChispa}>
                   {textoBurbujaChispa}
                 </div>
@@ -970,8 +1067,8 @@ export function App() {
                 >
                   {salidas.length === 0 && !preguntaPendiente && todosDiagnosticos.length === 0 && (
                     <p className="output-empty">
-                      Pulsa <strong>Ejecutar</strong> (`Ctrl + Enter`) para ver cada salida alineada
-                      con su número de línea.
+                      Pulsa <strong>Jugar</strong> (`Ctrl + Enter`) para ver tu juego cobrar vida en
+                      el Escenario 2D.
                     </p>
                   )}
 
@@ -1005,39 +1102,6 @@ export function App() {
                 </div>
                 <ContainerOverlayScrollbar targetRef={wbOutputScrollRef} />
               </div>
-
-              {/* Entrada interactiva para `preguntar` */}
-              {preguntaPendiente && (
-                <div className="inline-prompt" role="region" aria-label="Responder pregunta del programa">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                    <strong style={{ fontSize: '0.82rem' }}>{preguntaPendiente.mensaje}</strong>
-                    <span className="pill-mini">{preguntaPendiente.tipo}</span>
-                  </div>
-                  <form className="inline-prompt-form" onSubmit={enviarRespuesta}>
-                    <label htmlFor="wb-prompt-input" className="sr-only">
-                      Tu respuesta
-                    </label>
-                    <input
-                      id="wb-prompt-input"
-                      type="text"
-                      className="ide-input"
-                      value={textoRespuesta}
-                      onChange={(e) => setTextoRespuesta(e.target.value)}
-                      placeholder={
-                        preguntaPendiente.tipo === 'numero'
-                          ? 'Escribe un número...'
-                          : preguntaPendiente.tipo === 'logico'
-                            ? 'verdadero o falso'
-                            : 'Escribe aquí...'
-                      }
-                      autoFocus
-                    />
-                    <button type="submit" className="btn btn-primary btn-sm">
-                      <Send size={13} aria-hidden="true" /> Enviar
-                    </button>
-                  </form>
-                </div>
-              )}
 
               {/* Diagnósticos y pistas pedagógicas */}
               {todosDiagnosticos.length > 0 && (
@@ -1108,16 +1172,8 @@ export function App() {
 
           {/* PANEL LATERAL DERECHO ACOPLADO AL DOCK */}
           <RightDrawer
-            panel={
-              panelDerecho ??
-              (vistaMovil === 'misiones'
-                ? 'misiones'
-                : vistaMovil === 'rayosx'
-                  ? 'rayosx'
-                  : null)
-            }
+            panel={panelDerecho ?? (vistaMovil === 'misiones' ? 'misiones' : null)}
             onCerrar={() => setPanelDerecho(null)}
-            compilacion={compilacion}
             misionesCompletadas={misionesCompletadas}
             misionActiva={misionActiva}
             onIniciarMision={iniciarMision}
@@ -1132,19 +1188,11 @@ export function App() {
             onExportarEdu={() =>
               descargarArchivo(pestanaActual.nombre, pestanaActual.codigo, 'text/plain;charset=utf-8')
             }
-            onExportarIr={() => {
-              if (!compilacion.intermedio) return;
-              descargarArchivo(
-                pestanaActual.nombre.replace(/\.edu$/i, '') + '.ir.json',
-                JSON.stringify(compilacion.intermedio, null, 2),
-                'application/json;charset=utf-8',
-              );
-            }}
             historial={historialPestana}
             onGuardarInstantanea={() => guardarInstantanea('Guardado manual')}
             onRestaurarInstantanea={(codigo) => actualizarCodigoActual(codigo)}
             nombrePestanaActual={pestanaActual.nombre}
-            mobileVisible={vistaMovil === 'misiones' || vistaMovil === 'rayosx'}
+            mobileVisible={vistaMovil === 'misiones'}
           />
 
           {/* DOCK VERTICAL DERECHO (46px EN DESKTOP — ESTILO GOJS.APP/APP/) */}
@@ -1166,6 +1214,17 @@ export function App() {
               <button
                 type="button"
                 className="dock-btn"
+                aria-pressed={panelDerecho === 'ejemplos'}
+                onClick={() => alternarPanelDerecho('ejemplos')}
+                aria-label="Juegos 2D y proyectos"
+                title="Juegos 2D y archivos"
+              >
+                <Gamepad2 size={18} aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                className="dock-btn"
                 aria-pressed={panelDerecho === 'misiones'}
                 onClick={() => alternarPanelDerecho('misiones')}
                 aria-label="Misiones educativas"
@@ -1178,34 +1237,12 @@ export function App() {
               <button
                 type="button"
                 className="dock-btn"
-                aria-pressed={panelDerecho === 'rayosx'}
-                onClick={() => alternarPanelDerecho('rayosx')}
-                aria-label="Rayos X del compilador"
-                title="Rayos X (Tokens, Árbol, Símbolos, IR)"
-              >
-                <Cpu size={18} aria-hidden="true" />
-              </button>
-
-              <button
-                type="button"
-                className="dock-btn"
                 aria-pressed={panelDerecho === 'guia'}
                 onClick={() => alternarPanelDerecho('guia')}
-                aria-label="Guía rápida Scratch y .edu"
-                title="Guía Scratch ↔ .edu"
+                aria-label="Guía rápida de bloques"
+                title="Guía de bloques"
               >
                 <BookOpen size={18} aria-hidden="true" />
-              </button>
-
-              <button
-                type="button"
-                className="dock-btn"
-                aria-pressed={panelDerecho === 'ejemplos'}
-                onClick={() => alternarPanelDerecho('ejemplos')}
-                aria-label="Ejemplos y archivos"
-                title="Ejemplos y archivos .edu"
-              >
-                <FolderOpen size={18} aria-hidden="true" />
               </button>
 
               <button
@@ -1297,7 +1334,7 @@ export function App() {
               <ChevronDown size={12} aria-hidden="true" />
             </button>
 
-            <span>IR v1</span>
+            <span>Estudio 2D</span>
           </div>
         </footer>
 
@@ -1318,8 +1355,8 @@ export function App() {
             aria-pressed={vistaMovil === 'salida'}
             onClick={() => setVistaMovil('salida')}
           >
-            <Terminal size={17} aria-hidden="true" />
-            <span>Salida</span>
+            <Gamepad2 size={17} aria-hidden="true" />
+            <span>Juego 2D</span>
           </button>
           <button
             type="button"
@@ -1340,19 +1377,18 @@ export function App() {
             }}
           >
             <Trophy size={17} aria-hidden="true" />
-            <span>Retos</span>
+            <span>Misiones</span>
           </button>
           <button
             type="button"
             className="mob-dock-btn"
-            aria-pressed={vistaMovil === 'rayosx'}
             onClick={() => {
-              setPanelDerecho('rayosx');
-              setVistaMovil('rayosx');
+              setPanelDerecho('ejemplos');
+              setVistaMovil('misiones');
             }}
           >
-            <Cpu size={17} aria-hidden="true" />
-            <span>Rayos X</span>
+            <FolderOpen size={17} aria-hidden="true" />
+            <span>Juegos</span>
           </button>
           <button
             type="button"
