@@ -645,6 +645,7 @@ export function App() {
               tema={tema}
               movimientoReducido={movimientoReducido}
               onAbrirGaleriaTemas={() => setTemasAbiertos(true)}
+              onAbrirBuscador={() => setComandosAbiertos(true)}
               misionesCompletadas={misionesCompletadas}
               onEntrarIde={() => setVistaApp('ide')}
               onEntrarConCodigo={(nombre, codigo) => {
@@ -659,6 +660,10 @@ export function App() {
               }}
               onEntrarConRayosX={() => {
                 setPanelDerecho('rayosx');
+                setVistaApp('ide');
+              }}
+              onEntrarConGuia={() => {
+                setPanelDerecho('guia');
                 setVistaApp('ide');
               }}
             />

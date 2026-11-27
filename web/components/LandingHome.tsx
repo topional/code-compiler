@@ -5,13 +5,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
   Blocks,
-  ChevronDown,
   Code2,
   Cpu,
+  Github,
   MessageSquare,
   Palette,
   Play,
   RotateCcw,
+  Search,
   Send,
   Sparkles,
   Terminal,
@@ -41,11 +42,13 @@ interface LandingHomeProps {
   tema: TemaId;
   movimientoReducido: boolean;
   onAbrirGaleriaTemas: () => void;
+  onAbrirBuscador: () => void;
   misionesCompletadas: string[];
   onEntrarIde: () => void;
   onEntrarConCodigo: (nombre: string, codigo: string) => void;
   onEntrarConMision: (mision: MisionEdu) => void;
   onEntrarConRayosX: () => void;
+  onEntrarConGuia: () => void;
 }
 
 type TabHeroCard = 'runner' | 'chat';
@@ -195,11 +198,13 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   tema,
   movimientoReducido,
   onAbrirGaleriaTemas,
+  onAbrirBuscador,
   misionesCompletadas,
   onEntrarIde,
   onEntrarConCodigo,
   onEntrarConMision,
   onEntrarConRayosX,
+  onEntrarConGuia,
 }) => {
   const [modoShader, setModoShader] = useState<ModoShader>('neuro');
   const [tabHero, setTabHero] = useState<TabHeroCard>('runner');
@@ -340,36 +345,58 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           </a>
 
           <nav className="lp-nav-links" aria-label="Navegación principal">
-            <a href="#compilador" className="lp-nav-link">
-              Compilador vivo
+            <a href="#inicio-top" className="lp-nav-link">
+              Inicio
             </a>
+            <button type="button" className="lp-nav-link lp-nav-link-btn" onClick={onEntrarConGuia}>
+              Guía
+            </button>
             <a href="#retos" className="lp-nav-link">
-              Retos y proyectos
+              Misiones
+            </a>
+            <a href="#compilador" className="lp-nav-link">
+              Estudio
+            </a>
+            <a
+              href="https://github.com/topional/code-compiler"
+              target="_blank"
+              rel="noreferrer"
+              className="lp-nav-link lp-nav-github"
+            >
+              <Github size={14} aria-hidden="true" />
+              <span>GitHub</span>
             </a>
           </nav>
 
           <div className="lp-nav-actions">
             <button
               type="button"
-              className="lp-theme-trigger"
+              className="lp-nav-icon-btn"
+              onClick={onAbrirBuscador}
+              aria-label="Buscar comandos, retos y ejemplos (Ctrl+K)"
+              title="Buscar (Ctrl + K)"
+            >
+              <Search size={18} aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              className="lp-nav-icon-btn"
               onClick={onAbrirGaleriaTemas}
               aria-label={`Cambiar tema visual. Actual: ${temaMeta.nombre}`}
-              title="Cambiar tema visual"
+              title={`Tema: ${temaMeta.nombre}`}
             >
-              <Palette size={15} aria-hidden="true" />
-              <span className="lp-theme-trigger-label">{temaMeta.nombre}</span>
-              <ChevronDown size={13} aria-hidden="true" className="lp-theme-trigger-label" />
+              <Palette size={18} aria-hidden="true" />
             </button>
 
             <motion.button
               type="button"
-              className="lp-cta-primary lp-cta-sm"
-              whileHover={movimientoReducido ? undefined : { scale: 1.04 }}
-              whileTap={movimientoReducido ? undefined : { scale: 0.96 }}
+              className="lp-nav-cta-pixel"
+              whileHover={movimientoReducido ? undefined : { y: -1 }}
+              whileTap={movimientoReducido ? undefined : { y: 2 }}
               onClick={onEntrarIde}
             >
-              <span>Code Compiler</span>
-              <ArrowRight size={15} aria-hidden="true" />
+              Code Compiler
             </motion.button>
           </div>
         </div>
