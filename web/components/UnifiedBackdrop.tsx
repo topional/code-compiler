@@ -57,7 +57,7 @@ export const UnifiedBackdrop: React.FC<UnifiedBackdropProps> = ({
   }, []);
 
   const temaMeta = obtenerTema(domTema);
-  const esAltoContraste = domTema === 'high-contrast';
+  const esAltoContraste = temaMeta.grupo === 'Accesibilidad';
   const esClaro = temaMeta.grupo === 'Claros';
 
   useEffect(() => {

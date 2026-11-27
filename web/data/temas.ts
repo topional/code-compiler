@@ -1,24 +1,40 @@
 /**
- * Catálogo de 14 temas visuales diseñados a mano y verificados con WCAG AA/AAA.
- * Inspirados en buildwithclaude.com/themes, GoJS.app, Dracula, Tokyo Night,
- * Catppuccin, Nord, Gruvbox, Rosé Pine, Everforest, Kanagawa y Scratch.
+ * Catálogo de 27 temas visuales diseñados a mano y verificados con WCAG AA/AAA:
+ * 15 Oscuros + 9 Claros (3×3) + 3 Accesibilidad (AAA).
+ * Regla simétrica del logo <✦>: muestras[2] = corchetes < >, muestras[3] = estrella ✦.
  */
 
 export type TemaId =
+  // 15 Oscuros
   | 'gojs-dark'
   | 'dracula'
   | 'tokyo-night'
   | 'catppuccin-mocha'
-  | 'nord'
-  | 'arcade-pixel'
   | 'gruvbox-dark'
   | 'rose-pine'
   | 'everforest-dark'
   | 'kanagawa-wave'
+  | 'nord'
+  | 'arcade-pixel'
+  | 'one-dark'
+  | 'monokai-pro'
+  | 'solarized-dark'
+  | 'ayu-mirage'
+  | 'synthwave-84'
+  // 9 Claros
   | 'cuaderno'
   | 'catppuccin-latte'
   | 'bosque-menta'
-  | 'high-contrast';
+  | 'solarized-light'
+  | 'gruvbox-light'
+  | 'rose-pine-dawn'
+  | 'github-light'
+  | 'tokyo-day'
+  | 'everforest-light'
+  // 3 Accesibilidad
+  | 'high-contrast'
+  | 'high-contrast-light'
+  | 'high-contrast-amber';
 
 export interface TemaPreviewSintaxis {
   editorBg: string;
@@ -41,6 +57,7 @@ export interface TemaMeta {
 }
 
 export const TEMAS_CATALOGO: TemaMeta[] = [
+  // ===================== 15 TEMAS OSCUROS =====================
   {
     id: 'gojs-dark',
     nombre: 'GoJS Nocturno',
@@ -212,6 +229,93 @@ export const TEMAS_CATALOGO: TemaMeta[] = [
     },
   },
   {
+    id: 'one-dark',
+    nombre: 'One Dark Pro',
+    grupo: 'Oscuros',
+    descripcion: 'El estándar clásico de editores modernos con azul cielo y salvia.',
+    metaColor: '#21252b',
+    muestras: ['#21252b', '#282c34', '#61afef', '#98c379'],
+    sintaxis: {
+      editorBg: '#1d2026',
+      ink: '#eef2f7',
+      kw: '#c678dd',
+      str: '#98c379',
+      num: '#d19a66',
+      fn: '#61afef',
+      comment: '#98a3b8',
+    },
+  },
+  {
+    id: 'monokai-pro',
+    nombre: 'Monokai Pro',
+    grupo: 'Oscuros',
+    descripcion: 'Contraste cálido de estudio con amarillo miel, coral y lima.',
+    metaColor: '#221f22',
+    muestras: ['#221f22', '#2d2a2e', '#ffd866', '#ff6188'],
+    sintaxis: {
+      editorBg: '#1f1c1f',
+      ink: '#fcfcfa',
+      kw: '#ff6188',
+      str: '#ffd866',
+      num: '#ab9df2',
+      fn: '#a9dc76',
+      comment: '#a6a0ab',
+    },
+  },
+  {
+    id: 'solarized-dark',
+    nombre: 'Solarized Dark',
+    grupo: 'Oscuros',
+    descripcion: 'Azul petróleo científico con turquesa preciso y ocre dorado.',
+    metaColor: '#002b36',
+    muestras: ['#002b36', '#073642', '#38c4b8', '#e2b029'],
+    sintaxis: {
+      editorBg: '#00242e',
+      ink: '#fdf6e3',
+      kw: '#9dc62d',
+      str: '#38c4b8',
+      num: '#e2b029',
+      fn: '#4da8f0',
+      comment: '#93adb3',
+    },
+  },
+  {
+    id: 'ayu-mirage',
+    nombre: 'Ayu Mirage',
+    grupo: 'Oscuros',
+    descripcion: 'Gris azulado crepuscular con dorado miel y hielo luminoso.',
+    metaColor: '#1c212b',
+    muestras: ['#1c212b', '#232a37', '#ffcc66', '#73d0ff'],
+    sintaxis: {
+      editorBg: '#191e27',
+      ink: '#f2f4f8',
+      kw: '#ffa759',
+      str: '#bae67e',
+      num: '#dfbfff',
+      fn: '#73d0ff',
+      comment: '#97a5bd',
+    },
+  },
+  {
+    id: 'synthwave-84',
+    nombre: "SynthWave '84",
+    grupo: 'Oscuros',
+    descripcion: 'Noche retro-futurista de los 80 con magenta neón y cian láser.',
+    metaColor: '#191326',
+    muestras: ['#191326', '#241b38', '#ff7edb', '#36f9f6'],
+    sintaxis: {
+      editorBg: '#161022',
+      ink: '#fff5ff',
+      kw: '#fede5d',
+      str: '#72f1b8',
+      num: '#ff8b39',
+      fn: '#36f9f6',
+      comment: '#b29fd6',
+    },
+  },
+
+  // ===================== 9 TEMAS CLAROS (3×3) =====================
+  {
     id: 'cuaderno',
     nombre: 'Cuaderno Taller',
     grupo: 'Claros',
@@ -263,10 +367,114 @@ export const TEMAS_CATALOGO: TemaMeta[] = [
     },
   },
   {
+    id: 'solarized-light',
+    nombre: 'Solarized Light',
+    grupo: 'Claros',
+    descripcion: 'Pergamino solar clásico con tinta azul océano y ámbar tostado.',
+    metaColor: '#fdf6e3',
+    muestras: ['#fdf6e3', '#ffffff', '#0b669c', '#9c5500'],
+    sintaxis: {
+      editorBg: '#fefbf2',
+      ink: '#073642',
+      kw: '#246824',
+      str: '#0f766e',
+      num: '#9c5500',
+      fn: '#0b669c',
+      comment: '#526e75',
+    },
+  },
+  {
+    id: 'gruvbox-light',
+    nombre: 'Gruvbox Light',
+    grupo: 'Claros',
+    descripcion: 'Papel cálido retro con cobre quemado, oliva y contraste editorial.',
+    metaColor: '#fbf1c7',
+    muestras: ['#fbf1c7', '#fffdf2', '#af3a03', '#2e6b46'],
+    sintaxis: {
+      editorBg: '#fcf5d8',
+      ink: '#282828',
+      kw: '#b81f1a',
+      str: '#2e6b46',
+      num: '#8f3f71',
+      fn: '#af3a03',
+      comment: '#665c54',
+    },
+  },
+  {
+    id: 'rose-pine-dawn',
+    nombre: 'Rosé Pine Dawn',
+    grupo: 'Claros',
+    descripcion: 'Amanecer suave en crema rosado con vino suave y azul pino.',
+    metaColor: '#faf4ed',
+    muestras: ['#faf4ed', '#fffaf3', '#9c3d59', '#286983'],
+    sintaxis: {
+      editorBg: '#fcf7f1',
+      ink: '#383354',
+      kw: '#9c3d59',
+      str: '#286983',
+      num: '#b4631a',
+      fn: '#6e4c9a',
+      comment: '#676085',
+    },
+  },
+  {
+    id: 'github-light',
+    nombre: 'GitHub Light',
+    grupo: 'Claros',
+    descripcion: 'Minimalista, nítido y profesional con azul enlace y violeta.',
+    metaColor: '#f6f8fa',
+    muestras: ['#f6f8fa', '#ffffff', '#0969da', '#8250df'],
+    sintaxis: {
+      editorBg: '#fcfdfe',
+      ink: '#1f2328',
+      kw: '#cf222e',
+      str: '#0a3069',
+      num: '#0550ae',
+      fn: '#8250df',
+      comment: '#57606a',
+    },
+  },
+  {
+    id: 'tokyo-day',
+    nombre: 'Tokyo Day',
+    grupo: 'Claros',
+    descripcion: 'Luz urbana japonesa con gris perla, azul cobalto y celeste profundo.',
+    metaColor: '#e6e7ed',
+    muestras: ['#e6e7ed', '#f7f8fb', '#2e5cb8', '#007197'],
+    sintaxis: {
+      editorBg: '#f2f3f8',
+      ink: '#212842',
+      kw: '#7847bd',
+      str: '#2c7040',
+      num: '#b15c00',
+      fn: '#2e5cb8',
+      comment: '#525c7d',
+    },
+  },
+  {
+    id: 'everforest-light',
+    nombre: 'Everforest Light',
+    grupo: 'Claros',
+    descripcion: 'Lienzo cálido de arena y hojas verdes suaves para leer por horas.',
+    metaColor: '#f5efdc',
+    muestras: ['#f5efdc', '#fffdf5', '#357540', '#b05b24'],
+    sintaxis: {
+      editorBg: '#faf5e6',
+      ink: '#2d3830',
+      kw: '#b83333',
+      str: '#357540',
+      num: '#9c4b75',
+      fn: '#256c85',
+      comment: '#58675c',
+    },
+  },
+
+  // ===================== 3 TEMAS DE ACCESIBILIDAD (AAA) =====================
+  {
     id: 'high-contrast',
-    nombre: 'Alto Contraste AAA',
+    nombre: 'Alto Contraste Oscuro',
     grupo: 'Accesibilidad',
-    descripcion: 'Contraste máximo 21:1 negro puro, blanco, amarillo y cian.',
+    descripcion: 'Contraste máximo 21:1 negro puro, blanco, amarillo y cian sin ruido visual.',
     metaColor: '#000000',
     muestras: ['#000000', '#0a0a0a', '#ffff00', '#00ffff'],
     sintaxis: {
@@ -277,6 +485,40 @@ export const TEMAS_CATALOGO: TemaMeta[] = [
       num: '#00ffff',
       fn: '#ff66ff',
       comment: '#d4d4d4',
+    },
+  },
+  {
+    id: 'high-contrast-light',
+    nombre: 'Alto Contraste Claro',
+    grupo: 'Accesibilidad',
+    descripcion: 'WCAG AAA blanco puro y tinta negra absoluta con azul cobalto y bordes firmes.',
+    metaColor: '#ffffff',
+    muestras: ['#ffffff', '#f2f2f2', '#0033cc', '#8b005d'],
+    sintaxis: {
+      editorBg: '#ffffff',
+      ink: '#000000',
+      kw: '#0033cc',
+      str: '#005a1f',
+      num: '#8b005d',
+      fn: '#a80000',
+      comment: '#333333',
+    },
+  },
+  {
+    id: 'high-contrast-amber',
+    nombre: 'Alto Contraste Ámbar',
+    grupo: 'Accesibilidad',
+    descripcion: 'WCAG AAA en negro puro y fósforo ámbar cálido ideal para sensibilidad a la luz.',
+    metaColor: '#000000',
+    muestras: ['#000000', '#0d0a00', '#ffb703', '#5ce1e6'],
+    sintaxis: {
+      editorBg: '#000000',
+      ink: '#fff4cc',
+      kw: '#ffb703',
+      str: '#80ff80',
+      num: '#5ce1e6',
+      fn: '#ff99cc',
+      comment: '#f2d57e',
     },
   },
 ];

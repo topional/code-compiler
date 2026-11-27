@@ -471,28 +471,30 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                 </a>
               </div>
 
-              <div className="lp-shader-bar" role="group" aria-label="Cambiar textura del fondo continuo">
-                <span className="lp-shader-label">
-                  <Waves size={13} aria-hidden="true" /> Fondo:
-                </span>
-                {(
-                  [
-                    { id: 'halftone', label: 'Halftone' },
-                    { id: 'plotter', label: 'Plotter' },
-                    { id: 'braille', label: 'Braille' },
-                  ] as const
-                ).map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className="lp-shader-chip"
-                    aria-pressed={modoFondo === s.id}
-                    onClick={() => setModoFondo(s.id)}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
+              {temaMeta.grupo !== 'Accesibilidad' && (
+                <div className="lp-shader-bar" role="group" aria-label="Cambiar textura del fondo continuo">
+                  <span className="lp-shader-label">
+                    <Waves size={13} aria-hidden="true" /> Fondo:
+                  </span>
+                  {(
+                    [
+                      { id: 'halftone', label: 'Halftone' },
+                      { id: 'plotter', label: 'Plotter' },
+                      { id: 'braille', label: 'Braille' },
+                    ] as const
+                  ).map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="lp-shader-chip"
+                      aria-pressed={modoFondo === s.id}
+                      onClick={() => setModoFondo(s.id)}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* COLUMNA DERECHA: PRUEBA EN VIVO + CHAT CON CHISPA */}

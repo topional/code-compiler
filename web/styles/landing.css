@@ -49,9 +49,9 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
-[data-theme='high-contrast'] .lp-nav {
-  background: #000000;
-  border-bottom: 2px solid #ffffff;
+[data-theme^='high-contrast'] .lp-nav {
+  background: var(--bg-surface);
+  border-bottom: 2px solid var(--border-subtle);
 }
 
 .lp-nav-inner {
@@ -330,20 +330,20 @@
   box-shadow: 0 1px 0 var(--border-subtle);
 }
 
-[data-theme='high-contrast'] .lp-nav-cta-pixel,
-[data-theme='high-contrast'] .lp-cta-primary {
-  background: #ffff00;
-  color: #000000;
-  border-color: #ffffff;
-  box-shadow: 0 3px 0 #ffffff;
+[data-theme^='high-contrast'] .lp-nav-cta-pixel,
+[data-theme^='high-contrast'] .lp-cta-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--border-subtle);
+  box-shadow: 0 3px 0 var(--border-subtle);
 }
 
-[data-theme='high-contrast'] .lp-cta-glass,
-[data-theme='high-contrast'] .lp-cta-surface {
-  background: #000000;
-  color: #ffffff;
-  border-color: #ffff00;
-  box-shadow: 0 3px 0 #ffff00;
+[data-theme^='high-contrast'] .lp-cta-glass,
+[data-theme^='high-contrast'] .lp-cta-surface {
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  border-color: var(--border-strong);
+  box-shadow: 0 3px 0 var(--border-strong);
 }
 
 /* ==========================================================================
@@ -428,8 +428,8 @@
   text-shadow: 0 2px 18px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-[data-theme='high-contrast'] .lp-h1-dynamic {
-  color: #ffff00;
+[data-theme^='high-contrast'] .lp-h1-dynamic {
+  color: var(--accent);
   text-shadow: none;
 }
 
@@ -1285,17 +1285,17 @@
   padding: 20px;
 }
 
-[data-theme='high-contrast'] .lp-status-pill,
-[data-theme='high-contrast'] .lp-code-ticker,
-[data-theme='high-contrast'] .lp-shader-chip,
-[data-theme='high-contrast'] .lp-hero-panel,
-[data-theme='high-contrast'] .lp-pipe-source,
-[data-theme='high-contrast'] .lp-stage-card,
-[data-theme='high-contrast'] .lp-xp-bar-card,
-[data-theme='high-contrast'] .lp-bento-card,
-[data-theme='high-contrast'] .lp-closing-card,
-[data-theme='high-contrast'] .lp-footer {
-  background: #000000;
+[data-theme^='high-contrast'] .lp-status-pill,
+[data-theme^='high-contrast'] .lp-code-ticker,
+[data-theme^='high-contrast'] .lp-shader-chip,
+[data-theme^='high-contrast'] .lp-hero-panel,
+[data-theme^='high-contrast'] .lp-pipe-source,
+[data-theme^='high-contrast'] .lp-stage-card,
+[data-theme^='high-contrast'] .lp-xp-bar-card,
+[data-theme^='high-contrast'] .lp-bento-card,
+[data-theme^='high-contrast'] .lp-closing-card,
+[data-theme^='high-contrast'] .lp-footer {
+  background: var(--bg-surface);
   backdrop-filter: none;
 }
 
