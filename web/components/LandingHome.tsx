@@ -4,8 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
   Blocks,
-  Code2,
-  Cpu,
+  Gamepad2,
   Github,
   MessageSquare,
   Palette,
@@ -16,6 +15,7 @@ import {
   Sparkles,
   Terminal,
   Trophy,
+  Wand2,
 } from 'lucide-react';
 
 import { EJEMPLOS_EDU, type EjemploEdu } from '../data/ejemplos';
@@ -50,7 +50,62 @@ interface LandingHomeProps {
 }
 
 type TabHeroCard = 'runner' | 'chat';
-type FiltroCatalogo = 'todos' | 'misiones' | 'ejemplos';
+
+const TOY_HEROES = [
+  { id: 'zorro', label: 'Zorro Nova', valor: 'Zorro Nova' },
+  { id: 'robot', label: 'Robot Pixel', valor: 'Robot Pixel' },
+  { id: 'dragon', label: 'Dragón Chispa', valor: 'Dragon Chispa' },
+  { id: 'luna', label: 'Capitana Luna', valor: 'Capitana Luna' },
+] as const;
+
+const TOY_POWERS = [
+  {
+    id: 'dado',
+    label: 'Dado mágico (1-6)',
+    bloque: 'puntos = dado al azar entre 1 y 6',
+    linea: 'asignar puntos valor de numero aleatorio entre 1 y 6',
+  },
+  {
+    id: 'doble',
+    label: 'Super rayo x2',
+    bloque: 'puntos = 25 × 2',
+    linea: 'asignar puntos valor de 25 * 2',
+  },
+  {
+    id: 'escudo',
+    label: 'Escudo +50',
+    bloque: 'puntos = 50 + 50',
+    linea: 'asignar puntos valor de 50 + 50',
+  },
+  {
+    id: 'salto',
+    label: 'Salto estelar',
+    bloque: 'puntos = 10 × 9',
+    linea: 'asignar puntos valor de 10 * 9',
+  },
+] as const;
+
+const TOY_ENDINGS = [
+  {
+    id: 'celebrar',
+    label: 'Celebrar victoria',
+    bloque: 'mostrar "¡Aventura lista!", heroe y puntos',
+    lineas: 'mostrar "¡Aventura lista!"\nmostrar heroe\nmostrar puntos',
+  },
+  {
+    id: 'repetir',
+    label: 'Repetir 3 veces',
+    bloque: 'repetir 3 veces → "¡Nivel superado!"',
+    lineas: 'mostrar heroe\nrepetir 3 veces\n    mostrar "¡Nivel superado!"\nfin\nmostrar puntos',
+  },
+  {
+    id: 'record',
+    label: 'Comprobar medalla',
+    bloque: 'si puntos ≥ 50 → "¡Medalla de oro!"',
+    lineas:
+      'mostrar heroe\nsi puntos es mayor o igual que 50 entonces\n    mostrar "¡Medalla de oro!"\nsino\n    mostrar "¡Buen intento! Sube tus puntos"\nfin',
+  },
+] as const;
 
 const FRASES_CINETICAS_HERO = [
   'Compila en español',
@@ -91,22 +146,22 @@ interface PresetPipeline {
 const PRESETS_PIPELINE: PresetPipeline[] = [
   {
     id: 'vars',
-    etiqueta: 'Variables',
+    etiqueta: 'Guardar puntos',
     codigo: `crear variable puntos\nasignar puntos valor de 25 * 4\nmostrar puntos`,
   },
   {
     id: 'decision',
-    etiqueta: 'Decisión',
-    codigo: `crear variable dado\nasignar dado valor de numero aleatorio entre 1 y 6\nsi dado es mayor o igual que 4 entonces\n    mostrar "Ganaste"\nsino\n    mostrar "Intenta otra vez"\nfin`,
+    etiqueta: 'Lanzar un dado',
+    codigo: `crear variable dado\nasignar dado valor de numero aleatorio entre 1 y 6\nsi dado es mayor o igual que 4 entonces\n    mostrar "¡Ganaste!"\nsino\n    mostrar "¡Intenta otra vez!"\nfin`,
   },
   {
     id: 'funcion',
-    etiqueta: 'Función',
+    etiqueta: 'Crear un truco',
     codigo: `definir doble(numero x) devuelve numero\n    devolver x * 2\nfin\nmostrar doble(21)`,
   },
   {
     id: 'error',
-    etiqueta: 'Error semántico',
+    etiqueta: 'Cazar un error',
     codigo: `crear variable vidas\nasignar vidas valor de 3\nasignar vidas valor de "tres"`,
   },
 ];
@@ -230,16 +285,18 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   ]);
   const [inputChat, setInputChat] = useState('');
 
-  // Simulador vivo de 4 fases del compilador
+  // Constructor mágico de bloques en 3 clics (para niños)
+  const [toyHeroId, setToyHeroId] = useState<(typeof TOY_HEROES)[number]['id']>('zorro');
+  const [toyPowerId, setToyPowerId] = useState<(typeof TOY_POWERS)[number]['id']>('dado');
+  const [toyEndId, setToyEndId] = useState<(typeof TOY_ENDINGS)[number]['id']>('celebrar');
+  const [salidasToy, setSalidasToy] = useState<string[]>([]);
+
+  // Simulador amigable de 4 pasos
   const [presetPipeId, setPresetPipeId] = useState<string>(PRESETS_PIPELINE[0].id);
   const [salidasPipe, setSalidasPipe] = useState<string[]>([]);
 
-  // Catálogo filtrable
-  const [filtroCatalogo, setFiltroCatalogo] = useState<FiltroCatalogo>('todos');
-
   const [outputAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 200 });
   const [chatAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 220 });
-  const [gridAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 260 });
 
   const miniEditorRef = useRef<HTMLTextAreaElement | null>(null);
   const runnerOutRef = useRef<HTMLDivElement | null>(null);
@@ -299,6 +356,37 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
       cancelado = true;
     };
   }, [compilacionDemo, runSeq]);
+
+  const toyHero = TOY_HEROES.find((h) => h.id === toyHeroId) ?? TOY_HEROES[0];
+  const toyPower = TOY_POWERS.find((p) => p.id === toyPowerId) ?? TOY_POWERS[0];
+  const toyEnd = TOY_ENDINGS.find((e) => e.id === toyEndId) ?? TOY_ENDINGS[0];
+  const codigoToy = useMemo(
+    () =>
+      `crear variable heroe\nasignar heroe valor de "${toyHero.valor}"\ncrear variable puntos\n${toyPower.linea}\n${toyEnd.lineas}`,
+    [toyHero.valor, toyPower.linea, toyEnd.lineas],
+  );
+  const compToy = useMemo(() => compilarEdu(codigoToy, 'intermedio'), [codigoToy]);
+
+  useEffect(() => {
+    let cancelado = false;
+    if (compToy.diagnosticos.length > 0 || !compToy.intermedio) {
+      setSalidasToy([]);
+      return;
+    }
+    const out: string[] = [];
+    void ejecutarIntermedio(compToy.intermedio, {
+      onEvento: (ev) => {
+        if (ev.tipo === 'salida') out.push(ev.texto);
+      },
+      leerEntrada: async () => '1',
+      maxPasos: 2000,
+    }).then(() => {
+      if (!cancelado) setSalidasToy(out);
+    });
+    return () => {
+      cancelado = true;
+    };
+  }, [compToy]);
 
   const presetPipe =
     PRESETS_PIPELINE.find((p) => p.id === presetPipeId) ?? PRESETS_PIPELINE[0];
@@ -368,11 +456,14 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
             <button type="button" className="lp-nav-link lp-nav-link-btn" onClick={onEntrarConGuia}>
               Guía
             </button>
-            <a href="#retos" className="lp-nav-link">
+            <a href="#estudio" className="lp-nav-link">
+              Estudio
+            </a>
+            <a href="#misiones" className="lp-nav-link">
               Misiones
             </a>
-            <a href="#compilador" className="lp-nav-link">
-              Estudio
+            <a href="#proyectos" className="lp-nav-link">
+              Proyectos
             </a>
             <a
               href="https://github.com/topional/code-compiler"
@@ -443,9 +534,9 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               </h1>
 
               <p className="lp-hero-desc">
-                Aprende a programar en español con bloques visuales tipo Scratch y entra directo a{' '}
-                <strong>Code Compiler</strong>: un compilador real que te muestra tokens, árbol,
-                memoria y salida en milisegundos.
+                Aprende a programar en español con bloques tipo Scratch y da el salto a{' '}
+                <strong>Code Compiler</strong>: inventa tus propios juegos, supera misiones y mira
+                tus ideas cobrar vida al instante.
               </p>
 
               <div className="lp-code-ticker" aria-label="Ejemplo animado de código">
@@ -471,9 +562,9 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   <ArrowRight size={16} aria-hidden="true" />
                 </motion.button>
 
-                <a href="#compilador" className="lp-cta-glass">
-                  <Cpu size={16} aria-hidden="true" />
-                  <span>Ver el compilador</span>
+                <a href="#estudio" className="lp-cta-glass">
+                  <Wand2 size={16} aria-hidden="true" />
+                  <span>Ver cómo funciona</span>
                 </a>
               </div>
 
@@ -757,28 +848,147 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           </div>
         </section>
 
-        {/* SECCIÓN 2: SIMULADOR INTERACTIVO DE LAS 4 FASES DEL COMPILADOR */}
-        <section id="compilador" className="lp-section" aria-labelledby="pipe-heading">
+        {/* SECCIÓN 2: ESTUDIO INTERACTIVO PARA NIÑOS (CONSTRUCTOR DE BLOQUES + 4 PASOS AMIGABLES) */}
+        <section id="estudio" className="lp-section" aria-labelledby="estudio-heading">
           <div className="lp-section-head">
             <span className="lp-kicker">
               <ScrambleText
-                texto="// arquitectura real del compilador"
+                texto="// taller mágico de bloques"
                 desactivarAnimacion={movimientoReducido}
               />
             </span>
-            <h2 id="pipe-heading" className="lp-h2">
+            <h2 id="estudio-heading" className="lp-h2">
               <SplitRevealText
-                texto="Observa cada fase transformar tu código en vivo"
+                texto="Arma tu primer programa en 3 clics"
                 desactivarAnimacion={movimientoReducido}
               />
             </h2>
             <p className="lp-lead">
-              Toca un ejemplo y mira cómo responde cada etapa real de <strong>Code Compiler</strong>{' '}
-              directamente en tu navegador.
+              Elige un personaje, un poder y un final: mira cómo tus bloques se convierten al
+              instante en código real en español.
             </p>
           </div>
 
-          <div className="lp-filter-row" role="group" aria-label="Elegir código de demostración">
+          <div className="lp-toy-card">
+            <div className="lp-toy-controls">
+              <div className="lp-toy-group" role="group" aria-label="Elegir personaje">
+                <span className="lp-toy-step-label">1. ELIGE TU PERSONAJE</span>
+                <div className="lp-toy-pills">
+                  {TOY_HEROES.map((h) => (
+                    <button
+                      key={h.id}
+                      type="button"
+                      className="lp-toy-pill"
+                      aria-pressed={toyHeroId === h.id}
+                      onClick={() => setToyHeroId(h.id)}
+                    >
+                      {h.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="lp-toy-group" role="group" aria-label="Elegir poder">
+                <span className="lp-toy-step-label">2. ELIGE SU PODER</span>
+                <div className="lp-toy-pills">
+                  {TOY_POWERS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="lp-toy-pill"
+                      aria-pressed={toyPowerId === p.id}
+                      onClick={() => setToyPowerId(p.id)}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="lp-toy-group" role="group" aria-label="Elegir final">
+                <span className="lp-toy-step-label">3. ELIGE QUÉ PASA AL FINAL</span>
+                <div className="lp-toy-pills">
+                  {TOY_ENDINGS.map((e) => (
+                    <button
+                      key={e.id}
+                      type="button"
+                      className="lp-toy-pill"
+                      aria-pressed={toyEndId === e.id}
+                      onClick={() => setToyEndId(e.id)}
+                    >
+                      {e.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="lp-toy-stack" aria-label="Bloques armados">
+                <div className="lp-toy-block is-var">
+                  <span>heroe = &quot;{toyHero.valor}&quot;</span>
+                  <span className="lp-toy-block-tag">Personaje</span>
+                </div>
+                <div className="lp-toy-block is-op">
+                  <span>{toyPower.bloque}</span>
+                  <span className="lp-toy-block-tag">Poder</span>
+                </div>
+                <div className="lp-toy-block is-ctrl">
+                  <span>{toyEnd.bloque}</span>
+                  <span className="lp-toy-block-tag">Acción</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="lp-toy-result">
+              <div className="lp-toy-result-head">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                  <ChispaMascota estado="celebrando" size={30} />
+                  <div>
+                    <strong style={{ fontSize: '0.86rem' }}>Tu código en español</strong>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
+                      Generado y ejecutado en vivo
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="lp-cta-primary lp-cta-xs"
+                  onClick={() => onEntrarConCodigo('mi_aventura.edu', codigoToy)}
+                >
+                  <span>Seguir en Code Compiler</span>
+                  <ArrowRight size={13} aria-hidden="true" />
+                </button>
+              </div>
+
+              <pre className="lp-toy-code">{codigoToy}</pre>
+
+              <div className="lp-toy-out" aria-label="Resultado del programa creado">
+                <span className="lp-toy-step-label">RESPUESTA EN PANTALLA</span>
+                {salidasToy.map((linea, idx) => (
+                  <div key={`${idx}-${linea}`} className="lp-toy-out-line">
+                    <span className="lp-toy-out-arrow" aria-hidden="true">
+                      →
+                    </span>
+                    <span>{linea}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="lp-subhead">
+            <span className="lp-kicker">
+              <ScrambleText texto="// magia paso a paso" desactivarAnimacion={movimientoReducido} />
+            </span>
+            <h3 id="pipe-heading" className="lp-h3-section">
+              ¿Cómo entiende Chispa tus palabras en 4 pasos?
+            </h3>
+            <p className="lp-lead">
+              Toca un ejemplo sencillo y mira cómo <strong>Chispa</strong> lee tus frases, revisa
+              que todo encaje y pone tu idea en marcha.
+            </p>
+          </div>
+
+          <div className="lp-filter-row" role="group" aria-label="Elegir ejemplo sencillo">
             {PRESETS_PIPELINE.map((p) => (
               <button
                 key={p.id}
@@ -814,16 +1024,17 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
 
           <div className="lp-pipeline-grid">
             <SpotlightCard desactivarAnimacion={movimientoReducido} className="lp-stage-card">
-              <span className="lp-stage-num">
-                <ScrambleText texto="01 // LEXER" desactivarAnimacion={movimientoReducido} />
-              </span>
-              <h3>{compPipe.tokens.length} tokens detectados</h3>
+              <span className="lp-stage-num">PASO 1 · LEE TUS PALABRAS</span>
+              <h3>{compPipe.tokens.filter((t) => t.texto.trim()).length} piezas encontradas</h3>
               <div className="lp-token-cloud">
-                {compPipe.tokens.slice(0, 7).map((t, i) => (
-                  <span key={i} className="lp-token-chip">
-                    {t.tipo}
-                  </span>
-                ))}
+                {compPipe.tokens
+                  .filter((t) => t.texto.trim().length > 0)
+                  .slice(0, 7)
+                  .map((t, i) => (
+                    <span key={i} className="lp-token-chip">
+                      {t.texto}
+                    </span>
+                  ))}
               </div>
             </SpotlightCard>
 
@@ -832,14 +1043,12 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               desactivarAnimacion={movimientoReducido}
               className="lp-stage-card"
             >
-              <span className="lp-stage-num">
-                <ScrambleText texto="02 // PARSER" desactivarAnimacion={movimientoReducido} />
-              </span>
-              <h3>Árbol sintáctico</h3>
+              <span className="lp-stage-num">PASO 2 · ARMA EL PLAN</span>
+              <h3>Orden de instrucciones</h3>
               <p>
                 {compPipe.diagnosticos.some((d) => d.etapa === 'gramatica')
-                  ? 'Se detectó un error de gramática antes de continuar.'
-                  : `Gramática válida con ${compPipe.arbolVisual?.hijos.length ?? 0} sentencia(s) raíz.`}
+                  ? '¡Uy! Falta acomodar o cerrar una instrucción antes de jugar.'
+                  : `¡Orden perfecto! Tu programa tiene ${compPipe.arbolVisual?.hijos.length ?? 0} paso(s) claros.`}
               </p>
             </SpotlightCard>
 
@@ -848,19 +1057,16 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               desactivarAnimacion={movimientoReducido}
               className="lp-stage-card"
             >
-              <span className="lp-stage-num">
-                <ScrambleText texto="03 // SEMÁNTICO" desactivarAnimacion={movimientoReducido} />
-              </span>
+              <span className="lp-stage-num">PASO 3 · REVISA LAS REGLAS</span>
               <h3>
                 {compPipe.diagnosticos.length > 0
-                  ? `${compPipe.diagnosticos.length} error(es) detectado(s)`
-                  : `${compPipe.simbolos.length} símbolo(s) validado(s)`}
+                  ? `¡Pista detectada! (${compPipe.diagnosticos.length})`
+                  : '¡Todo encaja perfecto!'}
               </h3>
               <p>
                 {compPipe.diagnosticos.length > 0
                   ? compPipe.diagnosticos[0].mensaje
-                  : compPipe.simbolos.map((s) => `${s.nombre}: ${s.tipo}`).join(' · ') ||
-                    'Sin conflictos de tipo.'}
+                  : `Tus cajas guardadas (${compPipe.simbolos.map((s) => s.nombre).join(', ') || 'ninguna'}) tienen el tipo correcto.`}
               </p>
             </SpotlightCard>
 
@@ -869,23 +1075,17 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               desactivarAnimacion={movimientoReducido}
               className="lp-stage-card"
             >
-              <span className="lp-stage-num">
-                <ScrambleText
-                  texto="04 // IR v1 & RUNTIME"
-                  desactivarAnimacion={movimientoReducido}
-                />
-              </span>
-              <h3>
-                {compPipe.intermedio
-                  ? `${compPipe.intermedio.instrucciones.length} instrucciones IR`
-                  : 'Ejecución detenida'}
-              </h3>
-              <p className="mono" style={{ color: compPipe.diagnosticos.length ? 'var(--err)' : 'var(--ok)' }}>
+              <span className="lp-stage-num">PASO 4 · ¡EN ACCIÓN!</span>
+              <h3>{compPipe.intermedio ? '¡Programa en marcha!' : 'Pausa para corregir'}</h3>
+              <p
+                className="mono"
+                style={{ color: compPipe.diagnosticos.length ? 'var(--err)' : 'var(--ok)' }}
+              >
                 {compPipe.diagnosticos.length > 0
-                  ? 'Corrige el aviso para generar IR v1.'
+                  ? 'Corrige la pista del Paso 3 y volverá a funcionar.'
                   : salidasPipe.length > 0
-                    ? `Salida → ${salidasPipe.join(' | ')}`
-                    : 'Compilado y listo.'}
+                    ? `Resultado → ${salidasPipe.join(' | ')}`
+                    : '¡Listo para jugar!'}
               </p>
             </SpotlightCard>
           </div>
@@ -899,28 +1099,28 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           </div>
         </section>
 
-        {/* SECCIÓN 3: RETOS GUIADOS CON XP Y PROYECTOS */}
-        <section id="retos" className="lp-section" aria-labelledby="retos-heading">
+        {/* SECCIÓN 3: MISIONES GUIADAS CON XP (PRÁCTICAS GUIADAS) */}
+        <section id="misiones" className="lp-section" aria-labelledby="misiones-heading">
           <div className="lp-section-head">
             <span className="lp-kicker">
               <ScrambleText
-                texto="// práctica guiada y proyectos listos"
+                texto="// misiones guiadas con medallas"
                 desactivarAnimacion={movimientoReducido}
               />
             </span>
-            <h2 id="retos-heading" className="lp-h2">
+            <h2 id="misiones-heading" className="lp-h2">
               <SplitRevealText
-                texto="Retos verificados con XP y programas de práctica"
+                texto="Supera misiones paso a paso y sube de nivel"
                 desactivarAnimacion={movimientoReducido}
               />
             </h2>
             <p className="lp-lead">
-              Cada tarjeta abre directamente <strong>Code Compiler</strong> con bloques Scratch,
-              verificador automático y depuración paso a paso.
+              Empieza desde cero con historias divertidas, pistas amigables y recompensas XP que se
+              guardan en tu computadora.
             </p>
           </div>
 
-          <div className="lp-xp-bar-card" role="region" aria-label="Progreso de retos">
+          <div className="lp-xp-bar-card" role="region" aria-label="Progreso de misiones">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Trophy size={20} style={{ color: 'var(--accent)' }} aria-hidden="true" />
               <div>
@@ -930,7 +1130,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   {xpTotal} XP
                 </strong>
                 <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
-                  {misionesCompletadas.length} de {MISIONES_EDU.length} retos superados
+                  {misionesCompletadas.length} de {MISIONES_EDU.length} misiones superadas
                 </div>
               </div>
             </div>
@@ -940,11 +1140,11 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               aria-valuenow={porcentajeXp}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="Porcentaje de retos completados"
+              aria-label="Porcentaje de misiones completadas"
             >
               <motion.div
                 className="lp-xp-fill"
-                initial={{ width: 0 }}
+                initial={{ width: '0%' }}
                 whileInView={{ width: `${porcentajeXp}%` }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
@@ -959,111 +1159,105 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
             </span>
           </div>
 
-          <div className="lp-filter-row" role="group" aria-label="Filtrar catálogo">
-            {(
-              [
-                { id: 'todos', label: `Todo (${MISIONES_EDU.length + ejemplosMostrar.length})` },
-                { id: 'misiones', label: `Retos XP (${MISIONES_EDU.length})` },
-                { id: 'ejemplos', label: `Proyectos (${ejemplosMostrar.length})` },
-              ] as const
-            ).map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                className="lp-filter-pill"
-                aria-pressed={filtroCatalogo === f.id}
-                onClick={() => setFiltroCatalogo(f.id)}
-              >
-                {filtroCatalogo === f.id && (
-                  <motion.span
-                    layoutId="catalog-filter-bg"
-                    className="lp-filter-pill-bg"
-                    transition={{ type: 'spring', stiffness: 480, damping: 32 }}
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="lp-tab-inner">{f.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div ref={gridAnimRef} className="lp-bento-grid">
-            {(filtroCatalogo === 'todos' || filtroCatalogo === 'misiones') &&
-              MISIONES_EDU.map((m, idx) => {
-                const ok = misionesCompletadas.includes(m.id);
-                return (
-                  <SpotlightCard
-                    key={m.id}
-                    delay={idx * 0.04}
-                    desactivarAnimacion={movimientoReducido}
-                    className={`lp-bento-card ${ok ? 'is-done' : ''}`}
-                  >
-                    <div className="lp-bento-head">
-                      <span className="lp-bento-tag">
-                        <Blocks size={13} aria-hidden="true" />
-                        {m.etiquetaNivel}
-                      </span>
-                      <span className="lp-bento-xp">{ok ? '✓ Completado' : '+150 XP'}</span>
-                    </div>
-                    <h3 className="lp-bento-title">{m.titulo}</h3>
-                    <p className="lp-bento-desc">{m.historia}</p>
-                    <pre className="lp-bento-code">
-                      {m.codigoInicial.split('\n').slice(0, 3).join('\n')}
-                    </pre>
-                    <div className="lp-bento-foot">
-                      <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
-                        {m.insignia}
-                      </span>
-                      <button
-                        type="button"
-                        className="lp-cta-surface lp-cta-xs"
-                        onClick={() => onEntrarConMision(m)}
-                      >
-                        <span>{ok ? 'Repetir' : 'Abrir reto'}</span>
-                        <ArrowRight size={13} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </SpotlightCard>
-                );
-              })}
-
-            {(filtroCatalogo === 'todos' || filtroCatalogo === 'ejemplos') &&
-              ejemplosMostrar.map((ej, idx) => (
+          <div className="lp-bento-grid">
+            {MISIONES_EDU.map((m, idx) => {
+              const ok = misionesCompletadas.includes(m.id);
+              return (
                 <SpotlightCard
-                  key={ej.id}
+                  key={m.id}
                   delay={idx * 0.04}
                   desactivarAnimacion={movimientoReducido}
-                  className="lp-bento-card"
+                  className={`lp-bento-card ${ok ? 'is-done' : ''}`}
                 >
                   <div className="lp-bento-head">
                     <span className="lp-bento-tag">
-                      <Code2 size={13} aria-hidden="true" />
-                      Proyecto práctico
+                      <Blocks size={13} aria-hidden="true" />
+                      Misión · {m.etiquetaNivel}
                     </span>
-                    <span className="lp-bento-xp">{ej.nivel}</span>
+                    <span className="lp-bento-xp">{ok ? '✓ Completada' : '+150 XP'}</span>
                   </div>
-                  <h3 className="lp-bento-title">{ej.titulo}</h3>
-                  <p className="lp-bento-desc">{ej.subtitulo}</p>
+                  <h3 className="lp-bento-title">{m.titulo}</h3>
+                  <p className="lp-bento-desc">{m.historia}</p>
                   <pre className="lp-bento-code">
-                    {ej.codigo.split('\n').slice(0, 3).join('\n')}
+                    {m.codigoInicial.split('\n').slice(0, 3).join('\n')}
                   </pre>
                   <div className="lp-bento-foot">
                     <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
-                      {ej.etiquetas.slice(0, 2).join(' · ')}
+                      {m.insignia}
                     </span>
                     <button
                       type="button"
                       className="lp-cta-surface lp-cta-xs"
-                      onClick={() =>
-                        onEntrarConCodigo(ej.archivo.replace(/^examples\//, ''), ej.codigo)
-                      }
+                      onClick={() => onEntrarConMision(m)}
                     >
-                      <span>Ejecutar</span>
+                      <span>{ok ? 'Repetir misión' : 'Abrir misión'}</span>
                       <ArrowRight size={13} aria-hidden="true" />
                     </button>
                   </div>
                 </SpotlightCard>
-              ))}
+              );
+            })}
+          </div>
+        </section>
+
+        {/* SECCIÓN 4: JUEGOS Y PROYECTOS LISTOS (COLOR SECUNDARIO DIFERENCIADO) */}
+        <section id="proyectos" className="lp-section" aria-labelledby="proyectos-heading">
+          <div className="lp-section-head">
+            <span className="lp-kicker is-project">
+              <ScrambleText
+                texto="// juegos y proyectos para experimentar"
+                desactivarAnimacion={movimientoReducido}
+              />
+            </span>
+            <h2 id="proyectos-heading" className="lp-h2">
+              <SplitRevealText
+                texto="Juega, modifica y crea tus propios proyectos"
+                desactivarAnimacion={movimientoReducido}
+              />
+            </h2>
+            <p className="lp-lead">
+              Proyectos y minijuegos listos para probar en un clic: cambia las reglas, inventa
+              nuevos puntajes y hazlos tuyos dentro de <strong>Code Compiler</strong>.
+            </p>
+          </div>
+
+          <div className="lp-bento-grid">
+            {ejemplosMostrar.map((ej, idx) => (
+              <SpotlightCard
+                key={ej.id}
+                delay={idx * 0.04}
+                desactivarAnimacion={movimientoReducido}
+                className="lp-bento-card is-project"
+              >
+                <div className="lp-bento-head">
+                  <span className="lp-bento-tag is-project">
+                    <Gamepad2 size={13} aria-hidden="true" />
+                    Juego y proyecto
+                  </span>
+                  <span className="lp-bento-xp is-project">{ej.nivel}</span>
+                </div>
+                <h3 className="lp-bento-title">{ej.titulo}</h3>
+                <p className="lp-bento-desc">{ej.subtitulo}</p>
+                <pre className="lp-bento-code">
+                  {ej.codigo.split('\n').slice(0, 3).join('\n')}
+                </pre>
+                <div className="lp-bento-foot">
+                  <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>
+                    {ej.etiquetas.slice(0, 2).join(' · ')}
+                  </span>
+                  <button
+                    type="button"
+                    className="lp-cta-surface lp-cta-project lp-cta-xs"
+                    onClick={() =>
+                      onEntrarConCodigo(ej.archivo.replace(/^examples\//, ''), ej.codigo)
+                    }
+                  >
+                    <span>¡Jugar y editar!</span>
+                    <ArrowRight size={13} aria-hidden="true" />
+                  </button>
+                </div>
+              </SpotlightCard>
+            ))}
           </div>
 
           <div className="lp-closing-card">

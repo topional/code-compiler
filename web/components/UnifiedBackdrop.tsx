@@ -26,7 +26,7 @@ interface UnifiedBackdropProps {
 }
 
 const INTERACTIVE_SKIP_SELECTOR =
-  'button, a, input, textarea, select, label, dialog, [role="tab"], [role="button"], .lp-hero-panel, .lp-code-ticker, .lp-pipe-source, .lp-bento-card, .lp-stage-card, .lp-xp-bar-card, .lp-closing-card, .lp-nav';
+  'button, a, input, textarea, select, label, dialog, [role="tab"], [role="button"], .lp-hero-panel, .lp-code-ticker, .lp-toy-card, .lp-pipe-source, .lp-bento-card, .lp-stage-card, .lp-xp-bar-card, .lp-closing-card, .lp-nav';
 
 /**
  * Lienzo vivo ÚNICO, CONTINUO e INTERACTIVO detrás de toda la página (`position: fixed; inset: 0`).
