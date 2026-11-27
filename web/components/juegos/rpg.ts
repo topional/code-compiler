@@ -261,7 +261,7 @@ export function crearRpg(): Juego {
 
       // ---------- Paneles de vida (fijos, sin sacudida)
       panelVida(g, 12, 12, 'Slime Rey', 'Nv. 9', barraRival, Math.max(0, Math.round(vidaRival)), maxRival);
-      panelVida(g, w - 182, h * 0.57, 'Kira', 'Nv. 7', barraHeroe, Math.max(0, Math.round(vidaHeroe)), maxHeroe);
+      panelVida(g, Math.max(12, w - 198), h * 0.57, 'Kira', 'Nv. 7', barraHeroe, Math.max(0, Math.round(vidaHeroe)), maxHeroe);
 
       // ---------- Cuadro de mensaje
       const mh = 34;
@@ -288,17 +288,24 @@ export function crearRpg(): Juego {
 }
 
 function panelVida(g: CanvasRenderingContext2D, x: number, y: number, nombre: string, nivel: string, p: number, vida: number, max: number) {
+  const ancho = 186;
+  const etiquetaVida = `${vida}/${max}`;
   g.fillStyle = 'rgba(255,251,235,0.94)';
-  rect(g, x, y, 170, 44, 10);
+  rect(g, x, y, ancho, 44, 10);
   g.fill();
   g.strokeStyle = '#78350f';
   g.lineWidth = 2;
   g.stroke();
   texto(g, nombre, x + 10, y + 13, 13, '#1f2937', 'left', 'rgba(0,0,0,0)');
-  texto(g, nivel, x + 160, y + 13, 11, '#92400e', 'right', 'rgba(0,0,0,0)');
+  texto(g, nivel, x + ancho - 10, y + 13, 11, '#92400e', 'right', 'rgba(0,0,0,0)');
   const color = p > 0.5 ? '#22c55e' : p > 0.22 ? '#f59e0b' : '#ef4444';
-  barra(g, x + 10, y + 24, 114, 11, p, color, '#334155');
-  texto(g, `${vida}/${max}`, x + 160, y + 30, 11, '#1f2937', 'right', 'rgba(0,0,0,0)');
+  g.save();
+  g.font = '700 11px "Fredoka", "Plus Jakarta Sans", system-ui, sans-serif';
+  const espacioTexto = Math.max(52, Math.ceil(g.measureText(etiquetaVida).width) + 10);
+  g.restore();
+  const anchoBarra = Math.max(68, ancho - 20 - espacioTexto);
+  barra(g, x + 10, y + 24, anchoBarra, 11, p, color, '#334155');
+  texto(g, etiquetaVida, x + ancho - 10, y + 30, 11, '#1f2937', 'right', 'rgba(0,0,0,0)');
 }
 
 function rayo(g: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, t: number) {
