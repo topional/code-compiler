@@ -244,8 +244,8 @@
 }
 
 .lp-cta-glass:hover {
-  border-color: #fde047;
-  color: #fef08a;
+  border-color: var(--accent-bright);
+  color: var(--accent-bright);
   transform: translateY(-1px);
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.18),
@@ -439,7 +439,7 @@
   font-size: clamp(2.15rem, 4.9vw, 3.85rem);
   line-height: 1.08;
   font-weight: 700;
-  color: #fde047;
+  color: var(--accent-bright);
   min-height: 1.2em;
   text-shadow: 0 4px 24px rgba(0, 0, 0, 0.65);
 }
@@ -487,7 +487,7 @@
   height: 0.82em;
   margin-left: 5px;
   border-radius: 2px;
-  background: #7dd3fc;
+  background: var(--accent-bright);
   vertical-align: -0.06em;
   animation: lp-caret-breathe 2.4s ease-in-out infinite;
 }
@@ -516,7 +516,7 @@
   padding: 10px 14px;
   border-radius: 10px;
   background: rgba(11, 16, 30, 0.88);
-  border: 1px solid rgba(56, 189, 248, 0.36);
+  border: 1px solid color-mix(in srgb, var(--accent-bright) 42%, transparent);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -526,7 +526,7 @@
 }
 
 .lp-ticker-prompt {
-  color: #fde047;
+  color: var(--accent-bright);
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -543,7 +543,7 @@
   margin-left: 3px;
   border-radius: 2px;
   vertical-align: -0.15em;
-  background: #fde047;
+  background: var(--accent-bright);
   animation: lp-caret-breathe 2.4s ease-in-out infinite;
 }
 
@@ -586,18 +586,19 @@
 }
 
 .lp-shader-chip:hover {
-  border-color: #fde047;
+  border-color: var(--accent-bright);
+  color: var(--accent-bright);
   transform: translateY(-1px);
 }
 
 .lp-shader-chip[aria-pressed='true'] {
-  background: #facc15;
-  color: #0b1120;
-  border-color: #78350f;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: color-mix(in srgb, var(--accent) 55%, #000000);
   box-shadow:
-    inset 0 2px 0 #fef08a,
-    inset 0 -2px 0 #d97706,
-    0 2px 0 #451a03;
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.24),
+    0 2px 0 rgba(0, 0, 0, 0.52);
 }
 
 /* ==========================================================================
@@ -726,9 +727,12 @@
 .lp-hero-textarea {
   width: 100%;
   min-height: 175px;
+  max-height: 260px;
   padding: 12px 14px;
   border: none;
   resize: vertical;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--bg-editor);
   color: var(--ink-primary);
   font-family: var(--font-mono);
@@ -751,7 +755,8 @@
 .lp-runner-out {
   padding: 10px 12px;
   max-height: 145px;
-  overflow: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -839,7 +844,8 @@
   flex: 1;
   padding: 10px 12px;
   max-height: 235px;
-  overflow: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 8px;

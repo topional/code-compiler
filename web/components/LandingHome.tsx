@@ -1,5 +1,4 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import Lenis from 'lenis';
 import { motion } from 'motion/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -235,21 +234,6 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   const [outputAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 200 });
   const [chatAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 220 });
   const [gridAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 260 });
-
-  useEffect(() => {
-    if (movimientoReducido) return;
-    const lenis = new Lenis({ duration: 1.0, smoothWheel: true });
-    let rafId = 0;
-    const raf = (t: number) => {
-      lenis.raf(t);
-      rafId = window.requestAnimationFrame(raf);
-    };
-    rafId = window.requestAnimationFrame(raf);
-    return () => {
-      window.cancelAnimationFrame(rafId);
-      lenis.destroy();
-    };
-  }, [movimientoReducido]);
 
   const temaMeta = obtenerTema(tema);
   const compilacionDemo = useMemo(() => compilarEdu(codigoDemo, 'intermedio'), [codigoDemo]);
