@@ -16,7 +16,6 @@ import {
   Sparkles,
   Terminal,
   Trophy,
-  Waves,
 } from 'lucide-react';
 
 import { EJEMPLOS_EDU, type EjemploEdu } from '../data/ejemplos';
@@ -473,66 +472,39 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
 
               {temaMeta.grupo !== 'Accesibilidad' && (
                 <div
-                  className="lp-backdrop-groups"
-                  title="Toca o haz clic en cualquier zona libre del fondo para interactuar con la escena"
+                  className="lp-shader-bar"
+                  role="group"
+                  aria-label="Elegir mundo vivo programado a código"
+                  title="Toca o haz clic en cualquier zona libre del fondo para interactuar con el mundo"
                 >
-                  <div className="lp-shader-bar" role="group" aria-label="Elegir mundo vivo programado a código">
-                    <span className="lp-shader-label">
-                      <Sparkles size={13} aria-hidden="true" /> Mundos:
-                    </span>
-                    {(
-                      [
-                        { id: 'koi', label: 'Estanque Koi', hint: 'Toque: ondas de agua que atraen a los peces Koi' },
-                        { id: 'laguna', label: 'Laguna', hint: 'Toque: cardumen bioluminiscente y burbujas' },
-                        { id: 'cosmos', label: 'Cosmos', hint: 'Toque: lente gravitacional y meteoros curvados' },
-                        { id: 'vector', label: 'Vector 3D', hint: 'Toque: escáner sísmico 3D sobre las montañas' },
-                        { id: 'lluvia', label: 'Lluvia Neón', hint: 'Toque: salpicadura y gotas resbalando por el cristal' },
-                        { id: 'bosque', label: 'Bosque', hint: 'Toque: fuegos artificiales pixel-art sobre los pinos' },
-                        { id: 'dragon', label: 'Dragón', hint: 'Toque: atrae al dragón y dispara espiral de chispas' },
-                        { id: 'jardin', label: 'Jardín', hint: 'Toque: brota una flor animada y pétalos al viento' },
-                        { id: 'luciernagas', label: 'Luciérnagas', hint: 'Toque: enciende un farol que atrae al enjambre' },
-                        { id: 'acuario', label: 'Acuario', hint: 'Toque: pulso bioluminiscente y columna de burbujas' },
-                      ] as const
-                    ).map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        className="lp-shader-chip"
-                        aria-pressed={modoFondo === s.id}
-                        title={s.hint}
-                        onClick={() => setModoFondo(s.id)}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="lp-shader-bar" role="group" aria-label="Elegir textura generativa de estudio">
-                    <span className="lp-shader-label">
-                      <Waves size={13} aria-hidden="true" /> Texturas:
-                    </span>
-                    {(
-                      [
-                        { id: 'halftone', label: 'Halftone', hint: 'Toque: onda risográfica' },
-                        { id: 'braille', label: 'Braille', hint: 'Toque: red de constelación' },
-                        { id: 'mosaico', label: 'Mosaico', hint: 'Toque: cascada de teselas en diamante' },
-                        { id: 'tablero', label: 'Tablero', hint: 'Toque: volteo mecánico de símbolos' },
-                        { id: 'plano', label: 'Plano', hint: 'Toque: compás técnico (X, Y)' },
-                        { id: 'plotter', label: 'Plotter', hint: 'Toque: sello topográfico' },
-                      ] as const
-                    ).map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        className="lp-shader-chip"
-                        aria-pressed={modoFondo === s.id}
-                        title={s.hint}
-                        onClick={() => setModoFondo(s.id)}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
+                  <span className="lp-shader-label">
+                    <Sparkles size={13} aria-hidden="true" /> Mundos:
+                  </span>
+                  {(
+                    [
+                      { id: 'koi', label: 'Estanque Koi', hint: 'Toque: ondas de agua que atraen a los peces Koi' },
+                      { id: 'bosque', label: 'Bosque', hint: 'Toque: cohete y fuegos artificiales sobre la cabaña alpina' },
+                      { id: 'acuario', label: 'Acuario', hint: 'Toque: pulso bioluminiscente y vórtice de burbujas' },
+                      { id: 'luciernagas', label: 'Luciérnagas', hint: 'Toque: suelta un farol flotante que atrae al enjambre' },
+                      { id: 'cosmos', label: 'Cosmos', hint: 'Toque: lente gravitacional y meteoros curvados' },
+                      { id: 'vector', label: 'Vector 3D', hint: 'Toque: pulso sísmico 3D sobre la malla de montañas' },
+                      { id: 'lluvia', label: 'Lluvia Neón', hint: 'Toque: salpicadura y gotas resbalando por el cristal' },
+                      { id: 'acropolis', label: 'Acrópolis', hint: 'Toque: estrella fugaz dorada sobre el Partenón' },
+                      { id: 'bahia', label: 'Bahía Láser', hint: 'Toque: convergencia de rayos láser desde los Supertrees' },
+                      { id: 'puente', label: 'Puente Costa', hint: 'Toque: pulso de luz en los cables y bandada de aves' },
+                    ] as const
+                  ).map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="lp-shader-chip"
+                      aria-pressed={modoFondo === s.id}
+                      title={s.hint}
+                      onClick={() => setModoFondo(s.id)}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

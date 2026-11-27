@@ -539,18 +539,12 @@
   gap: 10px;
 }
 
-.lp-backdrop-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  padding-top: 4px;
-}
-
 .lp-shader-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  padding-top: 4px;
 }
 
 .lp-shader-label {
