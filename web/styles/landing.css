@@ -1,6 +1,6 @@
 /* ==========================================================================
-   Code Compiler · Chispa .edu — Portada Original Cinética + Shaders WebGL
-   Arquitectura propia: Paper Shaders + Partículas interactivas + Tipografía cinética
+   Code Compiler · Chispa — Portada Cinética con Fondo Continuo Unificado
+   Un solo lienzo generativo (Halftone / Plotter / Braille) detrás de toda la página
    ========================================================================== */
 
 :root {
@@ -8,12 +8,33 @@
 }
 
 .lp-root {
+  position: relative;
   min-height: 100dvh;
-  background: var(--bg-canvas);
+  background: transparent;
   color: var(--ink-primary);
   display: flex;
   flex-direction: column;
   overflow-x: clip;
+}
+
+.unified-backdrop-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--bg-canvas);
+}
+
+.unified-backdrop-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.lp-root > main,
+.lp-footer {
+  position: relative;
+  z-index: 1;
 }
 
 /* ==========================================================================
@@ -242,34 +263,35 @@
   gap: 8px;
   padding: 12px 18px;
   border-radius: 7px;
-  border: 2px solid rgba(255, 255, 255, 0.36);
-  background: rgba(12, 17, 32, 0.86);
-  color: #f8fafc;
+  border: 2px solid var(--border-strong);
+  background: color-mix(in srgb, var(--bg-surface) 84%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--ink-primary);
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.38),
-    0 3px 0 rgba(0, 0, 0, 0.65);
+    inset 0 2px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.16),
+    0 3px 0 var(--border-subtle);
   font-family: var(--font-pixel);
   font-size: 0.98rem;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.14s ease;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.14s ease, color 0.14s ease;
 }
 
 .lp-cta-glass:hover {
-  border-color: var(--accent-bright);
-  color: var(--accent-bright);
+  border-color: var(--accent);
+  color: var(--accent);
   transform: translateY(-1px);
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.38),
-    0 4px 0 rgba(0, 0, 0, 0.68);
+    inset 0 2px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.18),
+    0 4px 0 var(--border-subtle);
 }
 
 .lp-cta-glass:active {
   transform: translateY(2px);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.65);
+  box-shadow: 0 1px 0 var(--border-subtle);
 }
 
 .lp-cta-surface {
@@ -325,65 +347,12 @@
 }
 
 /* ==========================================================================
-   HERO CON SHADERS WEBGL INTERACTIVOS (PAPER SHADERS + CANVAS PARTÍCULAS)
+   HERO SIN LÍNEA DIVISORIA — SUPERPUESTO SOBRE EL FONDO CONTINUO UNIFICADO
    ========================================================================== */
 .lp-hero-stage {
   position: relative;
-  background: #070a12;
-  color: #f8fafc;
-  border-bottom: 1px solid var(--border-subtle);
-  overflow: hidden;
-}
-
-[data-theme='high-contrast'] .lp-hero-stage {
-  background: #000000;
-  border-bottom: 2px solid #ffff00;
-}
-
-.shader-bg-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.shader-fallback {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 25%, rgba(56, 189, 248, 0.22), transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(250, 204, 21, 0.16), transparent 55%),
-    #070a12;
-}
-
-[data-theme='high-contrast'] .shader-fallback {
-  background: #000000;
-}
-
-.shader-particle-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.lp-hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    rgba(7, 10, 18, 0.82) 0%,
-    rgba(7, 10, 18, 0.62) 55%,
-    rgba(7, 10, 18, 0.78) 100%
-  );
-  pointer-events: none;
-  z-index: 1;
-}
-
-[data-theme='high-contrast'] .lp-hero-overlay {
-  background: #000000;
+  background: transparent;
+  color: var(--ink-primary);
 }
 
 .lp-hero-grid {
@@ -391,7 +360,7 @@
   z-index: 2;
   max-width: 1220px;
   margin: 0 auto;
-  padding: 52px 20px 60px;
+  padding: 52px 20px 56px;
   display: grid;
   grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
   gap: 32px;
@@ -412,9 +381,10 @@
   gap: 9px;
   padding: 6px 13px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.84);
-  border: 1px solid rgba(148, 163, 184, 0.42);
-  color: #e2e8f0;
+  background: color-mix(in srgb, var(--bg-surface) 84%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-primary);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 700;
@@ -425,8 +395,8 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: #4ade80;
-  box-shadow: 0 0 8px rgba(74, 222, 128, 0.55);
+  background: var(--ok);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 55%, transparent);
 }
 
 /* ==========================================================================
@@ -444,7 +414,7 @@
   font-family: var(--font-ui);
   font-size: clamp(1.1rem, 2.2vw, 1.45rem);
   font-weight: 700;
-  color: #cbd5e1;
+  color: var(--ink-secondary);
   letter-spacing: -0.01em;
 }
 
@@ -453,13 +423,14 @@
   font-size: clamp(2.15rem, 4.9vw, 3.85rem);
   line-height: 1.08;
   font-weight: 700;
-  color: var(--accent-bright);
+  color: var(--accent);
   min-height: 1.2em;
-  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.65);
+  text-shadow: 0 2px 18px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 [data-theme='high-contrast'] .lp-h1-dynamic {
   color: #ffff00;
+  text-shadow: none;
 }
 
 .kinetic-stage {
@@ -501,7 +472,7 @@
   height: 0.82em;
   margin-left: 5px;
   border-radius: 2px;
-  background: var(--accent-bright);
+  background: var(--accent);
   vertical-align: -0.06em;
   animation: lp-caret-breathe 2.4s ease-in-out infinite;
 }
@@ -521,7 +492,7 @@
   max-width: 54ch;
   font-size: 0.98rem;
   line-height: 1.6;
-  color: #e2e8f0;
+  color: var(--ink-secondary);
 }
 
 .lp-code-ticker {
@@ -529,18 +500,19 @@
   min-height: 44px;
   padding: 10px 14px;
   border-radius: 10px;
-  background: rgba(11, 16, 30, 0.88);
-  border: 1px solid color-mix(in srgb, var(--accent-bright) 42%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border-strong));
   display: flex;
   align-items: center;
   gap: 10px;
   font-family: var(--font-mono);
   font-size: 0.82rem;
-  color: #f1f5f9;
+  color: var(--ink-primary);
 }
 
 .lp-ticker-prompt {
-  color: var(--accent-bright);
+  color: var(--accent);
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -557,7 +529,7 @@
   margin-left: 3px;
   border-radius: 2px;
   vertical-align: -0.15em;
-  background: var(--accent-bright);
+  background: var(--accent);
   animation: lp-caret-breathe 2.4s ease-in-out infinite;
 }
 
@@ -581,27 +553,28 @@
   gap: 5px;
   font-family: var(--font-mono);
   font-size: 0.74rem;
-  color: #cbd5e1;
+  color: var(--ink-secondary);
   margin-right: 4px;
 }
 
 .lp-shader-chip {
   padding: 5px 11px;
   border-radius: 6px;
-  border: 2px solid rgba(148, 163, 184, 0.42);
-  background: rgba(15, 23, 42, 0.84);
-  color: #e2e8f0;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
+  border: 2px solid var(--border-strong);
+  background: color-mix(in srgb, var(--bg-surface) 84%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--ink-primary);
+  box-shadow: 0 2px 0 var(--border-subtle);
   font-family: var(--font-pixel);
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.1s ease, border-color 0.12s ease;
+  transition: transform 0.1s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
 .lp-shader-chip:hover {
-  border-color: var(--accent-bright);
-  color: var(--accent-bright);
+  border-color: var(--accent);
+  color: var(--accent);
   transform: translateY(-1px);
 }
 
@@ -612,7 +585,7 @@
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.45),
     inset 0 -2px 0 rgba(0, 0, 0, 0.24),
-    0 2px 0 rgba(0, 0, 0, 0.52);
+    0 2px 0 rgba(0, 0, 0, 0.45);
 }
 
 /* ==========================================================================
@@ -629,7 +602,7 @@
     var(--accent-soft) 50%,
     var(--border-subtle) 100%
   );
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.52);
+  box-shadow: var(--shadow-pop);
 }
 
 .lp-beam-frame::before {
@@ -639,7 +612,8 @@
 .lp-hero-panel {
   position: relative;
   z-index: 1;
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  backdrop-filter: blur(14px);
   color: var(--ink-primary);
   border: 1px solid var(--border-strong);
   border-radius: 13px;
@@ -1040,7 +1014,8 @@
   margin: 0 auto 20px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: var(--bg-editor);
+  background: color-mix(in srgb, var(--bg-editor) 90%, transparent);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--border-strong);
   display: flex;
   align-items: flex-start;
@@ -1066,7 +1041,8 @@
 .lp-stage-card {
   padding: 18px 16px;
   border-radius: 12px;
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
@@ -1120,7 +1096,8 @@
   padding: 14px 18px;
   margin-bottom: 18px;
   border-radius: 12px;
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
 }
 
@@ -1148,7 +1125,8 @@
 .lp-bento-card {
   padding: 16px;
   border-radius: 12px;
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
@@ -1289,7 +1267,8 @@
   margin-top: 38px;
   padding: 36px 24px;
   border-radius: 16px;
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--accent);
   text-align: center;
   display: flex;
@@ -1301,8 +1280,23 @@
 .lp-footer {
   margin-top: auto;
   border-top: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface) 84%, transparent);
+  backdrop-filter: blur(12px);
   padding: 20px;
+}
+
+[data-theme='high-contrast'] .lp-status-pill,
+[data-theme='high-contrast'] .lp-code-ticker,
+[data-theme='high-contrast'] .lp-shader-chip,
+[data-theme='high-contrast'] .lp-hero-panel,
+[data-theme='high-contrast'] .lp-pipe-source,
+[data-theme='high-contrast'] .lp-stage-card,
+[data-theme='high-contrast'] .lp-xp-bar-card,
+[data-theme='high-contrast'] .lp-bento-card,
+[data-theme='high-contrast'] .lp-closing-card,
+[data-theme='high-contrast'] .lp-footer {
+  background: #000000;
+  backdrop-filter: none;
 }
 
 .lp-footer-inner {

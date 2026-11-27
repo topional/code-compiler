@@ -49,7 +49,7 @@ import { ThemePickerDialog } from './components/ThemePickerDialog';
 import type { CategoriaBloque } from './data/bloques';
 import { CODIGO_HERO_DEFAULT, EJEMPLOS_EDU } from './data/ejemplos';
 import type { MisionEdu } from './data/misiones';
-import { obtenerTema, TEMAS_VALIDOS, type TemaId } from './data/temas';
+import { obtenerTema, TEMAS_CATALOGO, TEMAS_VALIDOS, type TemaId } from './data/temas';
 import {
   compilarConApiRemota,
   compilarEdu,
@@ -1235,7 +1235,7 @@ export function App() {
                 type="button"
                 className="dock-btn"
                 onClick={() => setTemasAbiertos(true)}
-                aria-label="Galería de 10 temas"
+                aria-label={`Galería de ${TEMAS_CATALOGO.length} temas`}
                 title={`Temas (${temaMeta.nombre})`}
               >
                 <Palette size={18} aria-hidden="true" />
@@ -1290,7 +1290,7 @@ export function App() {
               type="button"
               className="status-btn"
               onClick={() => setTemasAbiertos(true)}
-              title="Cambiar tema visual (10 disponibles)"
+              title={`Cambiar tema visual (${TEMAS_CATALOGO.length} disponibles)`}
             >
               <span className="swatch-dot" style={{ backgroundColor: temaMeta.muestras[2], width: 9, height: 9 }} aria-hidden="true" />
               <span>{temaMeta.nombre}</span>

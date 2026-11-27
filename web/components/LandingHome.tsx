@@ -26,8 +26,8 @@ import { compilarEdu } from '../engine/compilador';
 import { ejecutarIntermedio } from '../engine/interprete';
 import type { VariableMemoria } from '../engine/types';
 import { ChispaBrandMark, ChispaMascota } from './ChispaLogo';
-import { InteractiveShaderBg, type ModoShader } from './InteractiveShaderBg';
 import { ContainerOverlayScrollbar, OverlayScrollbar } from './OverlayScrollbar';
+import { UnifiedBackdrop, type ModoFondoContinuo } from './UnifiedBackdrop';
 import {
   AnimatedNumber,
   KineticLetterStage,
@@ -205,7 +205,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   onEntrarConRayosX,
   onEntrarConGuia,
 }) => {
-  const [modoShader, setModoShader] = useState<ModoShader>('neuro');
+  const [modoFondo, setModoFondo] = useState<ModoFondoContinuo>('halftone');
   const [tabHero, setTabHero] = useState<TabHeroCard>('runner');
   const [codigoDemo, setCodigoDemo] = useState<string>(CODIGO_HERO_PLAYGROUND);
   const [salidasDemo, setSalidasDemo] = useState<SalidaDemo[]>([]);
@@ -338,6 +338,11 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
 
   return (
     <div className="lp-root">
+      <UnifiedBackdrop
+        tema={tema}
+        modo={modoFondo}
+        desactivarAnimacion={movimientoReducido}
+      />
       <OverlayScrollbar />
       {/* BARRA DE NAVEGACIÓN PRINCIPAL */}
       <header className="lp-nav">
@@ -409,15 +414,8 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
       </header>
 
       <main id="inicio-top">
-        {/* HERO PRINCIPAL DE CHISPA CON SHADERS WEBGL + TIPOGRAFÍA CINÉTICA */}
+        {/* HERO PRINCIPAL DE CHISPA SOBRE EL LIENZO CONTINUO UNIFICADO */}
         <section className="lp-hero-stage" aria-label="Presentación de Chispa">
-          <InteractiveShaderBg
-            tema={tema}
-            modo={modoShader}
-            desactivarAnimacion={movimientoReducido}
-          />
-          <div className="lp-hero-overlay" aria-hidden="true" />
-
           <div className="lp-hero-grid">
             {/* COLUMNA IZQUIERDA */}
             <div className="lp-hero-copy">
@@ -473,23 +471,23 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                 </a>
               </div>
 
-              <div className="lp-shader-bar" role="group" aria-label="Cambiar fondo shader interactivo">
+              <div className="lp-shader-bar" role="group" aria-label="Cambiar textura del fondo continuo">
                 <span className="lp-shader-label">
-                  <Waves size={13} aria-hidden="true" /> Fondo GPU:
+                  <Waves size={13} aria-hidden="true" /> Fondo:
                 </span>
                 {(
                   [
-                    { id: 'neuro', label: 'Red Neuronal' },
-                    { id: 'mesh', label: 'Nebulosa Mesh' },
-                    { id: 'orbit', label: 'Órbita' },
+                    { id: 'halftone', label: 'Halftone' },
+                    { id: 'plotter', label: 'Plotter' },
+                    { id: 'braille', label: 'Braille' },
                   ] as const
                 ).map((s) => (
                   <button
                     key={s.id}
                     type="button"
                     className="lp-shader-chip"
-                    aria-pressed={modoShader === s.id}
-                    onClick={() => setModoShader(s.id)}
+                    aria-pressed={modoFondo === s.id}
+                    onClick={() => setModoFondo(s.id)}
                   >
                     {s.label}
                   </button>

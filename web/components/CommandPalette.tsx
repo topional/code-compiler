@@ -22,7 +22,7 @@ import type { PanelDerechoTipo } from './RightDrawer';
 
 interface AccionComando {
   id: string;
-  grupo: 'Herramientas' | 'Temas (10)' | 'Ejemplos .edu' | 'Misiones';
+  grupo: 'Herramientas' | 'Temas' | 'Ejemplos .edu' | 'Misiones';
   titulo: string;
   subtitulo: string;
   ejecutar: () => void;
@@ -119,7 +119,7 @@ export function CommandPalette({
       },
       ...TEMAS_CATALOGO.map((t) => ({
         id: `tema-${t.id}`,
-        grupo: 'Temas (10)' as const,
+        grupo: 'Temas' as const,
         titulo: `Tema: ${t.nombre}`,
         subtitulo: `${t.grupo} · ${t.descripcion}`,
         ejecutar: () => onCambiarTema(t.id),
@@ -158,7 +158,7 @@ export function CommandPalette({
     if (item.id === 'panel-historial') return <History size={15} aria-hidden="true" />;
     if (item.id === 'cmd-format') return <Wand2 size={15} aria-hidden="true" />;
     if (item.id === 'cmd-layout') return <Columns2 size={15} aria-hidden="true" />;
-    if (item.grupo === 'Temas (10)') return <Palette size={15} aria-hidden="true" />;
+    if (item.grupo === 'Temas') return <Palette size={15} aria-hidden="true" />;
     if (item.grupo === 'Ejemplos .edu') return <Code2 size={15} aria-hidden="true" />;
     return <Trophy size={15} aria-hidden="true" />;
   };
