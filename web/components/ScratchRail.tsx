@@ -4,7 +4,7 @@
  */
 
 import { useRef } from 'react';
-import { X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 
 import { BLOQUES_EDU, CATEGORIAS_BLOQUE, type BloqueEdu, type CategoriaBloque } from '../data/bloques';
 import { ChispaLogo } from './ChispaLogo';
@@ -15,6 +15,7 @@ interface ScratchRailProps {
   onToggleCategoria: (cat: CategoriaBloque | null) => void;
   onInsertarBloque: (plantilla: string) => void;
   onAbrirEjemplos: () => void;
+  onAbrirAyudante: () => void;
   mobileVisible?: boolean;
 }
 
@@ -30,10 +31,12 @@ const CAT_VISUAL: Record<
 };
 
 const FICHAS_PARTES: Record<string, { texto: string; slot?: string }[]> = {
-  'crear-variable': [{ texto: 'crear variable', slot: 'puntos' }],
+  'crear-variable-texto': [{ texto: 'texto', slot: 'nombre = "Sofía"' }],
+  'crear-variable': [{ texto: 'número', slot: 'edad = 10' }],
   'asignar-valor': [{ texto: 'asignar', slot: 'puntos' }, { texto: 'valor de', slot: 'puntos + 1' }],
   mostrar: [{ texto: 'mostrar', slot: '"¡Hola!"' }],
-  preguntar: [{ texto: 'preguntar', slot: '"¿Nombre?"' }, { texto: 'en', slot: 'respuesta' }],
+  'preguntar-numero': [{ texto: 'preguntar número', slot: 'numero1 = 0' }],
+  preguntar: [{ texto: 'preguntar texto', slot: 'nombre' }],
   'si-entonces': [{ texto: 'si', slot: 'puntos > 10' }, { texto: 'entonces ... fin' }],
   'repetir-veces': [{ texto: 'repetir', slot: '3' }, { texto: 'veces ... fin' }],
   'mientras-hacer': [{ texto: 'mientras', slot: 'energia > 0' }, { texto: 'hacer ... fin' }],
@@ -86,6 +89,7 @@ export function ScratchRail({
   onToggleCategoria,
   onInsertarBloque,
   onAbrirEjemplos,
+  onAbrirAyudante,
   mobileVisible = false,
 }: ScratchRailProps) {
   const flyoutBodyRef = useRef<HTMLDivElement | null>(null);
@@ -193,6 +197,16 @@ export function ScratchRail({
                   ))}
                 </div>
               )}
+
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={onAbrirAyudante}
+              >
+                <Sparkles size={14} aria-hidden="true" />
+                Ayudante paso a paso
+              </button>
 
               <p className="blocks-flyout-hint">
                 {catMeta

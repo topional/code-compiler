@@ -68,20 +68,84 @@ export function compilarEdu(
   };
 }
 
+function insertarAntesDePreguntar(codigo: string, nombreVar: string): string {
+  const lineas = codigo.split(/\r?\n/);
+  const rePreg = new RegExp(`preguntar\\s+.*guardar\\s+en\\s+${nombreVar}\\b`, 'i');
+  const idx = lineas.findIndex((l) => rePreg.test(l));
+  if (idx >= 0) {
+    const indent = /^(\s*)/.exec(lineas[idx])?.[1] ?? '';
+    lineas.splice(idx, 0, `${indent}asignar ${nombreVar} valor de 0`);
+    return lineas.join('\n');
+  }
+  const reCrear = new RegExp(`crear\\s+variable\\s+${nombreVar}\\b`, 'i');
+  const idxCrear = lineas.findIndex((l) => reCrear.test(l));
+  if (idxCrear >= 0) {
+    const indent = /^(\s*)/.exec(lineas[idxCrear])?.[1] ?? '';
+    lineas.splice(idxCrear + 1, 0, `${indent}asignar ${nombreVar} valor de 0`);
+    return lineas.join('\n');
+  }
+  return `crear variable ${nombreVar}\nasignar ${nombreVar} valor de 0\n${codigo}`;
+}
+
+function encontrarVariableDePreguntar(codigo: string, lineaErr?: number | null): string | null {
+  const lineas = codigo.split(/\r?\n/);
+  const varsPreguntadas: string[] = [];
+  for (const l of lineas) {
+    const m = /preguntar\s+.*guardar\s+en\s+([a-zA-Z_áéíóúñÁÉÍÓÚÑ][a-zA-Z0-9_áéíóúñÁÉÍÓÚÑ]*)/i.exec(l);
+    if (m) varsPreguntadas.push(m[1]);
+  }
+  if (varsPreguntadas.length === 0) return null;
+  if (lineaErr && lineaErr >= 1 && lineaErr <= lineas.length) {
+    const textoLinea = lineas[lineaErr - 1];
+    const usada = varsPreguntadas.find((v) => new RegExp(`\\b${v}\\b`).test(textoLinea));
+    if (usada) return usada;
+  }
+  return varsPreguntadas[0];
+}
+
 /**
  * Traduce diagnósticos técnicos del compilador a pistas cálidas y accionables
- * pensadas para niños y estudiantes principiantes.
+ * con ejemplos visuales y botón de corrección rápida en 1 clic para niños.
  */
-export function obtenerPistaPedagogica(diag: Diagnostico): PistaPedagogica {
+export function obtenerPistaPedagogica(diag: Diagnostico, codigoFuente = ''): PistaPedagogica {
   const msg = diag.mensaje.toLowerCase();
+
+  // Caso clave: usar +, -, *, / con una variable llenada con "preguntar" (que guarda texto por defecto)
+  if (
+    (msg.includes('requiere operandos de tipo numero') || msg.includes('debe ser de tipo numero')) &&
+    msg.includes('texto')
+  ) {
+    const varPreg = codigoFuente ? encontrarVariableDePreguntar(codigoFuente, diag.linea) : null;
+    if (varPreg) {
+      return {
+        titulo: `¡Truco clave! "${varPreg}" se guardó como texto`,
+        explicacion: `Cuando usas "preguntar" en una cajita nueva, Chispa guarda la respuesta como palabras (texto). Para poder sumar o restar con "${varPreg}", dale primero "valor de 0" antes de preguntar.`,
+        ejemplo: `crear variable ${varPreg}\nasignar ${varPreg} valor de 0\npreguntar "¿Cuál es tu número?" guardar en ${varPreg}`,
+        autoFix: {
+          etiqueta: `Hacer que "${varPreg}" guarde número`,
+          aplicar: (cod) => insertarAntesDePreguntar(cod, varPreg),
+        },
+      };
+    }
+    return {
+      titulo: 'No se pueden sumar palabras con números',
+      explicacion:
+        'Los signos +, -, * y / solo funcionan con números (SIN comillas). Si una cajita guarda texto entre comillas ("5") o viene de "preguntar" sin "valor de 0", no se puede sumar.',
+      ejemplo: 'crear variable numero1\nasignar numero1 valor de 0\npreguntar "¿Tu número?" guardar en numero1',
+    };
+  }
 
   if (msg.includes('no está declarada') && msg.includes('variable')) {
     const match = /variable '([^']+)'/.exec(diag.mensaje);
     const nombre = match ? match[1] : 'mi_dato';
     return {
       titulo: '¡Primero crea la cajita!',
-      explicacion: `Antes de usar '${nombre}', necesitas crearla para que la computadora reserve espacio.`,
+      explicacion: `Antes de usar "${nombre}", necesitas crearla arriba para que Chispa reserve espacio.`,
       ejemplo: `crear variable ${nombre}\nasignar ${nombre} valor de 0`,
+      autoFix: {
+        etiqueta: `Crear cajita "${nombre}" arriba`,
+        aplicar: (cod) => `crear variable ${nombre}\nasignar ${nombre} valor de 0\n${cod}`,
+      },
     };
   }
 
@@ -90,7 +154,7 @@ export function obtenerPistaPedagogica(diag: Diagnostico): PistaPedagogica {
     const nombre = match ? match[1] : 'puntos';
     return {
       titulo: 'Esa cajita ya existe',
-      explicacion: `Solo necesitas 'crear variable' una vez. Para cambiar lo que guarda, usa 'asignar'.`,
+      explicacion: `Solo se escribe "crear variable ${nombre}" una vez. Para cambiar su valor después, usa "asignar".`,
       ejemplo: `asignar ${nombre} valor de 20`,
     };
   }
@@ -99,18 +163,22 @@ export function obtenerPistaPedagogica(diag: Diagnostico): PistaPedagogica {
     const match = /variable '([^']+)'/.exec(diag.mensaje);
     const nombre = match ? match[1] : 'dato';
     return {
-      titulo: 'La cajita está vacía',
-      explicacion: `Creaste '${nombre}', pero todavía no guardaste ningún valor adentro antes de leerla.`,
+      titulo: `La cajita "${nombre}" está vacía`,
+      explicacion: `Creaste "${nombre}", pero todavía no guardaste ningún valor adentro antes de usarla.`,
       ejemplo: `asignar ${nombre} valor de 10`,
+      autoFix: {
+        etiqueta: `Darle valor inicial 0 a "${nombre}"`,
+        aplicar: (cod) => insertarAntesDePreguntar(cod, nombre),
+      },
     };
   }
 
   if (msg.includes('no se puede asignar un valor de tipo')) {
     return {
-      titulo: 'Mezcla de tipos en la misma cajita',
+      titulo: 'Mezcla de texto y número en la misma cajita',
       explicacion:
-        'Cada variable recuerda su tipo desde el primer valor que guarda (número, texto o lógico). Si antes guardó un número, no puedes meterle texto entre comillas.',
-      ejemplo: 'asignar puntos valor de 10  # número\nasignar nombre valor de "Ana"  # texto',
+        'Cada cajita guarda un solo tipo: números SIN comillas (10) o texto CON comillas ("Ana"). No puedes mezclar ambos en la misma cajita.',
+      ejemplo: 'asignar edad valor de 10      # número (sin comillas)\nasignar nombre valor de "Ana"  # texto (con comillas)',
     };
   }
 
@@ -118,7 +186,7 @@ export function obtenerPistaPedagogica(diag: Diagnostico): PistaPedagogica {
     return {
       titulo: 'Falta una pregunta de verdadero o falso',
       explicacion:
-        'Después de "si" o "mientras" debes escribir una comparación (como "es igual a" o "es mayor que") o un valor lógico.',
+        'Después de "si" o "mientras" escribe una comparación (como "es igual a" o "es mayor que") o un valor lógico.',
       ejemplo: 'si puntos es mayor que 5 entonces\n    mostrar "¡Ganaste!"\nfin',
     };
   }
@@ -143,7 +211,7 @@ export function obtenerPistaPedagogica(diag: Diagnostico): PistaPedagogica {
 
   if (msg.includes('argumento') && msg.includes('debe ser de tipo')) {
     return {
-      titulo: 'Ingrediente del tipo equivocado',
+      titulo: 'Dato del tipo equivocado',
       explicacion:
         'La función esperaba un tipo de dato distinto (por ejemplo, un número sin comillas en vez de texto con comillas).',
       ejemplo: 'mostrar doble(5)',
@@ -152,24 +220,39 @@ export function obtenerPistaPedagogica(diag: Diagnostico): PistaPedagogica {
 
   if (msg.includes('texto sin cerrar')) {
     return {
-      titulo: 'Faltan las comillas de cierre',
+      titulo: 'Faltan las comillas de cierre "',
       explicacion: 'Todo texto empieza y termina con comillas dobles " en la misma línea.',
       ejemplo: 'mostrar "¡Hola mundo!"',
+      autoFix: diag.linea
+        ? {
+            etiqueta: 'Cerrar comillas en esa línea',
+            aplicar: (cod) => {
+              const ls = cod.split(/\r?\n/);
+              const i = (diag.linea ?? 1) - 1;
+              if (ls[i] !== undefined) ls[i] = `${ls[i]}"`;
+              return ls.join('\n');
+            },
+          }
+        : undefined,
     };
   }
 
   if (msg.includes("falta 'fin'")) {
     return {
-      titulo: 'Un bloque quedó abierto',
-      explicacion: 'Cada bloque (si, repetir, mientras o definir) necesita su palabra "fin" para cerrar.',
+      titulo: 'Falta cerrar el bloque con "fin"',
+      explicacion: 'Cada bloque (si, repetir, mientras o definir) necesita la palabra "fin" para cerrar.',
       ejemplo: 'si edad es mayor que 10 entonces\n    mostrar "Genial"\nfin',
+      autoFix: {
+        etiqueta: 'Agregar "fin" al final',
+        aplicar: (cod) => `${cod.trimEnd()}\nfin`,
+      },
     };
   }
 
-  if (msg.includes("valor de")) {
+  if (msg.includes('valor de')) {
     return {
       titulo: 'Recuerda escribir "valor de"',
-      explicacion: 'Para guardar algo en una variable siempre usamos: asignar NOMBRE valor de VALOR.',
+      explicacion: 'Para guardar algo en una cajita siempre usamos: asignar NOMBRE valor de VALOR.',
       ejemplo: 'asignar puntaje valor de 100',
     };
   }
@@ -184,9 +267,9 @@ export function obtenerPistaPedagogica(diag: Diagnostico): PistaPedagogica {
 
   const nombresEtapa: Record<EtapaCompilacion, string> = {
     lexer: 'Revisa los símbolos escritos',
-    gramatica: 'Revisa la estructura de la frase',
-    semantica: 'Revisa variables y tipos',
-    intermedio: 'Problema en el código intermedio',
+    gramatica: 'Revisa cómo está escrita la frase',
+    semantica: 'Revisa tus cajitas y tipos (texto o número)',
+    intermedio: 'Problema al preparar el programa',
     ejecucion: 'Ocurrió algo mientras corría el programa',
     limite: 'Se alcanzó un límite de seguridad',
     peticion: 'Revisa el envío al servidor',
@@ -197,7 +280,8 @@ export function obtenerPistaPedagogica(diag: Diagnostico): PistaPedagogica {
   return {
     titulo: nombresEtapa[diag.etapa] ?? 'Pista de corrección',
     explicacion:
-      'Haz clic en este aviso para saltar directo a la línea señalada y compararla con la Guía Visual de bloques.',
+      'Usa el botón "Ayudante" para armar variables, preguntas o decisiones paso a paso y compararlo con esta línea.',
+    ejemplo: 'crear variable nombre\nasignar nombre valor de "Sofía"\nmostrar nombre',
   };
 }
 

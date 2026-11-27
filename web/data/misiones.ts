@@ -5,6 +5,13 @@
 
 import { compilarEdu } from '../engine/compilador';
 import { ejecutarIntermedio } from '../engine/interprete';
+import type { ResultadoCompilacion } from '../engine/types';
+
+export interface PasoMision {
+  etiqueta: string;
+  ejemplo: string;
+  cumplido: (comp: ResultadoCompilacion, codigo: string) => boolean;
+}
 
 export interface MisionEdu {
   id: string;
@@ -16,6 +23,7 @@ export interface MisionEdu {
   insignia: string;
   codigoInicial: string;
   pista: string;
+  pasos: PasoMision[];
   entradasPrueba?: string[];
   verificar: (codigo: string) => Promise<{ completada: boolean; mensaje: string }>;
 }
@@ -56,7 +64,7 @@ export const MISIONES_EDU: MisionEdu[] = [
     etiquetaNivel: 'Nivel 1 · Variables',
     titulo: 'Tu credencial de explorador',
     historia: 'Chispa necesita saber tu nombre y tu edad para imprimir tu pase al laboratorio.',
-    objetivo: 'Crea una variable "nombre" con texto y una variable "edad" con un número, y muestra ambas en pantalla.',
+    objetivo: 'Crea una cajita "nombre" con palabras (entre comillas) y una cajita "edad" con un número (sin comillas), y muéstralas.',
     insignia: 'Explorador de Variables',
     codigoInicial: `# Misión 1: Completa tu credencial
 crear variable nombre
@@ -64,6 +72,23 @@ asignar nombre valor de "Sofía"
 # Crea la variable edad y muestra ambos valores
 mostrar nombre`,
     pista: 'Agrega: crear variable edad, asignar edad valor de 10 y mostrar edad.',
+    pasos: [
+      {
+        etiqueta: 'Cajita "nombre" con texto entre comillas',
+        ejemplo: 'asignar nombre valor de "Sofía"',
+        cumplido: (c) => c.simbolos.some((s) => s.nombre === 'nombre' && s.tipo === 'texto'),
+      },
+      {
+        etiqueta: 'Cajita "edad" con un número (sin comillas)',
+        ejemplo: 'crear variable edad / asignar edad valor de 10',
+        cumplido: (c) => c.simbolos.some((s) => s.nombre === 'edad' && s.tipo === 'numero'),
+      },
+      {
+        etiqueta: 'Mostrar "edad" en pantalla',
+        ejemplo: 'mostrar edad',
+        cumplido: (_c, cod) => /\bmostrar\s+edad\b/i.test(cod),
+      },
+    ],
     verificar: async (codigo) => {
       const r = await evaluar(codigo);
       if (!r.ok) return { completada: false, mensaje: 'Aún hay errores en el código. Revisa los avisos.' };
@@ -87,7 +112,7 @@ mostrar nombre`,
     etiquetaNivel: 'Nivel 2 · Decisiones',
     titulo: 'El guardián del puente',
     historia: 'Solo los robots con 50 puntos o más pueden cruzar el puente eléctrico.',
-    objetivo: 'Usa un bloque "si ... entonces ... sino ... fin" que compare una variable "puntos" con 50 y muestre un mensaje.',
+    objetivo: 'Usa un bloque "si ... entonces ... sino ... fin" que compare "puntos" con 50 y muestre un mensaje.',
     insignia: 'Estratega del Si/Sino',
     codigoInicial: `# Misión 2: Decide si el robot cruza el puente
 crear variable puntos
@@ -96,6 +121,23 @@ asignar puntos valor de 65
 # Escribe aquí tu si ... entonces ... sino ... fin
 `,
     pista: 'Usa: si puntos es mayor o igual que 50 entonces / mostrar "Cruza" / sino / mostrar "Espera" / fin',
+    pasos: [
+      {
+        etiqueta: 'Abrir decisión "si puntos ... entonces"',
+        ejemplo: 'si puntos es mayor o igual que 50 entonces',
+        cumplido: (c) => c.tokens.some((t) => t.tipo === 'SI'),
+      },
+      {
+        etiqueta: 'Agregar el camino contrario "sino"',
+        ejemplo: 'sino / mostrar "Espera"',
+        cumplido: (c) => c.tokens.some((t) => t.tipo === 'SINO'),
+      },
+      {
+        etiqueta: 'Cerrar con "fin" sin errores',
+        ejemplo: 'fin',
+        cumplido: (c) => c.tokens.some((t) => t.tipo === 'FIN') && c.diagnosticos.length === 0,
+      },
+    ],
     verificar: async (codigo) => {
       const r = await evaluar(codigo);
       if (!r.ok) return { completada: false, mensaje: 'Corrige los errores antes de comprobar la misión.' };
@@ -128,6 +170,18 @@ fin
 # Muestra "¡Despegue!" al final
 `,
     pista: 'Agrega mostrar "¡Despegue!" debajo de "fin".',
+    pasos: [
+      {
+        etiqueta: 'Ciclo "repetir 5 veces" contando hacia atrás',
+        ejemplo: 'repetir 5 veces ... fin',
+        cumplido: (c) => c.tokens.some((t) => t.tipo === 'REPETIR' || t.tipo === 'MIENTRAS'),
+      },
+      {
+        etiqueta: 'Mostrar "¡Despegue!" al terminar',
+        ejemplo: 'mostrar "¡Despegue!"',
+        cumplido: (_c, cod) => /mostrar\s+"[^"]*despegue/i.test(cod),
+      },
+    ],
     verificar: async (codigo) => {
       const r = await evaluar(codigo);
       if (!r.ok) return { completada: false, mensaje: 'Revisa los errores del compilador primero.' };
@@ -159,6 +213,18 @@ repetir 3 veces
     # Muestra el valor de dado aquí
 fin`,
     pista: 'Dentro del ciclo agrega: mostrar dado',
+    pasos: [
+      {
+        etiqueta: 'Usar "numero aleatorio entre 1 y 6"',
+        ejemplo: 'asignar dado valor de numero aleatorio entre 1 y 6',
+        cumplido: (c) => c.tokens.some((t) => t.tipo === 'ALEATORIO'),
+      },
+      {
+        etiqueta: 'Mostrar "dado" dentro del repetir',
+        ejemplo: 'mostrar dado',
+        cumplido: (_c, cod) => /\bmostrar\s+dado\b/i.test(cod),
+      },
+    ],
     verificar: async (codigo) => {
       const r = await evaluar(codigo);
       if (!r.ok) return { completada: false, mensaje: 'Corrige los errores antes de lanzar el dado.' };
@@ -190,6 +256,18 @@ fin
 # Llama a triple(4) con mostrar
 `,
     pista: 'Agrega al final: mostrar triple(4)',
+    pasos: [
+      {
+        etiqueta: 'Definir la receta "triple"',
+        ejemplo: 'definir triple(numero n) devuelve numero',
+        cumplido: (c) => c.simbolos.some((s) => s.esFuncion && s.nombre === 'triple'),
+      },
+      {
+        etiqueta: 'Mostrar el resultado de triple(4)',
+        ejemplo: 'mostrar triple(4)',
+        cumplido: (_c, cod) => /mostrar\s+triple\s*\(\s*4\s*\)/i.test(cod),
+      },
+    ],
     verificar: async (codigo) => {
       const r = await evaluar(codigo);
       if (!r.ok) return { completada: false, mensaje: 'Hay errores de compilación en tu función.' };
@@ -198,7 +276,7 @@ fin
       if (!r.salidas.includes('12')) {
         return { completada: false, mensaje: 'Muestra el resultado de triple(4) para obtener 12.' };
       }
-      return { completada: true, mensaje: '¡Fábrica encendida! Creaste tu primera función en .edu.' };
+      return { completada: true, mensaje: '¡Fábrica encendida! Creaste tu primera función.' };
     },
   },
   {
@@ -206,10 +284,10 @@ fin
     nivel: 6,
     etiquetaNivel: 'Reto Especial · Detective',
     titulo: '¡Caza los 7 bugs!',
-    historia: 'El archivo oficial examples/con_errores.edu tiene exactamente 7 errores semánticos. ¿Puedes repararlos todos hasta que compile limpio?',
-    objetivo: 'Corrige los 7 errores sin borrar todo el programa: haz que compile con 0 diagnósticos y muestre resultados válidos.',
-    insignia: 'Detective del Compilador',
-    codigoInicial: `# Reto Detective: repara los 7 errores semánticos de examples/con_errores.edu
+    historia: 'Este programa tiene exactamente 7 pistas de error escondidas. ¿Puedes repararlas todas hasta que corra limpio?',
+    objetivo: 'Corrige los 7 errores sin borrar todo el programa: haz que compile con 0 avisos y muestre resultados válidos.',
+    insignia: 'Detective del Código',
+    codigoInicial: `# Reto Detective: repara los 7 errores siguiendo las pistas de Chispa
 crear variable puntos
 asignar puntos valor de 10
 asignar puntos valor de "diez"
@@ -229,7 +307,19 @@ mostrar triple(3)
 repetir 2.5 veces
     mostrar "Hola"
 fin`,
-    pista: 'Revisa cada error con clic en el panel derecho: cambia "diez" por número, declara vidas, quita el duplicado de puntos, compara puntos es mayor que 0, pasa 5 a doble, usa doble(3) y cambia 2.5 por 2.',
+    pista: 'Revisa cada pista roja de Chispa: cambia "diez" por número, crea vidas, quita el duplicado de puntos, compara puntos es mayor que 0, pasa 5 a doble, usa doble(3) y cambia 2.5 por 2.',
+    pasos: [
+      {
+        etiqueta: 'Conservar la función "doble" y el ciclo "repetir"',
+        ejemplo: 'definir doble(...) / repetir 2 veces',
+        cumplido: (c) => c.simbolos.some((s) => s.esFuncion && s.nombre === 'doble') && c.tokens.some((t) => t.tipo === 'REPETIR'),
+      },
+      {
+        etiqueta: 'Dejar el programa con 0 avisos de error',
+        ejemplo: '¡Usa los botones de ayuda en cada pista!',
+        cumplido: (c) => c.diagnosticos.length === 0,
+      },
+    ],
     verificar: async (codigo) => {
       const r = await evaluar(codigo);
       if (!r.ok) {

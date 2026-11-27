@@ -26,6 +26,10 @@ export interface PistaPedagogica {
   titulo: string;
   explicacion: string;
   ejemplo?: string;
+  autoFix?: {
+    etiqueta: string;
+    aplicar: (codigo: string) => string;
+  };
 }
 
 export type CategoriaToken =

@@ -6,7 +6,9 @@ import {
   Blocks,
   BookOpen,
   Box,
+  CheckCircle2,
   ChevronDown,
+  Circle,
   Code2,
   Columns2,
   Download,
@@ -24,6 +26,7 @@ import {
   Send,
   SkipForward,
   SlidersHorizontal,
+  Sparkles,
   Square,
   Terminal,
   Trash2,
@@ -34,6 +37,7 @@ import {
 } from 'lucide-react';
 
 import { ChispaMascota } from './components/ChispaLogo';
+import { CodeHelperModal } from './components/CodeHelperModal';
 import { CommandPalette } from './components/CommandPalette';
 import { EduEditor, type EduEditorHandle } from './components/EduEditor';
 import { GameStage2D } from './components/GameStage2D';
@@ -163,6 +167,7 @@ export function App() {
   const [temasAbiertos, setTemasAbiertos] = useState(false);
   const [ajustesAbiertos, setAjustesAbiertos] = useState(false);
   const [comandosAbiertos, setComandosAbiertos] = useState(false);
+  const [ayudanteAbierto, setAyudanteAbierto] = useState(false);
 
   // Pestañas y archivos
   const [pestanas, setPestanas] = useState<PestanaCodigo[]>(() => leerPestanasIniciales());
@@ -662,6 +667,15 @@ export function App() {
         onAlternarLayout={() => setLayoutVertical((v) => !v)}
       />
 
+      <CodeHelperModal
+        open={ayudanteAbierto}
+        onClose={() => setAyudanteAbierto(false)}
+        onInsertarCodigo={(snippet) => {
+          editorRef.current?.insertSnippet(snippet);
+          setVistaMovil('editor');
+        }}
+      />
+
       <SettingsDialog
         open={ajustesAbiertos}
         onClose={() => setAjustesAbiertos(false)}
@@ -742,6 +756,7 @@ export function App() {
               setVistaMovil('editor');
             }}
             onAbrirEjemplos={() => alternarPanelDerecho('ejemplos')}
+            onAbrirAyudante={() => setAyudanteAbierto(true)}
             mobileVisible={vistaMovil === 'bloques'}
           />
 
@@ -810,6 +825,17 @@ export function App() {
                 </div>
 
                 <div className="ide-actions">
+                  <button
+                    type="button"
+                    className="ide-icon-btn"
+                    onClick={() => setAyudanteAbierto(true)}
+                    aria-label="Abrir ayudante paso a paso"
+                    title="Ayudante paso a paso: crea variables, preguntas y decisiones sin errores"
+                  >
+                    <Sparkles size={13} aria-hidden="true" style={{ color: 'var(--accent)' }} />
+                    <span className="hide-narrow">Ayudante</span>
+                  </button>
+
                   <button
                     type="button"
                     className="ide-icon-btn run-btn"
@@ -905,8 +931,35 @@ export function App() {
                     <span style={{ fontSize: '0.76rem', color: 'var(--ink-secondary)' }}>
                       {misionActiva.objetivo}
                     </span>
+                    {misionActiva.pasos.length > 0 && (
+                      <div className="mission-steps-live" aria-label="Pasos de la misión">
+                        {misionActiva.pasos.map((paso, idx) => {
+                          const ok = paso.cumplido(compilacion, pestanaActual.codigo);
+                          return (
+                            <div key={idx} className={`mission-step-row ${ok ? 'is-done' : ''}`}>
+                              {ok ? (
+                                <CheckCircle2 size={13} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
+                              ) : (
+                                <Circle size={13} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
+                              )}
+                              <span>
+                                {paso.etiqueta}{' '}
+                                {!ok && <code className="mission-step-code">{paso.ejemplo}</code>}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => setAyudanteAbierto(true)}
+                    >
+                      <Sparkles size={13} aria-hidden="true" /> Ayudante
+                    </button>
                     <button
                       type="button"
                       className="btn btn-ok btn-sm"
@@ -1103,37 +1156,64 @@ export function App() {
                 <ContainerOverlayScrollbar targetRef={wbOutputScrollRef} />
               </div>
 
-              {/* Diagnósticos y pistas pedagógicas */}
+              {/* Diagnósticos y pistas pedagógicas amigables con botón de arreglo en 1 clic */}
               {todosDiagnosticos.length > 0 && (
-                <div className="diag-stack" role="alert" aria-label="Errores del compilador">
+                <div className="diag-stack" role="alert" aria-label="Pistas de Chispa para corregir el código">
                   {todosDiagnosticos.map((d, idx) => {
-                    const pista = obtenerPistaPedagogica(d);
+                    const pista = obtenerPistaPedagogica(d, pestanaActual.codigo);
                     return (
-                      <button
-                        key={idx}
-                        type="button"
-                        className="diag-item"
-                        onClick={() => {
-                          if (d.linea) {
-                            editorRef.current?.focusLine(d.linea, d.columna);
-                            setVistaMovil('editor');
-                          }
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
-                          <strong style={{ fontSize: '0.78rem', color: 'var(--err)' }}>
-                            [{d.etapa}] {d.linea ? `Línea ${d.linea}:${d.columna ?? 1}` : 'General'}
+                      <div key={idx} className="diag-item">
+                        <div className="diag-item-head">
+                          <strong style={{ fontSize: '0.8rem', color: 'var(--err)' }}>
+                            <Lightbulb size={13} aria-hidden="true" style={{ verticalAlign: -2, marginRight: 4 }} />
+                            Pista de Chispa · {d.linea ? `Línea ${d.linea}` : 'Revisa tu código'}
                           </strong>
-                          <span className="pill-mini">Ir</span>
+                          {d.linea && (
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={() => {
+                                editorRef.current?.focusLine(d.linea!, d.columna ?? 1);
+                                setVistaMovil('editor');
+                              }}
+                            >
+                              Ver línea {d.linea}
+                            </button>
+                          )}
                         </div>
-                        <span className="mono" style={{ fontSize: '0.76rem' }}>
-                          {d.mensaje}
-                        </span>
+
                         <div className="diag-hint-box">
-                          <Lightbulb size={12} aria-hidden="true" style={{ verticalAlign: -2, marginRight: 4 }} />
-                          <strong>{pista.titulo}:</strong> {pista.explicacion}
+                          <div>
+                            <strong>{pista.titulo}:</strong> {pista.explicacion}
+                          </div>
+                          {pista.ejemplo && (
+                            <pre className="diag-example-code">{pista.ejemplo}</pre>
+                          )}
+                          <div className="diag-actions-row">
+                            {pista.autoFix && (
+                              <button
+                                type="button"
+                                className="diag-autofix-btn"
+                                onClick={() => {
+                                  const corregido = pista.autoFix!.aplicar(pestanaActual.codigo);
+                                  actualizarCodigoActual(corregido);
+                                  setVistaMovil('editor');
+                                }}
+                              >
+                                <Sparkles size={13} aria-hidden="true" />
+                                {pista.autoFix.etiqueta}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={() => setAyudanteAbierto(true)}
+                            >
+                              Abrir Ayudante
+                            </button>
+                          </div>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

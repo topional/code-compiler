@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { EJEMPLOS_EDU } from '../data/ejemplos';
-import { compilarEdu } from './compilador';
+import { compilarEdu, obtenerPistaPedagogica } from './compilador';
 import { ejecutarIntermedio } from './interprete';
 
 const RAIZ = resolve(process.cwd());
@@ -289,6 +289,27 @@ fin`;
     expect(res.intermedio).toBeNull();
     expect(res.diagnosticos.length).toBe(7);
     expect(res.diagnosticos.every((d) => d.etapa === 'semantica')).toBe(true);
+  });
+
+  it('detecta el error de preguntar + suma y ofrece autoFix en 1 clic que compila y suma bien', async () => {
+    const codigoCompanero = `crear variable numero1
+preguntar "¿Cuál es tu número?" guardar en numero1
+mostrar numero1
+crear variable numeroPrueba
+asignar numeroPrueba valor de 5
+crear variable numeroFinal
+asignar numeroFinal valor de numero1 + numeroPrueba
+mostrar numeroFinal`;
+    const comp = compilarEdu(codigoCompanero, 'intermedio');
+    expect(comp.diagnosticos.length).toBeGreaterThan(0);
+    const pista = obtenerPistaPedagogica(comp.diagnosticos[0], codigoCompanero);
+    expect(pista.titulo).toContain('numero1');
+    expect(pista.autoFix).toBeDefined();
+
+    const codigoArreglado = pista.autoFix!.aplicar(codigoCompanero);
+    const res = await correrPrograma(codigoArreglado, ['7']);
+    expect(res.errores).toEqual([]);
+    expect(res.salidas).toEqual(['7', '12']);
   });
 
   it('maneja aritmética racional exacta y ámbitos léxicos en recursión', async () => {
