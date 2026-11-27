@@ -38,18 +38,25 @@
 }
 
 /* ==========================================================================
-   NAVBAR SUPERIOR
+   NAVBAR SUPERIOR (transparente arriba sobre el fondo; aparece al hacer scroll)
    ========================================================================== */
 .lp-nav {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom: 1px solid transparent;
+  transition: background-color 0.22s ease, border-color 0.22s ease, backdrop-filter 0.22s ease;
 }
 
-[data-theme^='high-contrast'] .lp-nav {
+.lp-nav.is-scrolled {
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom-color: var(--border-subtle);
+}
+
+[data-theme^='high-contrast'] .lp-nav.is-scrolled {
   background: var(--bg-surface);
   border-bottom: 2px solid var(--border-subtle);
 }
@@ -1279,10 +1286,10 @@
 
 .lp-footer {
   margin-top: auto;
-  border-top: 1px solid var(--border-subtle);
-  background: color-mix(in srgb, var(--bg-surface) 84%, transparent);
-  backdrop-filter: blur(12px);
-  padding: 20px;
+  border-top: none;
+  background: transparent;
+  backdrop-filter: none;
+  padding: 24px 20px 28px;
 }
 
 [data-theme^='high-contrast'] .lp-status-pill,
@@ -1293,8 +1300,7 @@
 [data-theme^='high-contrast'] .lp-stage-card,
 [data-theme^='high-contrast'] .lp-xp-bar-card,
 [data-theme^='high-contrast'] .lp-bento-card,
-[data-theme^='high-contrast'] .lp-closing-card,
-[data-theme^='high-contrast'] .lp-footer {
+[data-theme^='high-contrast'] .lp-closing-card {
   background: var(--bg-surface);
   backdrop-filter: none;
 }

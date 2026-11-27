@@ -45,7 +45,7 @@ interface LandingHomeProps {
   onEntrarIde: () => void;
   onEntrarConCodigo: (nombre: string, codigo: string) => void;
   onEntrarConMision: (mision: MisionEdu) => void;
-  onEntrarConRayosX: () => void;
+  onEntrarConRayosX?: () => void;
   onEntrarConGuia: () => void;
 }
 
@@ -55,7 +55,7 @@ type FiltroCatalogo = 'todos' | 'misiones' | 'ejemplos';
 const FRASES_CINETICAS_HERO = [
   'Compila en español',
   'Bloques a código real',
-  'Rayos X en vivo',
+  'Aprende jugando',
   'Crea juegos y algoritmos',
 ];
 
@@ -160,11 +160,11 @@ const RESPUESTAS_CHISPA: {
     },
   },
   {
-    patron: /ir|compilador|rayos|token|parser/i,
+    patron: /ir|compilador|pasos|token|parser/i,
     texto:
-      'Code Compiler pasa tu código por 4 fases reales: Léxico (tokens) → Sintáctico (árbol) → Semántico (tipos) → IR JSON v1.',
+      'Code Compiler revisa tu programa en 4 pasos rápidos: lee cada palabra, comprueba el orden, revisa los tipos y ejecuta tu código al instante.',
     snippet: {
-      nombre: 'rayos_x_demo.edu',
+      nombre: 'mi_programa.edu',
       codigo: `crear variable x\nasignar x valor de 12 + 30\nmostrar x`,
     },
   },
@@ -201,10 +201,17 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   onEntrarIde,
   onEntrarConCodigo,
   onEntrarConMision,
-  onEntrarConRayosX,
   onEntrarConGuia,
 }) => {
   const [modoFondo, setModoFondo] = useState<ModoFondoContinuo>('koi');
+  const [navScrolled, setNavScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > 14);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   const [tabHero, setTabHero] = useState<TabHeroCard>('runner');
   const [codigoDemo, setCodigoDemo] = useState<string>(CODIGO_HERO_PLAYGROUND);
   const [salidasDemo, setSalidasDemo] = useState<SalidaDemo[]>([]);
@@ -344,7 +351,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
       />
       <OverlayScrollbar />
       {/* BARRA DE NAVEGACIÓN PRINCIPAL */}
-      <header className="lp-nav">
+      <header className={`lp-nav${navScrolled ? ' is-scrolled' : ''}`}>
         <div className="lp-nav-inner">
           <a href="#inicio-top" className="lp-brand" aria-label="Chispa Code Compiler, página principal">
             <ChispaBrandMark size={40} />
@@ -884,9 +891,9 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 22 }}>
-            <button type="button" className="lp-cta-surface" onClick={onEntrarConRayosX}>
-              <Cpu size={16} aria-hidden="true" />
-              <span>Explorar Rayos X en Code Compiler</span>
+            <button type="button" className="lp-cta-surface" onClick={onEntrarIde}>
+              <Play size={16} aria-hidden="true" />
+              <span>Probarlo en Code Compiler</span>
               <ArrowRight size={15} aria-hidden="true" />
             </button>
           </div>
@@ -1063,8 +1070,8 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
             <Sparkles size={26} style={{ color: 'var(--accent)' }} aria-hidden="true" />
             <h2 className="lp-h2">Abre Code Compiler y crea tu primer programa</h2>
             <p className="lp-lead">
-              Sin cuentas ni descargas: editor inteligente, bloques Scratch, Rayos X y ejecución
-              paso a paso en un clic.
+              Sin cuentas ni descargas: editor amigable en español, bloques tipo Scratch, misiones
+              divertidas y ejecución paso a paso en un clic.
             </p>
             <motion.button
               type="button"
@@ -1090,8 +1097,8 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
             <button type="button" onClick={onEntrarIde}>
               Code Compiler
             </button>
-            <button type="button" onClick={onEntrarConRayosX}>
-              Rayos X
+            <button type="button" onClick={onEntrarConGuia}>
+              Guía
             </button>
             <a
               href="https://github.com/topional/code-compiler"
