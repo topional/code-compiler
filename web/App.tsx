@@ -181,6 +181,7 @@ export function App() {
   const [paneles, setPaneles] = useState(leerPaneles);
   const centroRef = useRef<HTMLDivElement | null>(null);
   const salidaRef = useRef<HTMLElement | null>(null);
+  const tabStripRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEYS.paneles, JSON.stringify(paneles));
@@ -200,6 +201,14 @@ export function App() {
   const [pestanas, setPestanas] = useState<PestanaCodigo[]>(() => leerPestanasIniciales());
   const [pestanaActivaId, setPestanaActivaId] = useState<string>(() => leerPestanasIniciales()[0].id);
   const pestanaActual = pestanas.find((p) => p.id === pestanaActivaId) ?? pestanas[0];
+
+  // Mantiene siempre visible la pestaña activa al abrir o cambiar de juego 2D
+  useEffect(() => {
+    const strip = tabStripRef.current;
+    if (!strip) return;
+    const activa = strip.querySelector<HTMLElement>('.file-tab[aria-current="true"]');
+    activa?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [pestanaActual.id, pestanas.length]);
 
   // Misiones
   const [misionesCompletadas, setMisionesCompletadas] = useState<string[]>(() => {
@@ -829,22 +838,30 @@ mostrar heroe`,
               style={{ flex: `${paneles.editor} 1 0%` }}
               aria-label="Editor de código de Chispa"
             >
-              <div className="wb-pane-header">
-                <div className="tab-strip" role="region" aria-label="Pestañas de archivos">
-                  <button
-                    type="button"
-                    className="ide-icon-btn"
-                    onClick={() => {
-                      detenerEjecucion();
-                      setVistaApp('inicio');
-                    }}
-                    aria-label="Volver a la página principal"
-                    title="Volver a Inicio"
-                  >
-                    <Home size={14} aria-hidden="true" />
-                  </button>
+              <div className="wb-pane-header editor-tabs-bar">
+                <button
+                  type="button"
+                  className="ide-icon-btn"
+                  onClick={() => {
+                    detenerEjecucion();
+                    setVistaApp('inicio');
+                  }}
+                  aria-label="Volver a la página principal"
+                  title="Volver a Inicio"
+                >
+                  <Home size={14} aria-hidden="true" />
+                </button>
+                <div
+                  ref={tabStripRef}
+                  className="tab-strip"
+                  role="region"
+                  aria-label="Pestañas de archivos"
+                >
                   {pestanas.map((tab) => (
-                    <div key={tab.id} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    <div
+                      key={tab.id}
+                      className={`file-tab-item ${tab.id === pestanaActual.id ? 'is-active' : ''}`}
+                    >
                       <button
                         type="button"
                         className="file-tab"
@@ -881,7 +898,9 @@ mostrar heroe`,
                     <Plus size={15} aria-hidden="true" />
                   </button>
                 </div>
+              </div>
 
+              <div className="wb-pane-header editor-toolbar-bar" role="toolbar" aria-label="Acciones del editor">
                 <div className="ide-actions">
                   <button
                     type="button"
@@ -891,7 +910,7 @@ mostrar heroe`,
                     title="Ayudante paso a paso: crea variables, preguntas y decisiones sin errores"
                   >
                     <Sparkles size={13} aria-hidden="true" style={{ color: 'var(--accent)' }} />
-                    <span className="hide-narrow">Ayudante</span>
+                    <span>Ayudante</span>
                   </button>
 
                   <button
@@ -929,7 +948,9 @@ mostrar heroe`,
                       <Square size={13} aria-hidden="true" />
                     </button>
                   )}
+                </div>
 
+                <div className="ide-actions">
                   <button
                     type="button"
                     className={`ide-icon-btn hide-narrow ${autoRun ? 'active-toggle' : ''}`}
@@ -1190,9 +1211,10 @@ mostrar heroe`,
                     {salidas.length === 0 && !preguntaPendiente && todosDiagnosticos.length === 0 && (
                       <div className="output-empty">
                         <p style={{ margin: '0 0 8px' }}>
-                          Toca un juego arriba (<strong>RPG</strong>, <strong>Dado</strong>,{' '}
-                          <strong>Duelo</strong>, <strong>Cohete</strong> o <strong>Bóveda</strong>) o pulsa{' '}
-                          <strong>Jugar</strong> para empezar.
+                          Toca un juego arriba (<strong>RPG</strong>, <strong>Torneo</strong>,{' '}
+                          <strong>Cohete</strong>, <strong>Bóveda</strong>, <strong>Dado</strong>,{' '}
+                          <strong>Calcu</strong> o <strong>Libre</strong>) o pulsa <strong>Jugar</strong> para
+                          empezar.
                         </p>
                         <button
                           type="button"
@@ -1240,27 +1262,12 @@ mostrar heroe`,
                   <ContainerOverlayScrollbar targetRef={wbOutputScrollRef} />
                 </div>
 
-                {/* Barra de entrada SIEMPRE ABIERTA en la terminal (nunca desaparece ni salta) */}
+                {/* Barra de entrada SIEMPRE ABIERTA en la terminal (los botones rápidos viven en el Escenario 2D para no duplicar espacio vertical) */}
                 <div
                   className={`terminal-input-dock ${preguntaPendiente ? 'is-waiting' : ''}`}
                   role="region"
                   aria-label="Entrada de la terminal"
                 >
-                  {preguntaPendiente && opcionesRapidasPregunta.length > 0 && (
-                    <div className="terminal-quick-chips" role="group" aria-label="Elegir desde la terminal">
-                      {opcionesRapidasPregunta.map((op) => (
-                        <button
-                          key={op.val}
-                          type="button"
-                          className="terminal-chip-btn"
-                          onClick={() => enviarValorRespuesta(op.val)}
-                        >
-                          {op.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
                   <form
                     className="terminal-prompt-form"
                     onSubmit={(e) => {

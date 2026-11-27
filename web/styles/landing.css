@@ -104,10 +104,10 @@
 }
 
 .lp-brand-title {
-  font-family: var(--font-pixel);
-  font-size: 1.3rem;
+  font-family: var(--font-display);
+  font-size: 1.28rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
 }
 
 .lp-brand-sub {
@@ -197,9 +197,9 @@
     inset 0 2px 0 rgba(255, 255, 255, 0.45),
     inset 0 -2px 0 rgba(0, 0, 0, 0.24),
     0 3px 0 rgba(0, 0, 0, 0.52);
-  font-family: var(--font-pixel);
+  font-family: var(--font-ui);
   font-weight: 700;
-  letter-spacing: 0.015em;
+  letter-spacing: -0.01em;
   cursor: pointer;
   white-space: nowrap;
   position: relative;
@@ -278,8 +278,8 @@
     inset 0 2px 0 rgba(255, 255, 255, 0.12),
     inset 0 -2px 0 rgba(0, 0, 0, 0.16),
     0 3px 0 var(--border-subtle);
-  font-family: var(--font-pixel);
-  font-size: 0.98rem;
+  font-family: var(--font-ui);
+  font-size: 0.94rem;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
@@ -315,8 +315,8 @@
     inset 0 2px 0 rgba(255, 255, 255, 0.08),
     inset 0 -2px 0 rgba(0, 0, 0, 0.16),
     0 3px 0 var(--border-subtle);
-  font-family: var(--font-pixel);
-  font-size: 0.9rem;
+  font-family: var(--font-ui);
+  font-size: 0.86rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -572,8 +572,8 @@
   backdrop-filter: blur(8px);
   color: var(--ink-primary);
   box-shadow: 0 2px 0 var(--border-subtle);
-  font-family: var(--font-pixel);
-  font-size: 0.8rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.1s ease, border-color 0.12s ease;
@@ -645,8 +645,8 @@
   border: 2px solid transparent;
   background: transparent;
   color: var(--ink-secondary);
-  font-family: var(--font-pixel);
-  font-size: 0.88rem;
+  font-family: var(--font-ui);
+  font-size: 0.84rem;
   font-weight: 700;
   cursor: pointer;
   overflow: hidden;
@@ -704,8 +704,8 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 2px 0 var(--border-subtle);
-  font-family: var(--font-pixel);
-  font-size: 0.78rem;
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -721,9 +721,9 @@
 
 .lp-hero-textarea {
   width: 100%;
-  min-height: 175px;
-  max-height: 260px;
-  padding: 12px 14px;
+  min-height: 268px;
+  max-height: 320px;
+  padding: 10px 14px;
   border: none;
   resize: vertical;
   overflow-y: auto;
@@ -731,8 +731,8 @@
   background: var(--bg-editor);
   color: var(--ink-primary);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
-  line-height: 1.55;
+  font-size: 0.79rem;
+  line-height: 1.48;
   outline: none;
 }
 
@@ -1240,8 +1240,8 @@
   background: var(--bg-surface);
   color: var(--ink-secondary);
   box-shadow: 0 2px 0 var(--border-subtle);
-  font-family: var(--font-pixel);
-  font-size: 0.88rem;
+  font-family: var(--font-ui);
+  font-size: 0.84rem;
   font-weight: 700;
   cursor: pointer;
   overflow: hidden;

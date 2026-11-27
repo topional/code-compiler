@@ -125,11 +125,9 @@ crear variable piloto
 asignar piloto valor de "Nova"
 crear variable energia
 asignar energia valor de numero aleatorio entre 40 y 100
-
 mostrar "¡Motor Chispa encendido!"
 mostrar piloto
 mostrar energia
-
 si energia es mayor o igual que 70 entonces
     mostrar "Potencia máxima alcanzada"
 sino
