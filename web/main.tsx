@@ -4,6 +4,9 @@ import '@fontsource/fredoka/700.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/600.css';
 import '@fontsource/jetbrains-mono/700.css';
+import '@fontsource/pixelify-sans/500.css';
+import '@fontsource/pixelify-sans/600.css';
+import '@fontsource/pixelify-sans/700.css';
 import '@fontsource/plus-jakarta-sans/400.css';
 import '@fontsource/plus-jakarta-sans/500.css';
 import '@fontsource/plus-jakarta-sans/600.css';
@@ -14,6 +17,7 @@ import { createRoot } from 'react-dom/client';
 
 import './styles/tokens.css';
 import './styles/workbench.css';
+import './styles/landing.css';
 import { App } from './App';
 
 createRoot(document.getElementById('root')!).render(

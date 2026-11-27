@@ -12,6 +12,7 @@ import {
   Download,
   FolderOpen,
   History,
+  Home,
   Lightbulb,
   Palette,
   Pause,
@@ -34,6 +35,7 @@ import {
 import { ChispaMascota } from './components/ChispaLogo';
 import { CommandPalette } from './components/CommandPalette';
 import { EduEditor, type EduEditorHandle } from './components/EduEditor';
+import { LandingHome } from './components/LandingHome';
 import {
   RightDrawer,
   type InstantaneaCodigo,
@@ -130,6 +132,11 @@ export function App() {
   });
   const [movimientoReducido, setMovimientoReducido] = useState<boolean>(
     () => localStorage.getItem(STORAGE_KEYS.movimiento) === 'true',
+  );
+
+  // Vista superior: Página Principal (Codédex × GoJS) vs. Entorno IDE 100dvh
+  const [vistaApp, setVistaApp] = useState<'inicio' | 'ide'>(() =>
+    window.location.hash === '#ide' ? 'ide' : 'inicio',
   );
 
   // Layout del Workbench (GoJS × Scratch)
@@ -244,6 +251,30 @@ export function App() {
       // ignorar
     }
   }, [misionesCompletadas]);
+
+  // Sincronización de vista Inicio ↔ IDE con body class y hash de navegador
+  useEffect(() => {
+    document.body.classList.toggle('is-workbench', vistaApp === 'ide');
+    if (vistaApp === 'ide') {
+      if (window.location.hash !== '#ide') {
+        window.history.pushState(null, '', '#ide');
+      }
+    } else if (window.location.hash === '#ide') {
+      window.history.pushState(null, '', '#inicio');
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+    return () => {
+      document.body.classList.remove('is-workbench');
+    };
+  }, [vistaApp]);
+
+  useEffect(() => {
+    const onHash = () => {
+      setVistaApp(window.location.hash === '#ide' ? 'ide' : 'inicio');
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
 
   // Atajo global Ctrl+K / Cmd+K
   useEffect(() => {
@@ -548,6 +579,83 @@ export function App() {
         ? ultimaSalida.texto
         : 'Escribe código .edu o toca un bloque Scratch a la izquierda';
 
+  const modalesCompartidos = (
+    <>
+      <ThemePickerDialog
+        open={temasAbiertos}
+        onClose={() => setTemasAbiertos(false)}
+        temaActual={tema}
+        onSeleccionarTema={setTema}
+      />
+
+      <CommandPalette
+        open={comandosAbiertos}
+        onClose={() => setComandosAbiertos(false)}
+        onAbrirPanel={(p) => {
+          setVistaApp('ide');
+          setPanelDerecho(p);
+        }}
+        onCambiarTema={setTema}
+        onAbrirEjemplo={(codigo, nombre) => {
+          abrirNuevaPestana(nombre, codigo);
+          setVistaApp('ide');
+        }}
+        onIniciarMision={(m) => {
+          setVistaApp('ide');
+          setPanelDerecho('misiones');
+          iniciarMision(m);
+        }}
+        onFormatear={formatearActual}
+        onAlternarLayout={() => setLayoutVertical((v) => !v)}
+      />
+
+      <SettingsDialog
+        open={ajustesAbiertos}
+        onClose={() => setAjustesAbiertos(false)}
+        tema={tema}
+        onCambiarTema={setTema}
+        onAbrirGaleriaTemas={() => setTemasAbiertos(true)}
+        escalaTexto={escalaTexto}
+        onCambiarEscala={setEscalaTexto}
+        movimientoReducido={movimientoReducido}
+        onCambiarMovimiento={setMovimientoReducido}
+        modoMotor={modoMotor}
+        onCambiarModoMotor={setModoMotor}
+        urlApi={urlApi}
+        onCambiarUrlApi={setUrlApi}
+      />
+    </>
+  );
+
+  if (vistaApp === 'inicio') {
+    return (
+      <MotionConfig reducedMotion={movimientoReducido ? 'always' : 'user'}>
+        <LandingHome
+          tema={tema}
+          onSeleccionarTema={setTema}
+          onAbrirGaleriaTemas={() => setTemasAbiertos(true)}
+          misionesCompletadas={misionesCompletadas}
+          onEntrarIde={() => setVistaApp('ide')}
+          onEntrarConCodigo={(nombre, codigo) => {
+            abrirNuevaPestana(nombre, codigo);
+            setVistaApp('ide');
+          }}
+          onEntrarConMision={(m) => {
+            setPanelDerecho('misiones');
+            setVistaMovil('editor');
+            iniciarMision(m);
+            setVistaApp('ide');
+          }}
+          onEntrarConRayosX={() => {
+            setPanelDerecho('rayosx');
+            setVistaApp('ide');
+          }}
+        />
+        {modalesCompartidos}
+      </MotionConfig>
+    );
+  }
+
   return (
     <MotionConfig reducedMotion={movimientoReducido ? 'always' : 'user'}>
       <div className="wb-root">
@@ -586,6 +694,18 @@ export function App() {
             >
               <div className="wb-pane-header">
                 <div className="tab-strip" role="region" aria-label="Pestañas de archivos">
+                  <button
+                    type="button"
+                    className="ide-icon-btn"
+                    onClick={() => {
+                      detenerEjecucion();
+                      setVistaApp('inicio');
+                    }}
+                    aria-label="Volver a la página principal"
+                    title="Volver a Inicio"
+                  >
+                    <Home size={14} aria-hidden="true" />
+                  </button>
                   {pestanas.map((tab) => (
                     <div key={tab.id} style={{ display: 'inline-flex', alignItems: 'center' }}>
                       <button
@@ -997,6 +1117,19 @@ export function App() {
               <button
                 type="button"
                 className="dock-btn"
+                onClick={() => {
+                  detenerEjecucion();
+                  setVistaApp('inicio');
+                }}
+                aria-label="Página principal"
+                title="Volver a la página principal"
+              >
+                <Home size={18} aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                className="dock-btn"
                 aria-pressed={panelDerecho === 'misiones'}
                 onClick={() => alternarPanelDerecho('misiones')}
                 aria-label="Misiones educativas"
@@ -1196,42 +1329,7 @@ export function App() {
         </nav>
 
         {/* MODALES NATIVOS (<dialog>) */}
-        <ThemePickerDialog
-          open={temasAbiertos}
-          onClose={() => setTemasAbiertos(false)}
-          temaActual={tema}
-          onSeleccionarTema={setTema}
-        />
-
-        <CommandPalette
-          open={comandosAbiertos}
-          onClose={() => setComandosAbiertos(false)}
-          onAbrirPanel={(p) => setPanelDerecho(p)}
-          onCambiarTema={setTema}
-          onAbrirEjemplo={(codigo, nombre) => abrirNuevaPestana(nombre, codigo)}
-          onIniciarMision={(m) => {
-            setPanelDerecho('misiones');
-            iniciarMision(m);
-          }}
-          onFormatear={formatearActual}
-          onAlternarLayout={() => setLayoutVertical((v) => !v)}
-        />
-
-        <SettingsDialog
-          open={ajustesAbiertos}
-          onClose={() => setAjustesAbiertos(false)}
-          tema={tema}
-          onCambiarTema={setTema}
-          onAbrirGaleriaTemas={() => setTemasAbiertos(true)}
-          escalaTexto={escalaTexto}
-          onCambiarEscala={setEscalaTexto}
-          movimientoReducido={movimientoReducido}
-          onCambiarMovimiento={setMovimientoReducido}
-          modoMotor={modoMotor}
-          onCambiarModoMotor={setModoMotor}
-          urlApi={urlApi}
-          onCambiarUrlApi={setUrlApi}
-        />
+        {modalesCompartidos}
       </div>
     </MotionConfig>
   );
