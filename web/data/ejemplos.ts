@@ -8,7 +8,7 @@ export interface EjemploEdu {
   subtitulo: string;
   nivel: 'Inicio' | 'Intermedio' | 'Avanzado' | 'Reto';
   archivo: string;
-  escena?: 'rpg' | 'aventura' | 'torneo' | 'cohete' | 'boveda' | 'chispa';
+  escena?: 'rpg' | 'aventura' | 'torneo' | 'cohete' | 'boveda' | 'calculadora' | 'chispa';
   etiquetas: string[];
   codigo: string;
 }
@@ -65,8 +65,12 @@ mientras vida_heroe es mayor que 0 y vida_rival es mayor que 0 hacer
             mostrar "¡Llamarada solar!"
             mostrar dano
         sino
-            asignar vida_heroe valor de vida_heroe + 25
-            mostrar "¡Poción mágica! +25 vida"
+            si vida_heroe es mayor que 75 entonces
+                asignar vida_heroe valor de 100
+            sino
+                asignar vida_heroe valor de vida_heroe + 25
+            fin
+            mostrar "¡Poción mágica! Recuperas vida (máximo 100)"
         fin
     fin
     si vida_rival es mayor que 0 entonces
@@ -211,7 +215,7 @@ mostrar intentos`,
     subtitulo: 'Suma, resta, multiplica y divide cuidando el cero',
     nivel: 'Intermedio',
     archivo: 'calculadora',
-    escena: 'boveda',
+    escena: 'calculadora',
     etiquetas: ['matemática', 'preguntar', 'si/sino'],
     codigo: `# Calculadora mágica con 4 operaciones
 crear variable opcion

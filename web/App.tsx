@@ -18,7 +18,6 @@ import {
   Home,
   Lightbulb,
   Palette,
-  Pause,
   Play,
   Plus,
   RotateCcw,
@@ -39,8 +38,9 @@ import {
 
 import { CodeHelperModal } from './components/CodeHelperModal';
 import { CommandPalette } from './components/CommandPalette';
+import { Divisor } from './components/Divisor';
 import { EduEditor, type EduEditorHandle } from './components/EduEditor';
-import { GameStage2D, type EscenaJuego2D } from './components/GameStage2D';
+import { GameStage2D, textoOtraVez, type EscenaJuego2D } from './components/GameStage2D';
 import { LandingHome } from './components/LandingHome';
 import { ContainerOverlayScrollbar } from './components/OverlayScrollbar';
 import {
@@ -96,7 +96,24 @@ const STORAGE_KEYS = {
   movimiento: 'chispa_edu_reduced_motion',
   pestanas: 'chispa_edu_wb_pestanas_v5',
   misiones: 'chispa_edu_misiones_ok',
+  paneles: 'chispa_edu_tamano_paneles',
 };
+
+/**
+ * Tamaño inicial: el editor ocupa el 44 % y el juego mide 320 px de alto.
+ * En la vista vertical el juego va a la izquierda de la terminal y ocupa el 55 % del ancho.
+ */
+const PANELES_INICIALES = { editor: 0.44, juego: 320, juegoAncho: 0.55 };
+
+function leerPaneles(): typeof PANELES_INICIALES {
+  try {
+    const t = JSON.parse(localStorage.getItem(STORAGE_KEYS.paneles) ?? '');
+    if (typeof t?.editor === 'number' && typeof t?.juego === 'number') return { ...PANELES_INICIALES, ...t };
+  } catch {
+    // sin datos guardados o almacenamiento bloqueado: se usan los valores iniciales
+  }
+  return PANELES_INICIALES;
+}
 
 function leerPestanasIniciales(): PestanaCodigo[] {
   try {
@@ -161,6 +178,16 @@ export function App() {
   const [categoriaScratch, setCategoriaScratch] = useState<CategoriaBloque | null>(null);
   const [panelDerecho, setPanelDerecho] = useState<PanelDerechoTipo>(null);
   const [layoutVertical, setLayoutVertical] = useState(false);
+  const [paneles, setPaneles] = useState(leerPaneles);
+  const centroRef = useRef<HTMLDivElement | null>(null);
+  const salidaRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.paneles, JSON.stringify(paneles));
+    } catch {
+      // el tamaño solo se recuerda si el navegador lo permite
+    }
+  }, [paneles]);
   const [vistaMovil, setVistaMovil] = useState<VistaMovil>('editor');
 
   // Modales nativos
@@ -489,6 +516,7 @@ export function App() {
       torneo: { nombre: 'torneo', codigo: EJEMPLOS_EDU[1].codigo },
       cohete: { nombre: 'cohete', codigo: EJEMPLOS_EDU[2].codigo },
       boveda: { nombre: 'adivina_numero', codigo: EJEMPLOS_EDU[3].codigo },
+      calculadora: { nombre: 'calculadora', codigo: EJEMPLOS_EDU[5].codigo },
       chispa: {
         nombre: 'mi_mundo',
         codigo: `# ¡Mundo libre Chispa! Escribe lo que quieras probar
@@ -790,6 +818,7 @@ mostrar heroe`,
 
           {/* ÁREA CENTRAL: EDITOR + SALIDA/ESCENARIO */}
           <div
+            ref={centroRef}
             className={`wb-center ${layoutVertical ? 'layout-vertical' : ''} ${
               vistaMovil === 'editor' || vistaMovil === 'salida' ? '' : 'mobile-hidden'
             }`}
@@ -797,6 +826,7 @@ mostrar heroe`,
             {/* PANEL EDITOR */}
             <section
               className={`wb-pane wb-editor-pane ${vistaMovil === 'editor' ? '' : 'mobile-hidden'}`}
+              style={{ flex: `${paneles.editor} 1 0%` }}
               aria-label="Editor de código de Chispa"
             >
               <div className="wb-pane-header">
@@ -905,10 +935,15 @@ mostrar heroe`,
                     className={`ide-icon-btn hide-narrow ${autoRun ? 'active-toggle' : ''}`}
                     aria-pressed={autoRun}
                     onClick={() => setAutoRun((v) => !v)}
-                    aria-label={autoRun ? 'Pausar auto-ejecución' : 'Activar auto-ejecución'}
-                    title={autoRun ? 'Auto-run activo (clic para pausar)' : 'Auto-run pausado'}
+                    aria-label="Ejecución automática al escribir"
+                    title={
+                      autoRun
+                        ? 'Ejecución automática ACTIVADA: el programa se vuelve a ejecutar al escribir (clic para desactivar)'
+                        : 'Ejecución automática DESACTIVADA: pulsa Jugar para ejecutar (clic para activar)'
+                    }
                   >
-                    {autoRun ? <Pause size={13} aria-hidden="true" /> : <Zap size={13} aria-hidden="true" />}
+                    <Zap size={13} aria-hidden="true" />
+                    <span>Auto</span>
                   </button>
 
                   <button
@@ -1027,9 +1062,29 @@ mostrar heroe`,
               />
             </section>
 
+            <Divisor
+              orientacion={layoutVertical ? 'horizontal' : 'vertical'}
+              etiqueta="Tamaño del editor y del juego"
+              valor={paneles.editor * 100}
+              onArrastrar={(delta) => {
+                const r = centroRef.current?.getBoundingClientRect();
+                const total = r ? (layoutVertical ? r.height : r.width) : 1000;
+                setPaneles((p) => ({ ...p, editor: Math.min(0.72, Math.max(0.3, p.editor + delta / total)) }));
+              }}
+              onReiniciar={() => setPaneles((p) => ({ ...p, editor: PANELES_INICIALES.editor }))}
+            />
+
             {/* PANEL DERECHO UNIFICADO: ESCENARIO 2D + TERMINAL INTERACTIVA PERSISTENTE + CAJITAS */}
             <section
-              className={`wb-pane wb-output-pane ${vistaMovil === 'salida' ? '' : 'mobile-hidden'}`}
+              ref={salidaRef}
+              className={`wb-pane wb-output-pane ${layoutVertical ? 'salida-lado-a-lado' : ''} ${vistaMovil === 'salida' ? '' : 'mobile-hidden'}`}
+              style={
+                {
+                  flex: `${1 - paneles.editor} 1 0%`,
+                  '--alto-juego': `${paneles.juego}px`,
+                  '--ancho-juego': `${paneles.juegoAncho * 100}%`,
+                } as React.CSSProperties
+              }
               aria-label="Escenario 2D, terminal interactiva y cajitas"
             >
               {/* 1. ESCENARIO 2D CON DIRECTOR DE ESCENA Y SELECTOR DIRECTO DE JUEGOS */}
@@ -1049,6 +1104,27 @@ mostrar heroe`,
                 onSeleccionarJuego={seleccionarJuegoDirecto}
                 desactivarAnimacion={movimientoReducido}
               />
+
+              {layoutVertical ? (
+                <Divisor
+                  orientacion="vertical"
+                  etiqueta="Ancho del juego y de la terminal"
+                  valor={paneles.juegoAncho * 100}
+                  onArrastrar={(delta) => {
+                    const ancho = salidaRef.current?.getBoundingClientRect().width ?? 1000;
+                    setPaneles((p) => ({ ...p, juegoAncho: Math.min(0.75, Math.max(0.3, p.juegoAncho + delta / ancho)) }));
+                  }}
+                  onReiniciar={() => setPaneles((p) => ({ ...p, juegoAncho: PANELES_INICIALES.juegoAncho }))}
+                />
+              ) : (
+                <Divisor
+                  orientacion="horizontal"
+                  etiqueta="Tamaño del juego y de la terminal"
+                  valor={((paneles.juego - 160) / 480) * 100}
+                  onArrastrar={(delta) => setPaneles((p) => ({ ...p, juego: Math.min(640, Math.max(160, p.juego + delta)) }))}
+                  onReiniciar={() => setPaneles((p) => ({ ...p, juego: PANELES_INICIALES.juego }))}
+                />
+              )}
 
               {/* 2. TERMINAL INTERACTIVA PERSISTENTE (NUNCA SE CIERRA: PERMITE RESPONDER Y REJUGAR AQUÍ TAMBIÉN) */}
               <div className="terminal-shell">
@@ -1216,7 +1292,7 @@ mostrar heroe`,
                         preguntaPendiente
                           ? `${preguntaPendiente.mensaje} (escribe aquí y pulsa Enter)`
                           : salidas.length > 0
-                            ? 'Partida terminada · pulsa Enter o el botón para volver a jugar'
+                            ? `Partida terminada · pulsa Enter o «${textoOtraVez(pestanaActual.nombre, pestanaActual.codigo, variables)}»`
                             : 'Pulsa Enter o Jugar para iniciar en la terminal...'
                       }
                     />
@@ -1232,7 +1308,8 @@ mostrar heroe`,
                       >
                         {salidas.length > 0 ? (
                           <>
-                            <RotateCcw size={13} aria-hidden="true" /> Volver a jugar
+                            <RotateCcw size={13} aria-hidden="true" />{' '}
+                            {textoOtraVez(pestanaActual.nombre, pestanaActual.codigo, variables)}
                           </>
                         ) : (
                           <>

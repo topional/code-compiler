@@ -440,7 +440,65 @@ textarea {
   min-width: 0;
   min-height: 0;
   display: flex;
-  gap: 6px;
+  gap: 0; /* el divisor arrastrable hace de separación */
+}
+
+/* Divisor arrastrable entre paneles */
+.divisor {
+  flex: 0 0 8px;
+  display: grid;
+  place-items: center;
+  cursor: col-resize;
+  touch-action: none;
+  border-radius: 4px;
+  outline: none;
+}
+
+.divisor-horizontal {
+  cursor: row-resize;
+}
+
+.divisor-asa {
+  width: 3px;
+  height: 36px;
+  border-radius: 3px;
+  background: var(--border-subtle);
+  transition: background 120ms ease, height 120ms ease, width 120ms ease;
+}
+
+.divisor-horizontal .divisor-asa {
+  width: 36px;
+  height: 3px;
+}
+
+.divisor:hover .divisor-asa,
+.divisor:focus-visible .divisor-asa,
+body.arrastrando-divisor .divisor-asa {
+  background: var(--accent);
+}
+
+.divisor-vertical:hover .divisor-asa,
+.divisor-vertical:focus-visible .divisor-asa {
+  height: 64px;
+}
+
+.divisor-horizontal:hover .divisor-asa,
+.divisor-horizontal:focus-visible .divisor-asa {
+  width: 64px;
+}
+
+.divisor:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Mientras se arrastra, el texto no se selecciona y el canvas no roba el puntero */
+body.arrastrando-divisor {
+  user-select: none;
+}
+
+body.arrastrando-divisor .game-stage-canvas,
+body.arrastrando-divisor .cm-editor {
+  pointer-events: none;
 }
 
 .wb-center.layout-vertical {
@@ -2135,15 +2193,13 @@ dialog.cmd-dialog {
 .game-stage-canvas {
   display: block;
   width: 100%;
-  height: 248px;
-  image-rendering: pixelated;
+  height: var(--alto-juego, 320px);
   cursor: pointer;
   background: var(--bg-app);
-  transition: height 160ms ease;
 }
 
 .game-stage-shell.is-expanded .game-stage-canvas {
-  height: 340px;
+  height: calc(var(--alto-juego, 320px) + 140px);
 }
 
 .stage-controller-deck {
@@ -2300,7 +2356,10 @@ dialog.cmd-dialog {
 
 @media (max-width: 960px) {
   .game-stage-canvas {
-    height: 196px;
+    height: 220px;
+  }
+  .divisor {
+    display: none;
   }
   .wb-root {
     padding: 4px;
@@ -2381,4 +2440,66 @@ dialog.cmd-dialog {
 [data-reduced-motion='true'] *::after {
   animation-duration: 0.01ms !important;
   transition-duration: 0.01ms !important;
+}
+
+/* ==========================================================================
+   VISTA VERTICAL: juego a la izquierda; terminal, pistas y cajitas a la derecha
+   ========================================================================== */
+.wb-output-pane.salida-lado-a-lado {
+  display: grid;
+  grid-template-columns: minmax(0, var(--ancho-juego, 55%)) 8px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto auto;
+}
+
+.salida-lado-a-lado > .game-stage-shell {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  margin: 8px 0 8px 8px;
+  min-height: 0;
+}
+
+.salida-lado-a-lado > .divisor {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+
+.salida-lado-a-lado > .terminal-shell,
+.salida-lado-a-lado > .diag-stack,
+.salida-lado-a-lado > .memory-dock {
+  grid-column: 3;
+  min-width: 0;
+}
+
+.salida-lado-a-lado > .terminal-shell {
+  min-height: 0;
+  border-top: none;
+  border-left: 1px solid var(--border-subtle);
+}
+
+/* El juego llena toda la altura disponible. El canvas va en posición absoluta para que
+   su tamaño interno no fije la altura del contenedor. */
+.salida-lado-a-lado .game-stage-viewport {
+  flex: 1;
+  min-height: 150px;
+}
+
+.salida-lado-a-lado .game-stage-canvas,
+.salida-lado-a-lado .game-stage-shell.is-expanded .game-stage-canvas {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+@media (max-width: 960px) {
+  /* En celular los paneles van por pestañas: se vuelve a apilar. */
+  .wb-output-pane.salida-lado-a-lado {
+    display: flex;
+    flex-direction: column;
+  }
+  .salida-lado-a-lado > .game-stage-shell {
+    margin: 8px 8px 4px;
+  }
+  .salida-lado-a-lado .game-stage-canvas {
+    height: 220px;
+  }
 }
