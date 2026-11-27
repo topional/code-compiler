@@ -291,6 +291,21 @@ fin`;
     expect(res.diagnosticos.every((d) => d.etapa === 'semantica')).toBe(true);
   });
 
+  it('detecta cuando preguntar y guardar en están en líneas separadas y los une en 1 clic', () => {
+    const codigoPartido = `crear variable numero1
+preguntar "¿Cual es tu numero?"
+guardar en numero1`;
+    const comp = compilarEdu(codigoPartido, 'intermedio');
+    expect(comp.diagnosticos.length).toBeGreaterThan(0);
+    const pista = obtenerPistaPedagogica(comp.diagnosticos[0], codigoPartido);
+    expect(pista.titulo).toContain('misma línea');
+    expect(pista.autoFix).toBeDefined();
+
+    const unido = pista.autoFix!.aplicar(codigoPartido);
+    const comp2 = compilarEdu(unido, 'intermedio');
+    expect(comp2.diagnosticos).toEqual([]);
+  });
+
   it('detecta el error de preguntar + suma y ofrece autoFix en 1 clic que compila y suma bien', async () => {
     const codigoCompanero = `crear variable numero1
 preguntar "¿Cuál es tu número?" guardar en numero1

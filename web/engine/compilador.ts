@@ -257,6 +257,39 @@ export function obtenerPistaPedagogica(diag: Diagnostico, codigoFuente = ''): Pi
     };
   }
 
+  // Caso muy común: "preguntar" en una línea y "guardar en ..." en la línea siguiente (o faltó "guardar en")
+  if (msg.includes('guardar') || (diag.linea && codigoFuente && /^\s*preguntar\b/i.test(codigoFuente.split(/\r?\n/)[diag.linea - 1] ?? ''))) {
+    const lineas = codigoFuente ? codigoFuente.split(/\r?\n/) : [];
+    const idx = (diag.linea ?? 1) - 1;
+    const lineaActual = lineas[idx] ?? '';
+    const lineaSig = lineas[idx + 1] ?? '';
+    if (/^\s*preguntar\b/i.test(lineaActual) && /^\s*guardar\s+en\b/i.test(lineaSig)) {
+      return {
+        titulo: '¡"preguntar" y "guardar en" van en la misma línea!',
+        explicacion:
+          'Separaste "guardar en" en la línea de abajo. En Chispa toda la pregunta debe escribirse junta en una sola línea.',
+        ejemplo: `${lineaActual.trim()} ${lineaSig.trim()}`,
+        autoFix: {
+          etiqueta: 'Unir "preguntar" en una sola línea',
+          aplicar: (cod) => {
+            const ls = cod.split(/\r?\n/);
+            if (ls[idx] !== undefined && ls[idx + 1] !== undefined) {
+              ls[idx] = `${ls[idx].trimEnd()} ${ls[idx + 1].trim()}`;
+              ls.splice(idx + 1, 1);
+            }
+            return ls.join('\n');
+          },
+        },
+      };
+    }
+    return {
+      titulo: 'Falta escribir "guardar en" en la misma línea',
+      explicacion:
+        'Toda instrucción "preguntar" debe terminar en la misma línea con "guardar en" seguido del nombre de tu cajita.',
+      ejemplo: 'preguntar "¿Cuál es tu número?" guardar en numero1',
+    };
+  }
+
   if (msg.includes('división por cero')) {
     return {
       titulo: '¡Cuidado con el cero al dividir!',
