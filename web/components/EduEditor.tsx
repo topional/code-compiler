@@ -5,10 +5,21 @@
  *   (estilo GoJS.app), líneas de error y atajos Ctrl+Enter / Ctrl+Shift+F.
  */
 
-import { autocompletion, type Completion, type CompletionContext } from '@codemirror/autocomplete';
+import {
+  acceptCompletion,
+  autocompletion,
+  closeCompletion,
+  moveCompletionSelection,
+  nextSnippetField,
+  prevSnippetField,
+  snippetCompletion,
+  startCompletion,
+  type Completion,
+  type CompletionContext,
+} from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { HighlightStyle, StreamLanguage, syntaxHighlighting } from '@codemirror/language';
-import { StateEffect, StateField, type Range } from '@codemirror/state';
+import { Prec, StateEffect, StateField, type Range } from '@codemirror/state';
 import {
   Decoration,
   type DecorationSet,
@@ -98,57 +109,157 @@ const eduHighlightStyle = HighlightStyle.define([
 ]);
 
 const COMPLETIONS_EDU: Completion[] = [
-  { label: 'crear variable', type: 'keyword', apply: 'crear variable ', detail: 'Declara una variable' },
-  { label: 'asignar', type: 'keyword', apply: 'asignar nombre valor de ', detail: 'Guarda un valor' },
-  { label: 'mostrar', type: 'keyword', apply: 'mostrar ', detail: 'Muestra en el escenario' },
-  { label: 'preguntar', type: 'keyword', apply: 'preguntar "¿...?" guardar en ', detail: 'Pide un dato' },
-  {
+  snippetCompletion('crear variable ${nombre}', {
+    label: 'crear variable',
+    type: 'keyword',
+    detail: 'Crea una cajita nueva',
+    boost: 10,
+  }),
+  snippetCompletion('crear variable ${nombre}\nasignar ${nombre} valor de "${Sofía}"', {
+    label: 'crear variable (texto)',
+    type: 'keyword',
+    detail: 'Cajita para palabras " "',
+    boost: 9,
+  }),
+  snippetCompletion('crear variable ${edad}\nasignar ${edad} valor de ${10}', {
+    label: 'crear variable (número)',
+    type: 'keyword',
+    detail: 'Cajita para números',
+    boost: 9,
+  }),
+  snippetCompletion('asignar ${nombre} valor de ${valor}', {
+    label: 'asignar valor de',
+    type: 'keyword',
+    detail: 'Guarda un valor en una cajita',
+    boost: 8,
+  }),
+  snippetCompletion('mostrar ${"¡Hola!"}', {
+    label: 'mostrar',
+    type: 'keyword',
+    detail: 'Muestra en pantalla',
+    boost: 8,
+  }),
+  snippetCompletion(
+    'crear variable ${numero1}\nasignar ${numero1} valor de 0\npreguntar "${¿Cuál es tu número?}" guardar en ${numero1}',
+    {
+      label: 'preguntar (número)',
+      type: 'keyword',
+      detail: 'Pide un número para sumar',
+      boost: 8,
+    },
+  ),
+  snippetCompletion('preguntar "${¿Cómo te llamas?}" guardar en ${nombre}', {
+    label: 'preguntar (texto)',
+    type: 'keyword',
+    detail: 'Pide palabras al jugador',
+    boost: 7,
+  }),
+  snippetCompletion('si ${puntos} es mayor o igual que ${10} entonces\n    mostrar "${¡Ganaste!}"\nsino\n    mostrar "${Sigue intentando}"\nfin', {
+    label: 'si ... entonces ... sino',
+    type: 'keyword',
+    detail: 'Decisión con 2 caminos',
+    boost: 7,
+  }),
+  snippetCompletion('si ${puntos} es mayor que ${10} entonces\n    mostrar "${¡Genial!}"\nfin', {
     label: 'si ... entonces',
     type: 'keyword',
-    apply: 'si condicion entonces\n    mostrar "Sí"\nfin',
-    detail: 'Condicional',
-  },
-  {
+    detail: 'Decisión simple',
+    boost: 6,
+  }),
+  snippetCompletion('repetir ${3} veces\n    mostrar "${¡Salto!}"\nfin', {
     label: 'repetir ... veces',
     type: 'keyword',
-    apply: 'repetir 3 veces\n    mostrar "Hola"\nfin',
     detail: 'Ciclo fijo',
-  },
-  {
+    boost: 7,
+  }),
+  snippetCompletion('mientras ${energia} es mayor que ${0} hacer\n    mostrar ${energia}\n    asignar ${energia} valor de ${energia} - 1\nfin', {
     label: 'mientras ... hacer',
     type: 'keyword',
-    apply: 'mientras condicion hacer\n    mostrar "Paso"\nfin',
-    detail: 'Ciclo condicional',
-  },
-  {
+    detail: 'Ciclo con condición',
+    boost: 6,
+  }),
+  snippetCompletion('definir ${doble}(numero ${x}) devuelve numero\n    devolver ${x} * 2\nfin', {
     label: 'definir función',
     type: 'function',
-    apply: 'definir nombre(numero x) devuelve numero\n    devolver x\nfin',
-    detail: 'Crea una función',
-  },
-  {
+    detail: 'Crea tu propia receta',
+    boost: 6,
+  }),
+  snippetCompletion('numero aleatorio entre ${1} y ${6}', {
     label: 'numero aleatorio entre',
     type: 'function',
-    apply: 'numero aleatorio entre 1 y 6',
-    detail: 'Entero al azar',
-  },
-  { label: 'es igual a', type: 'operator', detail: 'Comparación ==' },
-  { label: 'es diferente de', type: 'operator', detail: 'Comparación !=' },
-  { label: 'es mayor que', type: 'operator', detail: 'Comparación >' },
-  { label: 'es menor que', type: 'operator', detail: 'Comparación <' },
-  { label: 'es mayor o igual que', type: 'operator', detail: 'Comparación >=' },
-  { label: 'es menor o igual que', type: 'operator', detail: 'Comparación <=' },
+    detail: 'Número al azar (dado)',
+    boost: 6,
+  }),
+  { label: 'es igual a', type: 'operator', detail: 'Comparar (=)' },
+  { label: 'es diferente de', type: 'operator', detail: 'Comparar (≠)' },
+  { label: 'es mayor que', type: 'operator', detail: 'Comparar (>)' },
+  { label: 'es menor que', type: 'operator', detail: 'Comparar (<)' },
+  { label: 'es mayor o igual que', type: 'operator', detail: 'Comparar (≥)' },
+  { label: 'es menor o igual que', type: 'operator', detail: 'Comparar (≤)' },
   { label: 'verdadero', type: 'constant', detail: 'Valor lógico' },
   { label: 'falso', type: 'constant', detail: 'Valor lógico' },
 ];
 
+const MULTIWORD_PREFIXES = [
+  'crear',
+  'asignar',
+  'numero',
+  'es',
+  'preguntar',
+  'definir',
+];
+
+function extraerSimbolosDelDoc(docTexto: string): Completion[] {
+  const encontrados = new Map<string, 'variable' | 'function'>();
+  for (const m of docTexto.matchAll(/\bcrear\s+variable\s+([a-zA-Z_áéíóúüñÁÉÍÓÚÜÑ][a-zA-Z0-9_áéíóúüñÁÉÍÓÚÜÑ]*)/gi)) {
+    encontrados.set(m[1], 'variable');
+  }
+  for (const m of docTexto.matchAll(/\bdefinir\s+([a-zA-Z_áéíóúüñÁÉÍÓÚÜÑ][a-zA-Z0-9_áéíóúüñÁÉÍÓÚÜÑ]*)\s*\(/gi)) {
+    encontrados.set(m[1], 'function');
+  }
+  return Array.from(encontrados.entries()).map(([nombre, tipo]) => ({
+    label: nombre,
+    type: tipo,
+    detail: tipo === 'function' ? 'Tu función' : 'Tu cajita',
+    boost: 12,
+  }));
+}
+
 function eduCompleter(context: CompletionContext) {
-  const word = context.matchBefore(/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+/);
+  const line = context.state.doc.lineAt(context.pos);
+  const beforeCursor = line.text.slice(0, context.pos - line.from);
+
+  // No abrir autocompletado dentro de comentarios ni dentro de comillas de texto
+  if (/^\s*#/.test(beforeCursor)) return null;
+  const quotesCount = (beforeCursor.match(/"/g) ?? []).length;
+  if (quotesCount % 2 === 1) return null;
+
+  // Si el usuario escribió una frase compuesta como "crear var" o "es may", reemplazar la frase entera sin duplicar
+  const multiMatch = /\b([a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+(?:\s+[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+)+)$/.exec(beforeCursor);
+  const firstWord = multiMatch ? multiMatch[1].split(/\s+/)[0].toLowerCase() : '';
+  if (multiMatch && MULTIWORD_PREFIXES.includes(firstWord)) {
+    const phrase = multiMatch[1].toLowerCase();
+    const matchingMulti = COMPLETIONS_EDU.filter((c) => c.label.toLowerCase().startsWith(phrase));
+    if (matchingMulti.length > 0) {
+      return {
+        from: context.pos - multiMatch[1].length,
+        options: matchingMulti,
+        validFor: /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_\s]*$/,
+      };
+    }
+  }
+
+  const word = context.matchBefore(/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_][a-zA-Z0-9_áéíóúüñÁÉÍÓÚÜÑ]*/);
   if (!word || (word.from === word.to && !context.explicit)) return null;
+
+  const simbolosUsuario = extraerSimbolosDelDoc(context.state.doc.toString()).filter(
+    (s) => s.label !== word.text,
+  );
+
   return {
     from: word.from,
-    options: COMPLETIONS_EDU,
-    validFor: /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]*$/,
+    options: [...simbolosUsuario, ...COMPLETIONS_EDU],
+    validFor: /^[a-zA-Z0-9_áéíóúüñÁÉÍÓÚÜÑ]*$/,
   };
 }
 
@@ -255,9 +366,33 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
         history(),
         eduStreamLanguage,
         syntaxHighlighting(eduHighlightStyle),
-        autocompletion({ override: [eduCompleter] }),
+        autocompletion({
+          override: [eduCompleter],
+          defaultKeymap: false,
+          icons: true,
+          maxRenderedOptions: 7,
+        }),
         lineDecorationsField,
-        placeholder('# Escribe tu programa .edu o haz clic en un bloque de la paleta...'),
+        placeholder('# Escribe tu programa o toca Ayudante / Bloques a la izquierda...'),
+        // Autocompletado estilo VS Code: ↓/↑ para elegir, TAB para aceptar (y Enter siempre baja de línea)
+        Prec.highest(
+          keymap.of([
+            { key: 'Ctrl-Space', run: startCompletion },
+            { key: 'Escape', run: closeCompletion },
+            { key: 'ArrowDown', run: moveCompletionSelection(true) },
+            { key: 'ArrowUp', run: moveCompletionSelection(false) },
+            { key: 'PageDown', run: moveCompletionSelection(true, 'page') },
+            { key: 'PageUp', run: moveCompletionSelection(false, 'page') },
+            {
+              key: 'Tab',
+              run: (v) => acceptCompletion(v) || nextSnippetField(v),
+            },
+            {
+              key: 'Shift-Tab',
+              run: prevSnippetField,
+            },
+          ]),
+        ),
         keymap.of([
           {
             key: 'Mod-Enter',

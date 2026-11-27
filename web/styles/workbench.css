@@ -645,6 +645,85 @@ textarea {
   text-underline-offset: 3px;
 }
 
+/* Autocompletado estilo VS Code adaptado a los 90 temas (con indicador Tab) */
+.edu-cm-wrapper .cm-tooltip {
+  border-radius: 10px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+
+.edu-cm-wrapper .cm-tooltip-autocomplete > ul {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 4px;
+  max-height: 230px;
+}
+
+.edu-cm-wrapper .cm-tooltip-autocomplete > ul > li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--ink-primary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.edu-cm-wrapper .cm-tooltip-autocomplete > ul > li:hover {
+  background: var(--bg-surface-hover);
+}
+
+.edu-cm-wrapper .cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.edu-cm-wrapper .cm-completionLabel {
+  color: inherit;
+}
+
+.edu-cm-wrapper .cm-completionMatchedText {
+  text-decoration: underline;
+  font-weight: 800;
+}
+
+.edu-cm-wrapper .cm-completionDetail {
+  margin-left: auto;
+  font-style: normal;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  opacity: 0.85;
+  color: var(--ink-secondary);
+}
+
+.edu-cm-wrapper .cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail {
+  color: var(--accent-ink);
+  opacity: 0.92;
+}
+
+.edu-cm-wrapper .cm-tooltip-autocomplete > ul > li[aria-selected]::after {
+  content: 'Tab ⇥';
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--accent-ink) 18%, transparent);
+  color: var(--accent-ink);
+  flex-shrink: 0;
+}
+
+.edu-cm-wrapper .cm-completionIcon {
+  opacity: 0.9;
+  padding-right: 2px;
+}
+
 .tok-edu-variable { color: var(--cat-variable); font-weight: 600; }
 .tok-edu-io { color: var(--cat-io); font-weight: 600; }
 .tok-edu-control { color: var(--cat-control); font-weight: 600; }
