@@ -1142,12 +1142,9 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               aria-valuemax={100}
               aria-label="Porcentaje de misiones completadas"
             >
-              <motion.div
+              <div
                 className="lp-xp-fill"
-                initial={{ width: '0%' }}
-                whileInView={{ width: `${porcentajeXp}%` }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
+                style={{ width: `${porcentajeXp}%` }}
               />
             </div>
             <span className="mono" style={{ fontWeight: 700, fontSize: '0.86rem' }}>
