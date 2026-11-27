@@ -631,7 +631,7 @@ export function App() {
   );
 
   return (
-    <MotionConfig reducedMotion={movimientoReducido ? 'always' : 'user'}>
+    <MotionConfig reducedMotion={movimientoReducido ? 'always' : 'never'}>
       <AnimatePresence mode="wait" initial={false}>
         {vistaApp === 'inicio' ? (
           <motion.div
@@ -643,6 +643,7 @@ export function App() {
           >
             <LandingHome
               tema={tema}
+              movimientoReducido={movimientoReducido}
               onSeleccionarTema={setTema}
               onAbrirGaleriaTemas={() => setTemasAbiertos(true)}
               misionesCompletadas={misionesCompletadas}
@@ -667,10 +668,10 @@ export function App() {
           <motion.div
             key="vista-ide"
             className="wb-root"
-            initial={{ opacity: 0, scale: 0.99 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
+            initial={{ y: 8 }}
+            animate={{ y: 0 }}
+            exit={{ y: 8 }}
+            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
           >
         <input
           ref={fileInputRef}
