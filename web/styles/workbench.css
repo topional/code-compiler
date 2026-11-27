@@ -602,6 +602,33 @@ textarea {
   font-size: 0.9rem;
 }
 
+.edu-cm-wrapper .cm-content {
+  caret-color: var(--accent);
+}
+
+.edu-cm-wrapper .cm-cursor,
+.edu-cm-wrapper .cm-dropCursor {
+  border-left: 2.5px solid var(--accent) !important;
+  margin-left: -1px;
+}
+
+[data-theme^='high-contrast'] .edu-cm-wrapper .cm-cursor,
+[data-theme^='high-contrast'] .edu-cm-wrapper .cm-dropCursor {
+  border-left-width: 3px !important;
+}
+
+.edu-cm-wrapper .cm-selectionBackground,
+.edu-cm-wrapper .cm-editor.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.edu-cm-wrapper .cm-content ::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent) !important;
+}
+
+.ide-input,
+.cmd-input,
+textarea {
+  caret-color: var(--accent);
+}
+
 .edu-cm-wrapper .cm-scroller {
   overflow: auto;
   line-height: 1.62;

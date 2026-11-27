@@ -412,6 +412,23 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
           ...historyKeymap,
           indentWithTab,
         ]),
+        EditorView.theme({
+          '&': {
+            backgroundColor: 'var(--bg-editor)',
+            color: 'var(--ink-primary)',
+          },
+          '.cm-content': {
+            caretColor: 'var(--accent)',
+          },
+          '.cm-cursor, .cm-dropCursor': {
+            borderLeftColor: 'var(--accent)',
+            borderLeftWidth: '2.5px',
+          },
+          '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection':
+            {
+              backgroundColor: 'color-mix(in srgb, var(--accent) 28%, transparent)',
+            },
+        }),
         EditorView.lineWrapping,
         EditorView.contentAttributes.of({
           'aria-label': ariaLabel,
