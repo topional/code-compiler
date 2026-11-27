@@ -1,11 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { obtenerTema, TEMAS_VALIDOS, type TemaId } from '../data/temas';
+import {
+  crearEstadoMundos,
+  dibujarCosmos,
+  dibujarDunasDither,
+  dibujarEstanqueKoi,
+  dibujarLagunaTortuga,
+  dibujarLluviaNeon,
+  dibujarMontanasVector,
+  registrarToqueMundo,
+} from './livingWorlds';
 
 export type ModoFondoContinuo =
+  | 'koi'
+  | 'laguna'
+  | 'cosmos'
+  | 'vector'
+  | 'dunas'
+  | 'lluvia'
   | 'halftone'
   | 'braille'
-  | 'mosaico'
   | 'tablero'
   | 'plano'
   | 'plotter';
@@ -117,6 +132,8 @@ export const UnifiedBackdrop: React.FC<UnifiedBackdropProps> = ({
     redimensionar();
     window.addEventListener('resize', redimensionar);
 
+    const worldState = crearEstadoMundos(ancho, alto);
+
     const onMove = (e: MouseEvent) => {
       mouse.tx = e.clientX / Math.max(1, ancho);
       mouse.ty = e.clientY / Math.max(1, alto);
@@ -133,6 +150,7 @@ export const UnifiedBackdrop: React.FC<UnifiedBackdropProps> = ({
         seed: (e.clientX * 0.013 + e.clientY * 0.017 + taps.length * 1.618) % 6.283,
       });
       if (taps.length > 8) taps.shift();
+      registrarToqueMundo(modo, worldState, e.clientX, e.clientY, tiempo);
       setTapCount((n) => n + 1);
       if (desactivarAnimacion) {
         renderFrame();
@@ -148,11 +166,6 @@ export const UnifiedBackdrop: React.FC<UnifiedBackdropProps> = ({
       vel: 0.00016 + (i % 5) * 0.000045,
       esSecundario: i % 3 === 0,
     }));
-
-    const koisMosaico = [
-      { cx: 0.82, cy: 0.28, rx: 0.14, ry: 0.12, vel: 0.34, fase: 0, sec: false },
-      { cx: 0.18, cy: 0.74, rx: 0.13, ry: 0.11, vel: -0.29, fase: 2.2, sec: true },
-    ];
 
     const podarTaps = (vidaMax: number) => {
       for (let i = taps.length - 1; i >= 0; i -= 1) {
@@ -333,86 +346,6 @@ export const UnifiedBackdrop: React.FC<UnifiedBackdropProps> = ({
 
         ctx.fillStyle = `rgba(${col}, ${Math.min(0.95, alpha).toFixed(3)})`;
         ctx.fillText(BRAILLE_STEPS[idxChar], c.px, c.py);
-      }
-    };
-
-    // ==================== 3. MOSAICO (KOI PIXEL) + CASCADA DIAMANTE ====================
-    const dibujarMosaico = (t: number) => {
-      podarTaps(2.0);
-      ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
-      ctx.fillRect(0, 0, ancho, alto);
-
-      const tile = ancho < 640 ? 24 : 20;
-      const gap = 3;
-      const cols = Math.ceil(ancho / tile);
-      const rows = Math.ceil(alto / tile);
-
-      const peces = koisMosaico.map((k) => {
-        const a = t * k.vel + k.fase;
-        return {
-          x: ancho * (k.cx + Math.sin(a) * k.rx),
-          y: alto * (k.cy + Math.sin(a * 2) * k.ry * 0.55),
-          tx: ancho * (k.cx + Math.sin(a - 0.18) * k.rx),
-          ty: alto * (k.cy + Math.sin((a - 0.18) * 2) * k.ry * 0.55),
-          sec: k.sec,
-        };
-      });
-
-      const mx = mouse.x * ancho;
-      const my = mouse.y * alto;
-
-      for (let r = 0; r < rows; r += 1) {
-        const cy = r * tile + tile * 0.5;
-        for (let c = 0; c < cols; c += 1) {
-          const cx = c * tile + tile * 0.5;
-
-          let valP = 0;
-          let valS = 0;
-
-          for (const pez of peces) {
-            const dHead = Math.hypot(cx - pez.x, cy - pez.y);
-            const dTail = Math.hypot(cx - pez.tx, cy - pez.ty);
-            if (dHead < 95) {
-              const v = Math.pow(1 - dHead / 95, 1.8) * (esClaro ? 0.3 : 0.36);
-              if (pez.sec) valS = Math.max(valS, v);
-              else valP = Math.max(valP, v);
-            }
-            if (dTail < 75) {
-              const v = Math.pow(1 - dTail / 75, 2) * (esClaro ? 0.18 : 0.22);
-              if (pez.sec) valS = Math.max(valS, v);
-              else valP = Math.max(valP, v);
-            }
-          }
-
-          const dMouse = Math.abs(cx - mx) + Math.abs(cy - my);
-          if (dMouse < 130) {
-            valP = Math.max(valP, (1 - dMouse / 130) * (esClaro ? 0.16 : 0.2));
-          }
-
-          for (const tap of taps) {
-            const p = (t - tap.born) / 2.0;
-            const manhattan = Math.abs(cx - tap.x) + Math.abs(cy - tap.y);
-            const wave = 14 + p * 380;
-            const band = Math.abs(manhattan - wave);
-            if (band < tile * 2.4) {
-              const energy = (1 - band / (tile * 2.4)) * (1 - p);
-              const par = (r + c) % 2 === 0;
-              if (par) valP = Math.max(valP, energy * (esClaro ? 0.58 : 0.72));
-              else valS = Math.max(valS, energy * (esClaro ? 0.54 : 0.68));
-            }
-          }
-
-          if (valP > 0.02 || valS > 0.02) {
-            const usaS = valS > valP;
-            const alpha = Math.min(0.82, Math.max(valP, valS));
-            ctx.fillStyle = usaS
-              ? `rgba(${sR}, ${sG}, ${sB}, ${alpha.toFixed(3)})`
-              : `rgba(${pR}, ${pG}, ${pB}, ${alpha.toFixed(3)})`;
-            ctx.beginPath();
-            ctx.roundRect(c * tile + gap * 0.5, r * tile + gap * 0.5, tile - gap, tile - gap, 4);
-            ctx.fill();
-          }
-        }
       }
     };
 
@@ -743,16 +676,39 @@ export const UnifiedBackdrop: React.FC<UnifiedBackdropProps> = ({
       }
     };
 
+    const pal = { bgR, bgG, bgB, pR, pG, pB, sR, sG, sB, esClaro };
+
     const renderFrame = () => {
       switch (modo) {
+        case 'koi':
+          podarTaps(2.6);
+          dibujarEstanqueKoi(ctx, ancho, alto, tiempo, pal, taps, worldState, mouse, desactivarAnimacion);
+          break;
+        case 'laguna':
+          podarTaps(2.5);
+          dibujarLagunaTortuga(ctx, ancho, alto, tiempo, pal, taps, worldState, desactivarAnimacion);
+          break;
+        case 'cosmos':
+          podarTaps(2.4);
+          dibujarCosmos(ctx, ancho, alto, tiempo, pal, taps, worldState, mouse);
+          break;
+        case 'vector':
+          podarTaps(2.2);
+          dibujarMontanasVector(ctx, ancho, alto, tiempo, pal, taps, mouse);
+          break;
+        case 'dunas':
+          podarTaps(2.2);
+          dibujarDunasDither(ctx, ancho, alto, tiempo, pal, taps, worldState, mouse);
+          break;
+        case 'lluvia':
+          podarTaps(2.5);
+          dibujarLluviaNeon(ctx, ancho, alto, tiempo, pal, taps, worldState, desactivarAnimacion);
+          break;
         case 'halftone':
           dibujarHalftone(tiempo);
           break;
         case 'braille':
           dibujarBraille(tiempo);
-          break;
-        case 'mosaico':
-          dibujarMosaico(tiempo);
           break;
         case 'tablero':
           dibujarTablero(tiempo);

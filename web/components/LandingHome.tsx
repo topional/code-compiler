@@ -205,7 +205,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   onEntrarConRayosX,
   onEntrarConGuia,
 }) => {
-  const [modoFondo, setModoFondo] = useState<ModoFondoContinuo>('halftone');
+  const [modoFondo, setModoFondo] = useState<ModoFondoContinuo>('koi');
   const [tabHero, setTabHero] = useState<TabHeroCard>('runner');
   const [codigoDemo, setCodigoDemo] = useState<string>(CODIGO_HERO_PLAYGROUND);
   const [salidasDemo, setSalidasDemo] = useState<SalidaDemo[]>([]);
@@ -473,35 +473,61 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
 
               {temaMeta.grupo !== 'Accesibilidad' && (
                 <div
-                  className="lp-shader-bar"
-                  role="group"
-                  aria-label="Cambiar fondo interactivo continuo"
-                  title="Toca o haz clic en el fondo para activar su animación exclusiva"
+                  className="lp-backdrop-groups"
+                  title="Toca o haz clic en cualquier zona libre del fondo para interactuar con la escena"
                 >
-                  <span className="lp-shader-label">
-                    <Waves size={13} aria-hidden="true" /> Fondo:
-                  </span>
-                  {(
-                    [
-                      { id: 'halftone', label: 'Halftone', hint: 'Toque: onda risográfica' },
-                      { id: 'braille', label: 'Braille', hint: 'Toque: red de constelación' },
-                      { id: 'mosaico', label: 'Mosaico', hint: 'Toque: cascada de teselas' },
-                      { id: 'tablero', label: 'Tablero', hint: 'Toque: volteo mecánico de símbolos' },
-                      { id: 'plano', label: 'Plano', hint: 'Toque: compás técnico (X, Y)' },
-                      { id: 'plotter', label: 'Plotter', hint: 'Toque: sello topográfico' },
-                    ] as const
-                  ).map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className="lp-shader-chip"
-                      aria-pressed={modoFondo === s.id}
-                      title={s.hint}
-                      onClick={() => setModoFondo(s.id)}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
+                  <div className="lp-shader-bar" role="group" aria-label="Elegir mundo vivo programado a código">
+                    <span className="lp-shader-label">
+                      <Sparkles size={13} aria-hidden="true" /> Mundos:
+                    </span>
+                    {(
+                      [
+                        { id: 'koi', label: 'Estanque Koi', hint: 'Toque: ondas de agua que atraen a los peces Koi' },
+                        { id: 'laguna', label: 'Laguna', hint: 'Toque: cardumen bioluminiscente y burbujas' },
+                        { id: 'cosmos', label: 'Cosmos', hint: 'Toque: lente gravitacional y meteoros curvados' },
+                        { id: 'vector', label: 'Vector 3D', hint: 'Toque: escáner sísmico 3D sobre las montañas' },
+                        { id: 'dunas', label: 'Dunas 1-bit', hint: 'Toque: onda de espejismo en dithering Bayer' },
+                        { id: 'lluvia', label: 'Lluvia Neón', hint: 'Toque: salpicadura y gotas resbalando por el cristal' },
+                      ] as const
+                    ).map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className="lp-shader-chip"
+                        aria-pressed={modoFondo === s.id}
+                        title={s.hint}
+                        onClick={() => setModoFondo(s.id)}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="lp-shader-bar" role="group" aria-label="Elegir textura generativa de estudio">
+                    <span className="lp-shader-label">
+                      <Waves size={13} aria-hidden="true" /> Texturas:
+                    </span>
+                    {(
+                      [
+                        { id: 'halftone', label: 'Halftone', hint: 'Toque: onda risográfica' },
+                        { id: 'braille', label: 'Braille', hint: 'Toque: red de constelación' },
+                        { id: 'tablero', label: 'Tablero', hint: 'Toque: volteo mecánico de símbolos' },
+                        { id: 'plano', label: 'Plano', hint: 'Toque: compás técnico (X, Y)' },
+                        { id: 'plotter', label: 'Plotter', hint: 'Toque: sello topográfico' },
+                      ] as const
+                    ).map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className="lp-shader-chip"
+                        aria-pressed={modoFondo === s.id}
+                        title={s.hint}
+                        onClick={() => setModoFondo(s.id)}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
