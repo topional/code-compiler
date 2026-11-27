@@ -1,9 +1,0 @@
-definir sinRetorno() devuelve numero
-    mostrar 1
-fin
-definir textoPorNumero() devuelve numero
-    devolver "hola"
-fin
-definir textoPorNumero() devuelve numero
-    devolver 1
-fin

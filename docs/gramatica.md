@@ -151,24 +151,6 @@ explica en [semantica.md](semantica.md). Las restricciones sobre valores que
 dependen de entradas o aleatorios se comprueban en el intérprete.
 `juego` y `calculadora` son marcadores informativos durante la ejecución.
 
-## Cambios frente al hito 1
-
-Comparación entre la entrega del hito 1 (commit `9ec58f5`, 6 de octubre de 2026)
-y el hito 2 (commit `b04abef`, 9 de noviembre de 2026):
-
-| Construcción | Hito 1 | Hito 2 | Motivo |
-| --- | --- | --- | --- |
-| Entrada | `preguntar cad y guardar en id` | `preguntar cad guardar en id` | La `y` se confundía con la conjunción lógica y con la `y` del rango aleatorio. |
-| Definición de función | `definir id con parametros devuelve tipo` | `definir id ( parametrosOpt ) devuelve tipo` | Los paréntesis hacen que la definición coincida con la llamada y permiten funciones sin parámetros con `()`. |
-| Token `CON` | Lo usaba `parametrosOpt` | Sigue en el lexer como palabra reservada, sin uso en el parser | Se conserva para no cambiar el vocabulario. Puede eliminarse en una versión posterior. |
-| Comentario del rango aleatorio | Pendiente validar tipos y orden | La semántica comprueba tipos y, si se conocen los valores, enteros y orden | El análisis semántico ya cubre esa validación. |
-
-El resto de las producciones no cambió. También se añadieron comentarios por
-sección en `EducativoLexer.g4` y `EducativoParser.g4`. Las entradas
-`tests/gramatica/invalidos/entrada_con_y.edu` y
-`tests/gramatica/invalidos/funcion_sin_parentesis.edu` comprueban que la
-sintaxis anterior ya no se acepta.
-
 ## Ejemplos y validación
 
 [derivaciones.md](derivaciones.md) contiene cuatro ejemplos desarrollados por

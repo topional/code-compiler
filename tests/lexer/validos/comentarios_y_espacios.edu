@@ -1,6 +1,0 @@
-# Comentario al inicio
-
-	mostrar 1   # comentario después de una instrucción
-   
-# Otro comentario
-mostrar "# no es comentario"

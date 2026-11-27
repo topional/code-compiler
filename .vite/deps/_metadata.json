@@ -1,0 +1,112 @@
+{
+  "hash": "a0bcecbb",
+  "configHash": "859131b1",
+  "lockfileHash": "26b73aa1",
+  "browserHash": "14230d74",
+  "optimized": {
+    "@codemirror/autocomplete": {
+      "src": "../../node_modules/@codemirror/autocomplete/dist/index.js",
+      "file": "@codemirror_autocomplete.js",
+      "fileHash": "cfd8fe2e",
+      "needsInterop": false
+    },
+    "@codemirror/commands": {
+      "src": "../../node_modules/@codemirror/commands/dist/index.js",
+      "file": "@codemirror_commands.js",
+      "fileHash": "425255ee",
+      "needsInterop": false
+    },
+    "@codemirror/language": {
+      "src": "../../node_modules/@codemirror/language/dist/index.js",
+      "file": "@codemirror_language.js",
+      "fileHash": "efc0ead7",
+      "needsInterop": false
+    },
+    "@codemirror/state": {
+      "src": "../../node_modules/@codemirror/state/dist/index.js",
+      "file": "@codemirror_state.js",
+      "fileHash": "bdb6f695",
+      "needsInterop": false
+    },
+    "@codemirror/view": {
+      "src": "../../node_modules/@codemirror/view/dist/index.js",
+      "file": "@codemirror_view.js",
+      "fileHash": "2dc30fc0",
+      "needsInterop": false
+    },
+    "@lezer/highlight": {
+      "src": "../../node_modules/@lezer/highlight/dist/index.js",
+      "file": "@lezer_highlight.js",
+      "fileHash": "f7f156d4",
+      "needsInterop": false
+    },
+    "canvas-confetti": {
+      "src": "../../node_modules/canvas-confetti/dist/confetti.module.mjs",
+      "file": "canvas-confetti.js",
+      "fileHash": "9de3396d",
+      "needsInterop": false
+    },
+    "fuse.js": {
+      "src": "../../node_modules/fuse.js/dist/fuse.mjs",
+      "file": "fuse__js.js",
+      "fileHash": "0b8b134f",
+      "needsInterop": false
+    },
+    "lenis": {
+      "src": "../../node_modules/lenis/dist/lenis.mjs",
+      "file": "lenis.js",
+      "fileHash": "7f426437",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "8298617f",
+      "needsInterop": false
+    },
+    "motion/react": {
+      "src": "../../node_modules/motion/dist/es/react.mjs",
+      "file": "motion_react.js",
+      "fileHash": "105701ef",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "04456bcb",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "3e2c59f1",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "6ef2cb34",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-TLWDJGXO": {
+      "file": "chunk-TLWDJGXO.js"
+    },
+    "chunk-TDFQXVKV": {
+      "file": "chunk-TDFQXVKV.js"
+    },
+    "chunk-R6EZDKFL": {
+      "file": "chunk-R6EZDKFL.js"
+    },
+    "chunk-X7BJDPYS": {
+      "file": "chunk-X7BJDPYS.js"
+    },
+    "chunk-5P56E4J6": {
+      "file": "chunk-5P56E4J6.js"
+    },
+    "chunk-DC5AMYBS": {
+      "file": "chunk-DC5AMYBS.js"
+    }
+  }
+}

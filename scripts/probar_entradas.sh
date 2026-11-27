@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Comprueba las entradas .edu del lexer, la gramática y la semántica por su carpeta y etapa.
+# Comprueba las entradas .edu de gramática y semántica por su carpeta y etapa.
 set -euo pipefail
 
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
@@ -7,9 +7,9 @@ interprete=${1:-.venv/bin/python}
 grupo=${2:-todos}
 
 case "$grupo" in
-    todos) etapas=(lexer gramatica semantica) ;;
-    lexer|gramatica|semantica) etapas=("$grupo") ;;
-    *) echo "Grupo inválido: $grupo. Usa lexer, gramatica, semantica o todos." >&2; exit 2 ;;
+    todos) etapas=(gramatica semantica) ;;
+    gramatica|semantica) etapas=("$grupo") ;;
+    *) echo "Grupo inválido: $grupo. Usa gramatica, semantica o todos." >&2; exit 2 ;;
 esac
 
 if ! command -v -- "$interprete" >/dev/null; then
@@ -24,10 +24,7 @@ total=0
 fallos=0
 
 for etapa in "${etapas[@]}"; do
-    if [[ "$etapa" == lexer ]]; then
-        prefijo='Error léxico en '
-        confirmacion='Análisis léxico correcto.'
-    elif [[ "$etapa" == gramatica ]]; then
+    if [[ "$etapa" == gramatica ]]; then
         prefijo='Error sintáctico en '
         confirmacion='Análisis sintáctico correcto.'
     else

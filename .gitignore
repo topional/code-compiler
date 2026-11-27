@@ -2,22 +2,10 @@
 .venv/
 __pycache__/
 *.pyc
-*.pyo
-*.db
-*.sqlite3
 
 # Codigo generado a partir de las gramaticas
 src/generated/
 
-# Dependencias y artefactos de compilacion web
+# Dependencias y build de la pagina web (GitHub Pages)
 node_modules/
 dist/
-.vite/
-*.tsbuildinfo
-
-# Archivos temporales y empaquetados locales
-*.zip
-*.cmd
-*.bat
-.DS_Store
-Thumbs.db

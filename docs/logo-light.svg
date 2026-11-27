@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="420" height="96" viewBox="0 0 420 96" fill="none">
-  <rect x="8" y="16" width="64" height="64" rx="18" fill="#FF6B2C" stroke="#142038" stroke-width="3.5"/>
-  <path d="M22 33C22 30.8 23.8 29 26 29H33L37 33H54C56.2 33 58 34.8 58 37V59C58 61.2 56.2 63 54 63H26C23.8 63 22 61.2 22 59V33Z" fill="#FFF9F0" stroke="#142038" stroke-width="2.5"/>
-  <path d="M44 35L32.5 49.5H40.5L38 60L50 45.5H42L44 35Z" fill="#C9410A"/>
-  <text x="90" y="56" font-family="'Fredoka', system-ui, -apple-system, sans-serif" font-size="40" font-weight="700" fill="#142038">Chispa</text>
-  <rect x="234" y="26" width="68" height="36" rx="10" fill="#142038"/>
-  <text x="268" y="50" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="20" font-weight="700" fill="#FFF9F0">.edu</text>
-  <text x="90" y="78" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#3F4F6B">De Scratch al código real en español</text>
-</svg>

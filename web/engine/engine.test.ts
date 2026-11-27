@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import { EJEMPLOS_EDU } from '../data/ejemplos';
 import { compilarEdu } from './compilador';
 import { ejecutarIntermedio } from './interprete';
 
@@ -13,6 +14,12 @@ function listarEdu(relDir: string): string[] {
     .filter((f) => f.endsWith('.edu'))
     .sort()
     .map((f) => join(dir, f));
+}
+
+function codigoEjemplo(id: string): string {
+  const ej = EJEMPLOS_EDU.find((e) => e.id === id);
+  if (!ej) throw new Error(`Ejemplo '${id}' no encontrado`);
+  return ej.codigo;
 }
 
 async function correrPrograma(codigo: string, entradas: string[] = []): Promise<{
@@ -103,10 +110,9 @@ describe('Paridad 100 % con la batería de pruebas .edu del repositorio', () => 
   });
 });
 
-describe('Ejecución exacta de los programas oficiales de examples/', () => {
-  it('ejecuta examples/basico.edu', async () => {
-    const codigo = readFileSync(join(RAIZ, 'examples/basico.edu'), 'utf-8');
-    const res = await correrPrograma(codigo);
+describe('Ejecución exacta de programas .edu (examples/ y catálogo)', () => {
+  it('ejecuta basico.edu', async () => {
+    const res = await correrPrograma(codigoEjemplo('basico'));
     expect(res.errores).toEqual([]);
     expect(res.salidas).toEqual([
       'Hola',
@@ -120,9 +126,8 @@ describe('Ejecución exacta de los programas oficiales de examples/', () => {
     ]);
   });
 
-  it('ejecuta examples/avanzado.edu (recursión, lógica y ciclos anidados)', async () => {
-    const codigo = readFileSync(join(RAIZ, 'examples/avanzado.edu'), 'utf-8');
-    const res = await correrPrograma(codigo);
+  it('ejecuta avanzado.edu (recursión, lógica y ciclos anidados)', async () => {
+    const res = await correrPrograma(codigoEjemplo('avanzado'));
     expect(res.errores).toEqual([]);
     expect(res.salidas).toEqual([
       'n, factorial, fibonacci y paridad',
@@ -145,10 +150,9 @@ describe('Ejecución exacta de los programas oficiales de examples/', () => {
     expect(res.salidas.at(-1)).toBe('13');
   });
 
-  it('ejecuta examples/principal.edu (Adivina el número)', async () => {
-    const codigo = readFileSync(join(RAIZ, 'examples/principal.edu'), 'utf-8');
+  it('ejecuta principal.edu (Adivina el número)', async () => {
     const intentos = Array.from({ length: 10 }, (_, i) => String(i + 1));
-    const res = await correrPrograma(codigo, intentos);
+    const res = await correrPrograma(codigoEjemplo('principal'), intentos);
     expect(res.errores).toEqual([]);
     expect(res.salidas[0]).toBe('Adivina el número del 1 al 10');
     expect(res.salidas.at(-2)).toBe('¡Adivinaste! Intentos usados:');
@@ -164,9 +168,8 @@ describe('Ejecución exacta de los programas oficiales de examples/', () => {
     expect(['Empate', 'Ganaste', 'Perdiste']).toContain(res.salidas.at(-1));
   });
 
-  it('detecta los 7 errores semánticos exactos de examples/con_errores.edu', () => {
-    const codigo = readFileSync(join(RAIZ, 'examples/con_errores.edu'), 'utf-8');
-    const res = compilarEdu(codigo, 'intermedio');
+  it('detecta los 7 errores semánticos exactos de con_errores.edu', () => {
+    const res = compilarEdu(codigoEjemplo('con_errores'), 'intermedio');
     expect(res.intermedio).toBeNull();
     expect(res.diagnosticos.length).toBe(7);
     expect(res.diagnosticos.every((d) => d.etapa === 'semantica')).toBe(true);
