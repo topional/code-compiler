@@ -17,7 +17,6 @@ import {
   Terminal,
   Trophy,
   Waves,
-  Zap,
 } from 'lucide-react';
 
 import { EJEMPLOS_EDU, type EjemploEdu } from '../data/ejemplos';
@@ -26,8 +25,9 @@ import { obtenerTema, type TemaId } from '../data/temas';
 import { compilarEdu } from '../engine/compilador';
 import { ejecutarIntermedio } from '../engine/interprete';
 import type { VariableMemoria } from '../engine/types';
-import { ChispaMascota } from './ChispaLogo';
+import { ChispaBrandMark, ChispaMascota } from './ChispaLogo';
 import { InteractiveShaderBg, type ModoShader } from './InteractiveShaderBg';
+import { OverlayScrollbar } from './OverlayScrollbar';
 import {
   AnimatedNumber,
   KineticLetterStage,
@@ -318,13 +318,12 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
 
   return (
     <div className="lp-root">
+      <OverlayScrollbar />
       {/* BARRA DE NAVEGACIÓN PRINCIPAL */}
       <header className="lp-nav">
         <div className="lp-nav-inner">
           <a href="#inicio-top" className="lp-brand" aria-label="Chispa, página principal">
-            <span className="lp-brand-mark" aria-hidden="true">
-              <Zap size={16} />
-            </span>
+            <ChispaBrandMark size={34} />
             <span className="lp-brand-title">Chispa</span>
           </a>
 

@@ -25,6 +25,11 @@ body,
 
 html {
   scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 body.is-workbench {
@@ -37,14 +42,25 @@ body:has(dialog[open]) {
   overflow: hidden;
 }
 
-/* Scrollbar moderno, limpio y coherente con los 10 temas */
+/* Selección de texto adaptada al color de cada uno de los 10 temas */
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+input,
+textarea {
+  caret-color: var(--accent);
+}
+
+/* Scrollbars internos discretos sin franja opaca */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
@@ -52,13 +68,54 @@ body:has(dialog[open]) {
 *::-webkit-scrollbar-thumb {
   background: var(--scroll-thumb);
   border-radius: 999px;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
   background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   background-clip: padding-box;
+}
+
+/* Overlay Scrollbar flotante (pasa por encima sin cortar ni afectar el layout) */
+.overlay-scroll-rail {
+  position: fixed;
+  top: 8px;
+  right: 3px;
+  bottom: 8px;
+  width: 12px;
+  z-index: 60;
+  opacity: 0.32;
+  transition: opacity 0.2s ease, width 0.16s ease;
+  cursor: pointer;
+}
+
+.overlay-scroll-rail.is-visible,
+.overlay-scroll-rail:hover,
+.overlay-scroll-rail.is-dragging {
+  opacity: 1;
+}
+
+.overlay-scroll-thumb {
+  width: 6px;
+  margin-left: auto;
+  margin-right: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-soft);
+  transition: width 0.14s ease, filter 0.14s ease;
+}
+
+.overlay-scroll-rail:hover .overlay-scroll-thumb,
+.overlay-scroll-rail.is-dragging .overlay-scroll-thumb {
+  width: 8px;
+  filter: brightness(1.08);
+}
+
+@media (max-width: 720px) {
+  .overlay-scroll-rail {
+    display: none;
+  }
 }
 
 :focus-visible {

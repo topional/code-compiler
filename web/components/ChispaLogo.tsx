@@ -1,4 +1,50 @@
 /**
+ * Emblema original de Chispa: corchetes de código `< >` abrazando una chispa de 4 puntas.
+ * Se adapta automáticamente a los 10 temas visuales.
+ */
+export function ChispaBrandMark({ size = 34 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      fill="none"
+      aria-hidden="true"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      <rect
+        x="3"
+        y="3"
+        width="58"
+        height="58"
+        rx="14"
+        fill="var(--bg-editor)"
+        stroke="var(--accent)"
+        strokeWidth="3.5"
+      />
+      <path
+        d="M21 22L12 32L21 42"
+        stroke="var(--ink-primary)"
+        strokeWidth="4.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M43 22L52 32L43 42"
+        stroke="var(--ink-primary)"
+        strokeWidth="4.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M32 16L35.6 28.4L46 32L35.6 35.6L32 48L28.4 35.6L18 32L28.4 28.4Z"
+        fill="var(--accent)"
+      />
+    </svg>
+  );
+}
+
+/**
  * Logotipo SVG y mascota adaptativa de Chispa .edu · Code Compiler.
  * Usa variables CSS (--logo-*) para adaptarse a los 10 temas visuales.
  */
