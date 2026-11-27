@@ -273,3 +273,144 @@ export const ContainerOverlayScrollbar: React.FC<{
     </div>
   );
 };
+
+/**
+ * Scrollbar horizontal flotante con el color del tema activo (por ejemplo para la barra de pestañas).
+ */
+export const HorizontalOverlayScrollbar: React.FC<{
+  targetRef: React.RefObject<HTMLElement | null>;
+}> = ({ targetRef }) => {
+  const [visible, setVisible] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [metrics, setMetrics] = useState({ thumbWidth: 0, thumbLeft: 0, hasScroll: false });
+
+  const hideTimerRef = useRef<number | null>(null);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollRef = useRef(0);
+
+  const recalcular = useCallback(() => {
+    const el = targetRef.current;
+    if (!el) return;
+    const scrollWidth = el.scrollWidth;
+    const clientWidth = el.clientWidth;
+    const maxScroll = scrollWidth - clientWidth;
+
+    if (maxScroll <= 3 || clientWidth <= 20) {
+      setMetrics((prev) =>
+        !prev.hasScroll ? prev : { thumbWidth: 0, thumbLeft: 0, hasScroll: false },
+      );
+      return;
+    }
+
+    const trackWidth = Math.max(24, clientWidth - 8);
+    const ratio = clientWidth / scrollWidth;
+    const thumbWidth = Math.max(28, Math.round(trackWidth * ratio));
+    const maxLeft = Math.max(1, trackWidth - thumbWidth);
+    const thumbLeft = Math.round((el.scrollLeft / maxScroll) * maxLeft);
+
+    setMetrics((prev) =>
+      prev.hasScroll && prev.thumbWidth === thumbWidth && prev.thumbLeft === thumbLeft
+        ? prev
+        : { thumbWidth, thumbLeft, hasScroll: true },
+    );
+  }, [targetRef]);
+
+  const mostrarTemporal = useCallback(() => {
+    setVisible(true);
+    if (hideTimerRef.current !== null) window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(() => setVisible(false), 1100);
+  }, []);
+
+  useEffect(() => {
+    const el = targetRef.current;
+    if (!el) return;
+
+    recalcular();
+    const rafInit = window.requestAnimationFrame(recalcular);
+
+    const onScroll = () => {
+      recalcular();
+      mostrarTemporal();
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+
+    const ro = new ResizeObserver(() => recalcular());
+    ro.observe(el);
+
+    const mo = new MutationObserver(() => recalcular());
+    mo.observe(el, { childList: true, subtree: true, characterData: true });
+
+    return () => {
+      window.cancelAnimationFrame(rafInit);
+      el.removeEventListener('scroll', onScroll);
+      ro.disconnect();
+      mo.disconnect();
+      if (hideTimerRef.current !== null) window.clearTimeout(hideTimerRef.current);
+    };
+  }, [mostrarTemporal, recalcular, targetRef]);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: PointerEvent) => {
+      const el = targetRef.current;
+      if (!el) return;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      const trackWidth = Math.max(24, el.clientWidth - 8);
+      const maxLeft = Math.max(1, trackWidth - metrics.thumbWidth);
+      const deltaX = e.clientX - dragStartXRef.current;
+      el.scrollLeft = Math.max(0, Math.min(maxScroll, dragStartScrollRef.current + (deltaX / maxLeft) * maxScroll));
+    };
+    const onUp = () => setDragging(false);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+  }, [dragging, metrics.thumbWidth, targetRef]);
+
+  if (!metrics.hasScroll) return null;
+
+  const onTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).dataset.thumb === 'true') return;
+    const el = targetRef.current;
+    if (!el) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width)));
+    el.scrollTo({ left: ratio * (el.scrollWidth - el.clientWidth), behavior: 'smooth' });
+  };
+
+  const onThumbPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const el = targetRef.current;
+    if (!el) return;
+    dragStartXRef.current = e.clientX;
+    dragStartScrollRef.current = el.scrollLeft;
+    setDragging(true);
+  };
+
+  const activo = visible || hovered || dragging;
+
+  return (
+    <div
+      className={`overlay-scroll-rail is-local is-horizontal ${activo ? 'is-visible' : ''} ${dragging ? 'is-dragging' : ''}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onPointerDown={onTrackPointerDown}
+      aria-hidden="true"
+    >
+      <div
+        data-thumb="true"
+        className="overlay-scroll-thumb"
+        style={{
+          width: `${metrics.thumbWidth}px`,
+          transform: `translateX(${metrics.thumbLeft}px)`,
+        }}
+        onPointerDown={onThumbPointerDown}
+      />
+    </div>
+  );
+};

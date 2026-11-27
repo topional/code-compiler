@@ -13,15 +13,36 @@ export interface DivisorProps {
   valor: number;
   /** Desplazamiento del puntero en píxeles desde el último movimiento. */
   onArrastrar: (delta: number) => void;
+  /** Se llama al terminar de arrastrar o ajustar con teclado para guardar el tamaño. */
+  onSoltar?: () => void;
   onReiniciar: () => void;
 }
 
-export const Divisor: React.FC<DivisorProps> = ({ orientacion, etiqueta, valor, onArrastrar, onReiniciar }) => {
+export const Divisor: React.FC<DivisorProps> = ({
+  orientacion,
+  etiqueta,
+  valor,
+  onArrastrar,
+  onSoltar,
+  onReiniciar,
+}) => {
   const ultimo = useRef<number | null>(null);
   const pendiente = useRef(0);
   const cuadro = useRef(0);
   const eje = (e: React.PointerEvent) => (orientacion === 'vertical' ? e.clientX : e.clientY);
-  // El ratón puede mover el divisor muchas veces por cuadro: se aplica una sola vez por cuadro.
+  const claseEje = orientacion === 'vertical' ? 'arrastrando-divisor-v' : 'arrastrando-divisor-h';
+
+  const aplicarPendiente = () => {
+    if (cuadro.current) {
+      window.cancelAnimationFrame(cuadro.current);
+      cuadro.current = 0;
+    }
+    const d = pendiente.current;
+    pendiente.current = 0;
+    if (d) onArrastrar(d);
+  };
+
+  // Agrupa los eventos del ratón en un único cuadro de animación para fluidez 1:1 sin saltos.
   const acumular = (delta: number) => {
     pendiente.current += delta;
     if (cuadro.current) return;
@@ -31,6 +52,14 @@ export const Divisor: React.FC<DivisorProps> = ({ orientacion, etiqueta, valor, 
       pendiente.current = 0;
       if (d) onArrastrar(d);
     });
+  };
+
+  const terminarArrastre = () => {
+    if (ultimo.current === null) return;
+    ultimo.current = null;
+    aplicarPendiente();
+    document.body.classList.remove('arrastrando-divisor', 'arrastrando-divisor-v', 'arrastrando-divisor-h');
+    onSoltar?.();
   };
 
   return (
@@ -47,7 +76,7 @@ export const Divisor: React.FC<DivisorProps> = ({ orientacion, etiqueta, valor, 
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         ultimo.current = eje(e);
-        document.body.classList.add('arrastrando-divisor');
+        document.body.classList.add('arrastrando-divisor', claseEje);
       }}
       onPointerMove={(e) => {
         if (ultimo.current === null) return;
@@ -55,14 +84,8 @@ export const Divisor: React.FC<DivisorProps> = ({ orientacion, etiqueta, valor, 
         acumular(actual - ultimo.current);
         ultimo.current = actual;
       }}
-      onPointerUp={() => {
-        ultimo.current = null;
-        document.body.classList.remove('arrastrando-divisor');
-      }}
-      onPointerCancel={() => {
-        ultimo.current = null;
-        document.body.classList.remove('arrastrando-divisor');
-      }}
+      onPointerUp={terminarArrastre}
+      onPointerCancel={terminarArrastre}
       onDoubleClick={onReiniciar}
       onKeyDown={(e) => {
         const menos = orientacion === 'vertical' ? 'ArrowLeft' : 'ArrowUp';
@@ -70,6 +93,7 @@ export const Divisor: React.FC<DivisorProps> = ({ orientacion, etiqueta, valor, 
         if (e.key === menos || e.key === mas) {
           e.preventDefault();
           onArrastrar((e.key === mas ? 1 : -1) * (e.shiftKey ? 60 : 20));
+          onSoltar?.();
         } else if (e.key === 'Home' || e.key === 'Enter') {
           e.preventDefault();
           onReiniciar();

@@ -42,7 +42,7 @@ import { Divisor } from './components/Divisor';
 import { EduEditor, type EduEditorHandle } from './components/EduEditor';
 import { GameStage2D, textoOtraVez, type EscenaJuego2D } from './components/GameStage2D';
 import { LandingHome } from './components/LandingHome';
-import { ContainerOverlayScrollbar } from './components/OverlayScrollbar';
+import { ContainerOverlayScrollbar, HorizontalOverlayScrollbar } from './components/OverlayScrollbar';
 import {
   RightDrawer,
   type InstantaneaCodigo,
@@ -115,6 +115,13 @@ function leerPaneles(): typeof PANELES_INICIALES {
   return PANELES_INICIALES;
 }
 
+function siguienteNombreJuego(lista: PestanaCodigo[]): string {
+  const usados = new Set(lista.map((p) => p.nombre.replace(/\.edu$/i, '').toLowerCase()));
+  let n = 1;
+  while (usados.has(`mi_juego_${n}`)) n += 1;
+  return `mi_juego_${n}`;
+}
+
 function leerPestanasIniciales(): PestanaCodigo[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.pestanas);
@@ -179,16 +186,38 @@ export function App() {
   const [panelDerecho, setPanelDerecho] = useState<PanelDerechoTipo>(null);
   const [layoutVertical, setLayoutVertical] = useState(false);
   const [paneles, setPaneles] = useState(leerPaneles);
+  const panelesLiveRef = useRef(paneles);
+  panelesLiveRef.current = paneles;
   const centroRef = useRef<HTMLDivElement | null>(null);
   const salidaRef = useRef<HTMLElement | null>(null);
   const tabStripRef = useRef<HTMLDivElement | null>(null);
+
+  // Aplica tamaños directo a variables CSS del DOM durante el arrastre (cero re-renders y cero bloqueo de localStorage)
+  const aplicarPanelesEnDom = useCallback((p: typeof PANELES_INICIALES) => {
+    const centro = centroRef.current;
+    if (centro) {
+      centro.style.setProperty('--flex-editor', String(p.editor));
+      centro.style.setProperty('--flex-salida', String(1 - p.editor));
+    }
+    const salida = salidaRef.current;
+    if (salida) {
+      salida.style.setProperty('--alto-juego', `${Math.round(p.juego)}px`);
+      salida.style.setProperty('--ancho-juego', `${p.juegoAncho * 100}%`);
+    }
+  }, []);
+
+  const confirmarPaneles = useCallback(() => {
+    setPaneles({ ...panelesLiveRef.current });
+  }, []);
+
   useEffect(() => {
+    aplicarPanelesEnDom(paneles);
     try {
       localStorage.setItem(STORAGE_KEYS.paneles, JSON.stringify(paneles));
     } catch {
       // el tamaño solo se recuerda si el navegador lo permite
     }
-  }, [paneles]);
+  }, [aplicarPanelesEnDom, paneles]);
   const [vistaMovil, setVistaMovil] = useState<VistaMovil>('editor');
 
   // Modales nativos
@@ -565,7 +594,7 @@ mostrar heroe`,
     detenerEjecucion();
     setSalidas([]);
     setVariables([]);
-    const nombreLimpio = (nombre ?? `mi_juego_${pestanas.length + 1}`).replace(/\.edu$/i, '');
+    const nombreLimpio = (nombre ?? siguienteNombreJuego(pestanas)).replace(/\.edu$/i, '');
     if (nombre) {
       const existente = pestanas.find((p) => p.nombre.replace(/\.edu$/i, '') === nombreLimpio);
       if (existente) {
@@ -574,12 +603,12 @@ mostrar heroe`,
         return;
       }
     }
-    const id = `tab-${Date.now()}`;
+    const id = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setPestanas((prev) => [
       ...prev,
       {
         id,
-        nombre: nombreLimpio,
+        nombre: nombre ? nombreLimpio : siguienteNombreJuego(prev),
         codigo: codigo ?? '# ¡Crea tu juego aquí!\nmostrar "¡Hola desde Chispa!"\n',
       },
     ]);
@@ -831,11 +860,16 @@ mostrar heroe`,
             className={`wb-center ${layoutVertical ? 'layout-vertical' : ''} ${
               vistaMovil === 'editor' || vistaMovil === 'salida' ? '' : 'mobile-hidden'
             }`}
+            style={
+              {
+                '--flex-editor': String(paneles.editor),
+                '--flex-salida': String(1 - paneles.editor),
+              } as React.CSSProperties
+            }
           >
             {/* PANEL EDITOR */}
             <section
               className={`wb-pane wb-editor-pane ${vistaMovil === 'editor' ? '' : 'mobile-hidden'}`}
-              style={{ flex: `${paneles.editor} 1 0%` }}
               aria-label="Editor de código de Chispa"
             >
               <div className="wb-pane-header editor-tabs-bar">
@@ -851,52 +885,60 @@ mostrar heroe`,
                 >
                   <Home size={14} aria-hidden="true" />
                 </button>
-                <div
-                  ref={tabStripRef}
-                  className="tab-strip"
-                  role="region"
-                  aria-label="Pestañas de archivos"
-                >
-                  {pestanas.map((tab) => (
-                    <div
-                      key={tab.id}
-                      className={`file-tab-item ${tab.id === pestanaActual.id ? 'is-active' : ''}`}
-                    >
-                      <button
-                        type="button"
-                        className="file-tab"
-                        aria-current={tab.id === pestanaActual.id ? 'true' : undefined}
-                        onClick={() => {
-                          detenerEjecucion();
-                          setSalidas([]);
-                          setVariables([]);
-                          setPestanaActivaId(tab.id);
-                        }}
+                <div className="overlay-scroll-host tab-strip-host">
+                  <div
+                    ref={tabStripRef}
+                    className="tab-strip"
+                    role="region"
+                    aria-label="Pestañas de archivos"
+                    onWheel={(e) => {
+                      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                        e.currentTarget.scrollLeft += e.deltaY;
+                      }
+                    }}
+                  >
+                    {pestanas.map((tab) => (
+                      <div
+                        key={tab.id}
+                        className={`file-tab-item ${tab.id === pestanaActual.id ? 'is-active' : ''}`}
                       >
-                        <span className="file-tab-ext">2D</span>
-                        <span>{tab.nombre.replace(/\.edu$/i, '')}</span>
-                      </button>
-                      {pestanas.length > 1 && (
                         <button
                           type="button"
-                          className="file-tab-close"
-                          aria-label={`Cerrar ${tab.nombre}`}
-                          onClick={() => cerrarPestana(tab.id)}
+                          className="file-tab"
+                          aria-current={tab.id === pestanaActual.id ? 'true' : undefined}
+                          onClick={() => {
+                            detenerEjecucion();
+                            setSalidas([]);
+                            setVariables([]);
+                            setPestanaActivaId(tab.id);
+                          }}
                         >
-                          <X size={12} aria-hidden="true" />
+                          <span className="file-tab-ext">2D</span>
+                          <span>{tab.nombre.replace(/\.edu$/i, '')}</span>
                         </button>
-                      )}
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className="ide-icon-btn"
-                    onClick={() => abrirNuevaPestana()}
-                    aria-label="Nuevo juego o programa"
-                    title="Nuevo programa"
-                  >
-                    <Plus size={15} aria-hidden="true" />
-                  </button>
+                        {pestanas.length > 1 && (
+                          <button
+                            type="button"
+                            className="file-tab-close"
+                            aria-label={`Cerrar ${tab.nombre}`}
+                            onClick={() => cerrarPestana(tab.id)}
+                          >
+                            <X size={12} aria-hidden="true" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="ide-icon-btn"
+                      onClick={() => abrirNuevaPestana()}
+                      aria-label="Nuevo juego o programa"
+                      title="Nuevo programa"
+                    >
+                      <Plus size={15} aria-hidden="true" />
+                    </button>
+                  </div>
+                  <HorizontalOverlayScrollbar targetRef={tabStripRef} />
                 </div>
               </div>
 
@@ -1090,8 +1132,14 @@ mostrar heroe`,
               onArrastrar={(delta) => {
                 const r = centroRef.current?.getBoundingClientRect();
                 const total = r ? (layoutVertical ? r.height : r.width) : 1000;
-                setPaneles((p) => ({ ...p, editor: Math.min(0.72, Math.max(0.3, p.editor + delta / total)) }));
+                const next = {
+                  ...panelesLiveRef.current,
+                  editor: Math.min(0.72, Math.max(0.3, panelesLiveRef.current.editor + delta / total)),
+                };
+                panelesLiveRef.current = next;
+                aplicarPanelesEnDom(next);
               }}
+              onSoltar={confirmarPaneles}
               onReiniciar={() => setPaneles((p) => ({ ...p, editor: PANELES_INICIALES.editor }))}
             />
 
@@ -1101,7 +1149,6 @@ mostrar heroe`,
               className={`wb-pane wb-output-pane ${layoutVertical ? 'salida-lado-a-lado' : ''} ${vistaMovil === 'salida' ? '' : 'mobile-hidden'}`}
               style={
                 {
-                  flex: `${1 - paneles.editor} 1 0%`,
                   '--alto-juego': `${paneles.juego}px`,
                   '--ancho-juego': `${paneles.juegoAncho * 100}%`,
                 } as React.CSSProperties
@@ -1133,8 +1180,14 @@ mostrar heroe`,
                   valor={paneles.juegoAncho * 100}
                   onArrastrar={(delta) => {
                     const ancho = salidaRef.current?.getBoundingClientRect().width ?? 1000;
-                    setPaneles((p) => ({ ...p, juegoAncho: Math.min(0.75, Math.max(0.3, p.juegoAncho + delta / ancho)) }));
+                    const next = {
+                      ...panelesLiveRef.current,
+                      juegoAncho: Math.min(0.75, Math.max(0.3, panelesLiveRef.current.juegoAncho + delta / ancho)),
+                    };
+                    panelesLiveRef.current = next;
+                    aplicarPanelesEnDom(next);
                   }}
+                  onSoltar={confirmarPaneles}
                   onReiniciar={() => setPaneles((p) => ({ ...p, juegoAncho: PANELES_INICIALES.juegoAncho }))}
                 />
               ) : (
@@ -1142,7 +1195,15 @@ mostrar heroe`,
                   orientacion="horizontal"
                   etiqueta="Tamaño del juego y de la terminal"
                   valor={((paneles.juego - 160) / 480) * 100}
-                  onArrastrar={(delta) => setPaneles((p) => ({ ...p, juego: Math.min(640, Math.max(160, p.juego + delta)) }))}
+                  onArrastrar={(delta) => {
+                    const next = {
+                      ...panelesLiveRef.current,
+                      juego: Math.min(640, Math.max(160, panelesLiveRef.current.juego + delta)),
+                    };
+                    panelesLiveRef.current = next;
+                    aplicarPanelesEnDom(next);
+                  }}
+                  onSoltar={confirmarPaneles}
                   onReiniciar={() => setPaneles((p) => ({ ...p, juego: PANELES_INICIALES.juego }))}
                 />
               )}

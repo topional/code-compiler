@@ -128,6 +128,31 @@ textarea {
   width: 7px;
 }
 
+.overlay-scroll-rail.is-horizontal {
+  top: auto;
+  left: 4px;
+  right: 4px;
+  bottom: 0;
+  width: auto;
+  height: 7px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.overlay-scroll-rail.is-horizontal .overlay-scroll-thumb {
+  width: auto;
+  height: 3px;
+  margin: 0 0 1px 0;
+  transition: height 0.14s ease, filter 0.14s ease;
+}
+
+.overlay-scroll-rail.is-horizontal:hover .overlay-scroll-thumb,
+.overlay-scroll-rail.is-horizontal.is-dragging .overlay-scroll-thumb {
+  width: auto;
+  height: 5px;
+  filter: brightness(1.08);
+}
+
 @media (max-width: 720px) {
   .overlay-scroll-rail:not(.is-local) {
     display: none;
@@ -496,6 +521,14 @@ body.arrastrando-divisor {
   user-select: none;
 }
 
+body.arrastrando-divisor-v {
+  cursor: col-resize;
+}
+
+body.arrastrando-divisor-h {
+  cursor: row-resize;
+}
+
 body.arrastrando-divisor .game-stage-canvas,
 body.arrastrando-divisor .cm-editor {
   pointer-events: none;
@@ -506,11 +539,11 @@ body.arrastrando-divisor .cm-editor {
 }
 
 .wb-editor-pane {
-  flex: 1.35;
+  flex: var(--flex-editor, 0.44) 1 0%;
 }
 
 .wb-output-pane {
-  flex: 0.95;
+  flex: var(--flex-salida, 0.56) 1 0%;
 }
 
 /* Barra dedicada de pestañas de archivos (ancho completo del editor) + barra de acciones */
@@ -531,14 +564,22 @@ body.arrastrando-divisor .cm-editor {
   justify-content: space-between;
 }
 
+.tab-strip-host {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  justify-content: center;
+}
+
 .tab-strip {
   display: flex;
   align-items: center;
   gap: 4px;
   min-width: 0;
+  width: 100%;
+  height: 100%;
   overflow-x: auto;
-  scrollbar-width: thin;
-  flex: 1;
+  overflow-y: hidden;
 }
 
 .file-tab-item {
@@ -2384,14 +2425,19 @@ dialog.cmd-dialog {
   .wb-body {
     flex-direction: column;
   }
+  .wb-center {
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
   .blocks-flyout,
   .wb-drawer,
-  .wb-center,
   .wb-editor-pane,
   .wb-output-pane {
     width: 100%;
     min-width: 0;
-    flex: 1;
+    flex: 1 1 auto;
   }
   .wb-pane.mobile-hidden,
   .wb-center.mobile-hidden {
