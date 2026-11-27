@@ -466,6 +466,7 @@
 }
 
 .lp-demo-tab {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -478,7 +479,8 @@
   font-size: 0.96rem;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.14s ease, background 0.14s ease, transform 0.12s ease;
+  overflow: hidden;
+  transition: border-color 0.12s ease, transform 0.12s ease;
 }
 
 .lp-demo-tab:hover {
@@ -488,10 +490,25 @@
 }
 
 .lp-demo-tab[aria-selected='true'] {
-  background: var(--accent);
   color: var(--accent-ink);
   border-color: var(--accent);
   box-shadow: 0 3px 0 var(--border-strong);
+}
+
+.lp-tab-pill-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  border-radius: 6px;
+  z-index: 0;
+}
+
+.lp-tab-pill-content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .lp-demo-frame {
@@ -744,6 +761,7 @@
 }
 
 .lp-filter-pill {
+  position: relative;
   padding: 7px 14px;
   border-radius: 999px;
   border: 1px solid var(--border-subtle);
@@ -752,6 +770,7 @@
   font-size: 0.84rem;
   font-weight: 700;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .lp-filter-pill:hover {
@@ -760,9 +779,16 @@
 }
 
 .lp-filter-pill[aria-pressed='true'] {
-  background: var(--accent);
   color: var(--accent-ink);
   border-color: var(--accent);
+}
+
+.lp-filter-pill-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  border-radius: 999px;
+  z-index: 0;
 }
 
 .lp-quest-grid {
@@ -1074,12 +1100,212 @@
 
 @media (prefers-reduced-motion: reduce) {
   .lp-hero-mascot,
-  .lp-cursor-block {
+  .lp-cursor-block,
+  .anim-caret,
+  .btn-pixel-sheen::after,
+  .lp-beam-frame::before {
     animation: none !important;
   }
 }
 
 [data-reduced-motion='true'] .lp-hero-mascot,
-[data-reduced-motion='true'] .lp-cursor-block {
+[data-reduced-motion='true'] .lp-cursor-block,
+[data-reduced-motion='true'] .anim-caret,
+[data-reduced-motion='true'] .btn-pixel-sheen::after,
+[data-reduced-motion='true'] .lp-beam-frame::before {
   animation: none !important;
+}
+
+/* ==========================================================================
+   PRIMITIVAS DE ANIMACIÓN (Motion · React Bits · Magic UI · Motion Primitives)
+   ========================================================================== */
+.lp-mascot-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.lp-mascot-speech {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid #38bdf8;
+  color: #e0f2fe;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='high-contrast'] .lp-mascot-speech {
+  background: #000000;
+  border-color: #ffff00;
+  color: #ffffff;
+}
+
+.anim-rotating-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 11.5ch;
+  justify-content: center;
+  vertical-align: baseline;
+}
+
+.anim-rotating-word {
+  display: inline-flex;
+  flex-wrap: nowrap;
+}
+
+.anim-char {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+
+.lp-hero-typewriter-bar {
+  margin: 0;
+  min-height: 3.1em;
+  max-width: 58ch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: clamp(0.86rem, 1.8vw, 1.02rem);
+  line-height: 1.5;
+  color: #e2e8f0;
+  background: rgba(8, 16, 36, 0.72);
+  border: 1px solid rgba(56, 189, 248, 0.36);
+  padding: 10px 16px;
+  border-radius: 10px;
+}
+
+[data-theme='high-contrast'] .lp-hero-typewriter-bar {
+  background: #000000;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.anim-typewriter {
+  display: inline;
+}
+
+.anim-caret {
+  display: inline-block;
+  width: 0.56em;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -0.15em;
+  background: #fde047;
+  animation: lp-blink 0.9s steps(1) infinite;
+}
+
+.anim-split-wrap {
+  display: inline;
+}
+
+.anim-split-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.anim-split-word {
+  display: inline-block;
+  will-change: transform, filter;
+}
+
+/* Brillo diagonal periódico en botones dorados */
+.btn-pixel-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-pixel-sheen::after {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: -70%;
+  width: 45%;
+  height: 160%;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  animation: lp-sheen 4.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes lp-sheen {
+  0%,
+  72% {
+    left: -70%;
+  }
+  100% {
+    left: 140%;
+  }
+}
+
+/* Borde animado estilo Magic UI BorderBeam alrededor del mini-playground */
+.lp-beam-frame {
+  overflow: hidden;
+}
+
+.lp-beam-frame::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 260deg,
+    var(--accent) 305deg,
+    var(--info) 335deg,
+    transparent 360deg
+  );
+  animation: lp-beam-spin 7s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lp-beam-frame > .lp-demo-window {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes lp-beam-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* SpotlightCard que sigue el puntero (React Bits) */
+.anim-spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.anim-spotlight-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    240px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    var(--accent-soft),
+    transparent 68%
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.anim-spotlight-card:hover::after {
+  opacity: 1;
 }

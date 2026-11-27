@@ -1,5 +1,6 @@
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import confetti from 'canvas-confetti';
-import { MotionConfig } from 'motion/react';
+import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Blocks,
@@ -120,6 +121,8 @@ export function App() {
   const editorRef = useRef<EduEditorHandle | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const outputEndRef = useRef<HTMLDivElement | null>(null);
+  const [wbOutputAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 180 });
+  const [wbMemAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 180 });
 
   // Preferencias globales
   const [tema, setTema] = useState<TemaId>(() => {
@@ -627,38 +630,48 @@ export function App() {
     </>
   );
 
-  if (vistaApp === 'inicio') {
-    return (
-      <MotionConfig reducedMotion={movimientoReducido ? 'always' : 'user'}>
-        <LandingHome
-          tema={tema}
-          onSeleccionarTema={setTema}
-          onAbrirGaleriaTemas={() => setTemasAbiertos(true)}
-          misionesCompletadas={misionesCompletadas}
-          onEntrarIde={() => setVistaApp('ide')}
-          onEntrarConCodigo={(nombre, codigo) => {
-            abrirNuevaPestana(nombre, codigo);
-            setVistaApp('ide');
-          }}
-          onEntrarConMision={(m) => {
-            setPanelDerecho('misiones');
-            setVistaMovil('editor');
-            iniciarMision(m);
-            setVistaApp('ide');
-          }}
-          onEntrarConRayosX={() => {
-            setPanelDerecho('rayosx');
-            setVistaApp('ide');
-          }}
-        />
-        {modalesCompartidos}
-      </MotionConfig>
-    );
-  }
-
   return (
     <MotionConfig reducedMotion={movimientoReducido ? 'always' : 'user'}>
-      <div className="wb-root">
+      <AnimatePresence mode="wait" initial={false}>
+        {vistaApp === 'inicio' ? (
+          <motion.div
+            key="vista-inicio"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.99 }}
+            transition={{ duration: 0.18 }}
+          >
+            <LandingHome
+              tema={tema}
+              onSeleccionarTema={setTema}
+              onAbrirGaleriaTemas={() => setTemasAbiertos(true)}
+              misionesCompletadas={misionesCompletadas}
+              onEntrarIde={() => setVistaApp('ide')}
+              onEntrarConCodigo={(nombre, codigo) => {
+                abrirNuevaPestana(nombre, codigo);
+                setVistaApp('ide');
+              }}
+              onEntrarConMision={(m) => {
+                setPanelDerecho('misiones');
+                setVistaMovil('editor');
+                iniciarMision(m);
+                setVistaApp('ide');
+              }}
+              onEntrarConRayosX={() => {
+                setPanelDerecho('rayosx');
+                setVistaApp('ide');
+              }}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="vista-ide"
+            className="wb-root"
+            initial={{ opacity: 0, scale: 0.99 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
         <input
           ref={fileInputRef}
           type="file"
@@ -933,7 +946,13 @@ export function App() {
               </div>
 
               {/* Salida anclada por número de línea (estilo GoJS.app) */}
-              <div className="output-stream" role="log" aria-live="polite" aria-label="Consola de salida">
+              <div
+                ref={wbOutputAnimRef}
+                className="output-stream"
+                role="log"
+                aria-live="polite"
+                aria-label="Consola de salida"
+              >
                 {salidas.length === 0 && !preguntaPendiente && todosDiagnosticos.length === 0 && (
                   <p className="output-empty">
                     Pulsa <strong>Ejecutar</strong> (`Ctrl + Enter`) para ver cada salida alineada
@@ -1052,7 +1071,7 @@ export function App() {
                     Sin variables activas todavía.
                   </span>
                 ) : (
-                  <div className="memory-chips">
+                  <div ref={wbMemAnimRef} className="memory-chips">
                     {variables.map((v) => (
                       <span
                         key={v.idInterno}
@@ -1328,9 +1347,12 @@ export function App() {
           </button>
         </nav>
 
-        {/* MODALES NATIVOS (<dialog>) */}
-        {modalesCompartidos}
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MODALES NATIVOS (<dialog>) */}
+      {modalesCompartidos}
     </MotionConfig>
   );
 }
