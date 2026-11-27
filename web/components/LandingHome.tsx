@@ -342,9 +342,12 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
       {/* BARRA DE NAVEGACIÓN PRINCIPAL */}
       <header className="lp-nav">
         <div className="lp-nav-inner">
-          <a href="#inicio-top" className="lp-brand" aria-label="Chispa, página principal">
-            <ChispaBrandMark size={34} />
-            <span className="lp-brand-title">Chispa</span>
+          <a href="#inicio-top" className="lp-brand" aria-label="Chispa Code Compiler, página principal">
+            <ChispaBrandMark size={40} />
+            <span className="lp-brand-stack">
+              <span className="lp-brand-title">Chispa</span>
+              <span className="lp-brand-sub">Code Compiler</span>
+            </span>
           </a>
 
           <nav className="lp-nav-links" aria-label="Navegación principal">

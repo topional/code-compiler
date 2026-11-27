@@ -1,51 +1,40 @@
 /**
- * Emblema original de Chispa: corchetes de código `< >` abrazando una chispa de 4 puntas.
- * Se adapta automáticamente a los 10 temas visuales.
+ * Emblema SVG oficial de Chispa: corchetes biselados `< >` abrazando una chispa de 4 puntas.
+ * Sin marco exterior; cada uno de los 10 temas define su propia pareja cromática
+ * mediante `--logo-spark` (corchete izquierdo + chispa) y `--logo-wing` (corchete derecho).
  */
-export function ChispaBrandMark({ size = 34 }: { size?: number }) {
+export function ChispaBrandMark({ size = 40 }: { size?: number }) {
+  const height = Math.round(size * (96 / 112));
   return (
     <svg
       width={size}
-      height={size}
-      viewBox="0 0 64 64"
+      height={height}
+      viewBox="0 0 112 96"
       fill="none"
       aria-hidden="true"
       style={{ display: 'block', flexShrink: 0 }}
     >
-      <rect
-        x="3"
-        y="3"
-        width="58"
-        height="58"
-        rx="14"
-        fill="var(--bg-editor)"
-        stroke="var(--accent)"
-        strokeWidth="3.5"
+      {/* Corchete izquierdo `<` biselado */}
+      <polygon
+        points="42,6 4,40 4,56 42,90 42,72 19,48 42,24"
+        fill="var(--logo-spark, var(--accent))"
       />
+      {/* Chispa central de 4 puntas estilizada */}
       <path
-        d="M21 22L12 32L21 42"
-        stroke="var(--ink-primary)"
-        strokeWidth="4.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M56 10 Q60 43 82 48 Q60 53 56 86 Q52 53 30 48 Q52 43 56 10 Z"
+        fill="var(--logo-spark, var(--accent))"
       />
-      <path
-        d="M43 22L52 32L43 42"
-        stroke="var(--ink-primary)"
-        strokeWidth="4.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M32 16L35.6 28.4L46 32L35.6 35.6L32 48L28.4 35.6L18 32L28.4 28.4Z"
-        fill="var(--accent)"
+      {/* Corchete derecho `>` biselado */}
+      <polygon
+        points="70,6 108,40 108,56 70,90 70,72 93,48 70,24"
+        fill="var(--logo-wing, var(--info))"
       />
     </svg>
   );
 }
 
 /**
- * Logotipo SVG y mascota adaptativa de Chispa .edu · Code Compiler.
+ * Logotipo SVG y mascota adaptativa de Chispa · Code Compiler.
  * Usa variables CSS (--logo-*) para adaptarse a los 10 temas visuales.
  */
 
@@ -56,76 +45,31 @@ interface ChispaLogoProps {
 export function ChispaLogo({ compact = false }: ChispaLogoProps) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-      <svg
-        width="40"
-        height="40"
-        viewBox="0 0 64 64"
-        fill="none"
-        aria-hidden="true"
-        style={{ flexShrink: 0 }}
-      >
-        <rect
-          x="4"
-          y="6"
-          width="56"
-          height="52"
-          rx="16"
-          fill="var(--logo-frame)"
-          stroke="var(--border-strong)"
-          strokeWidth="3"
-        />
-        <path
-          d="M17 20C17 17.8 18.8 16 21 16H27L30.5 20H43C45.2 20 47 21.8 47 24V42C47 44.2 45.2 46 43 46H21C18.8 46 17 44.2 17 42V20Z"
-          fill="var(--logo-body)"
-          stroke="var(--border-strong)"
-          strokeWidth="2.5"
-        />
-        <path
-          d="M35.5 22L25.5 34.5H32.5L30.5 44L40.5 31.5H33.5L35.5 22Z"
-          fill="var(--logo-spark)"
-        />
-      </svg>
+      <ChispaBrandMark size={compact ? 32 : 40} />
 
       {!compact && (
         <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.05 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: '1.22rem',
-                color: 'var(--logo-ink)',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Chispa
-            </span>
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 700,
-                fontSize: '0.72rem',
-                padding: '2px 7px',
-                borderRadius: '7px',
-                background: 'var(--logo-badge-bg)',
-                color: 'var(--logo-badge-ink)',
-                border: '1.5px solid var(--border-strong)',
-              }}
-            >
-              .edu
-            </span>
-          </span>
           <span
-            className="mono"
             style={{
-              fontSize: '0.68rem',
+              fontFamily: 'var(--font-pixel)',
               fontWeight: 700,
-              color: 'var(--ink-muted)',
-              letterSpacing: '0.03em',
-              marginTop: 2,
+              fontSize: '1.22rem',
+              color: 'var(--logo-ink)',
+              letterSpacing: '0.01em',
             }}
           >
-            CODE COMPILER
+            Chispa
+          </span>
+          <span
+            style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '0.68rem',
+              fontWeight: 600,
+              color: 'var(--ink-muted)',
+              letterSpacing: '0.03em',
+            }}
+          >
+            Code Compiler
           </span>
         </span>
       )}

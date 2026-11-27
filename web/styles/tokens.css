@@ -82,7 +82,8 @@
 
   --logo-frame: #facc15;
   --logo-body: #141926;
-  --logo-spark: #fde047;
+  --logo-spark: #facc15;
+  --logo-wing: #29b6f6;
   --logo-ink: #f5f7ff;
   --logo-badge-bg: #facc15;
   --logo-badge-ink: #0c0f17;
@@ -155,7 +156,8 @@
 
   --logo-frame: #bd93f9;
   --logo-body: #282a36;
-  --logo-spark: #ff79c6;
+  --logo-spark: #bd93f9;
+  --logo-wing: #ff79c6;
   --logo-ink: #f8f8f2;
   --logo-badge-bg: #ff79c6;
   --logo-badge-ink: #191a21;
@@ -228,7 +230,8 @@
 
   --logo-frame: #7aa2f7;
   --logo-body: #1a1b26;
-  --logo-spark: #73daca;
+  --logo-spark: #7aa2f7;
+  --logo-wing: #73daca;
   --logo-ink: #eef2ff;
   --logo-badge-bg: #73daca;
   --logo-badge-ink: #11131d;
@@ -302,6 +305,7 @@
   --logo-frame: #fab387;
   --logo-body: #1e1e2e;
   --logo-spark: #cba6f7;
+  --logo-wing: #89dceb;
   --logo-ink: #cdd6f4;
   --logo-badge-bg: #cba6f7;
   --logo-badge-ink: #11111b;
@@ -375,6 +379,7 @@
   --logo-frame: #88c0d0;
   --logo-body: #2e3440;
   --logo-spark: #ebcb8b;
+  --logo-wing: #88c0d0;
   --logo-ink: #eceff4;
   --logo-badge-bg: #ebcb8b;
   --logo-badge-ink: #1b2028;
@@ -448,6 +453,7 @@
   --logo-frame: #fde047;
   --logo-body: #1b1236;
   --logo-spark: #22d3ee;
+  --logo-wing: #f472b6;
   --logo-ink: #fdf8ff;
   --logo-badge-bg: #f472b6;
   --logo-badge-ink: #110b22;
@@ -522,6 +528,7 @@
   --logo-frame: #ff6b2c;
   --logo-body: #fff9f0;
   --logo-spark: #c9410a;
+  --logo-wing: #1d4ed8;
   --logo-ink: #142038;
   --logo-badge-bg: #142038;
   --logo-badge-ink: #fff9f0;
@@ -594,7 +601,8 @@
 
   --logo-frame: #5a4fcf;
   --logo-body: #ffffff;
-  --logo-spark: #c84b00;
+  --logo-spark: #5a4fcf;
+  --logo-wing: #0284c7;
   --logo-ink: #2c2f44;
   --logo-badge-bg: #2c2f44;
   --logo-badge-ink: #ffffff;
@@ -667,7 +675,8 @@
 
   --logo-frame: #047857;
   --logo-body: #f1f8f4;
-  --logo-spark: #b45309;
+  --logo-spark: #047857;
+  --logo-wing: #0284c7;
   --logo-ink: #122e22;
   --logo-badge-bg: #122e22;
   --logo-badge-ink: #f1f8f4;
@@ -741,6 +750,7 @@
   --logo-frame: #ffff00;
   --logo-body: #000000;
   --logo-spark: #ffff00;
+  --logo-wing: #00ffff;
   --logo-ink: #ffffff;
   --logo-badge-bg: #ffff00;
   --logo-badge-ink: #000000;

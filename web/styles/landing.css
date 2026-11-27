@@ -69,11 +69,25 @@
   gap: 6px;
 }
 
+.lp-brand-stack {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.02;
+}
+
 .lp-brand-title {
   font-family: var(--font-pixel);
-  font-size: 1.22rem;
+  font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+.lp-brand-sub {
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  letter-spacing: 0.03em;
 }
 
 .lp-brand-badge {
