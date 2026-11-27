@@ -14,20 +14,20 @@ export function ChispaBrandMark({ size = 40 }: { size?: number }) {
       aria-hidden="true"
       style={{ display: 'block', flexShrink: 0 }}
     >
-      {/* Corchete izquierdo `<` biselado */}
+      {/* Corchete izquierdo `<` biselado (color 3 del tema) */}
       <polygon
         points="42,6 4,40 4,56 42,90 42,72 19,48 42,24"
-        fill="var(--logo-spark, var(--accent))"
+        fill="var(--logo-wing, var(--accent))"
       />
-      {/* Chispa central de 4 puntas estilizada */}
+      {/* Chispa central de 4 puntas estilizada (color 4 del tema) */}
       <path
         d="M56 10 Q60 43 82 48 Q60 53 56 86 Q52 53 30 48 Q52 43 56 10 Z"
-        fill="var(--logo-spark, var(--accent))"
+        fill="var(--logo-spark, var(--info))"
       />
-      {/* Corchete derecho `>` biselado */}
+      {/* Corchete derecho `>` biselado (color 3 del tema) */}
       <polygon
         points="70,6 108,40 108,56 70,90 70,72 93,48 70,24"
-        fill="var(--logo-wing, var(--info))"
+        fill="var(--logo-wing, var(--accent))"
       />
     </svg>
   );
