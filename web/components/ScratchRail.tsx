@@ -1,10 +1,18 @@
 /**
- * Carril de categorías Scratch + Flyout plegable de fichas rompecabezas `.edu`.
- * Cada ficha muestra cápsulas visuales de parámetros y se inserta al cursor con clic o arrastre.
+ * Carril de categorías estilo Scratch con iconos intuitivos para niños
+ * + Flyout plegable de fichas rompecabezas listas para insertar o arrastrar.
  */
 
 import { useRef } from 'react';
-import { Sparkles, X } from 'lucide-react';
+import {
+  Box,
+  Dices,
+  GitBranch,
+  MessageCircle,
+  Sparkles,
+  Wand2,
+  X,
+} from 'lucide-react';
 
 import { BLOQUES_EDU, CATEGORIAS_BLOQUE, type BloqueEdu, type CategoriaBloque } from '../data/bloques';
 import { ChispaLogo } from './ChispaLogo';
@@ -21,13 +29,38 @@ interface ScratchRailProps {
 
 const CAT_VISUAL: Record<
   CategoriaBloque,
-  { corto: string; colorVar: string; bgVar: string }
+  { corto: string; colorVar: string; bgVar: string; icono: React.ReactNode }
 > = {
-  variables: { corto: 'Vars', colorVar: 'var(--cat-variable)', bgVar: 'var(--cat-variable-bg)' },
-  io: { corto: 'Hablar', colorVar: 'var(--cat-io)', bgVar: 'var(--cat-io-bg)' },
-  control: { corto: 'Control', colorVar: 'var(--cat-control)', bgVar: 'var(--cat-control-bg)' },
-  operadores: { corto: 'Azar', colorVar: 'var(--cat-operador)', bgVar: 'var(--cat-operador-bg)' },
-  funciones: { corto: 'Func', colorVar: 'var(--cat-funcion)', bgVar: 'var(--cat-funcion-bg)' },
+  variables: {
+    corto: 'Cajitas',
+    colorVar: 'var(--cat-variable)',
+    bgVar: 'var(--cat-variable-bg)',
+    icono: <Box size={15} aria-hidden="true" />,
+  },
+  io: {
+    corto: 'Hablar',
+    colorVar: 'var(--cat-io)',
+    bgVar: 'var(--cat-io-bg)',
+    icono: <MessageCircle size={15} aria-hidden="true" />,
+  },
+  control: {
+    corto: 'Ciclos',
+    colorVar: 'var(--cat-control)',
+    bgVar: 'var(--cat-control-bg)',
+    icono: <GitBranch size={15} aria-hidden="true" />,
+  },
+  operadores: {
+    corto: 'Azar',
+    colorVar: 'var(--cat-operador)',
+    bgVar: 'var(--cat-operador-bg)',
+    icono: <Dices size={15} aria-hidden="true" />,
+  },
+  funciones: {
+    corto: 'Recetas',
+    colorVar: 'var(--cat-funcion)',
+    bgVar: 'var(--cat-funcion-bg)',
+    icono: <Wand2 size={15} aria-hidden="true" />,
+  },
 };
 
 const FICHAS_PARTES: Record<string, { texto: string; slot?: string }[]> = {
@@ -104,7 +137,7 @@ export function ScratchRail({
 
   return (
     <>
-      {/* Carril vertical izquierdo con círculos de color estilo Scratch */}
+      {/* Carril vertical izquierdo con medallas de icono y color estilo Scratch */}
       <nav className="scratch-rail" aria-label="Categorías de bloques">
         <button
           type="button"
@@ -126,12 +159,14 @@ export function ScratchRail({
               key={cat.id}
               type="button"
               className="scratch-cat-btn"
-              style={{ '--cat-color': vis.colorVar } as React.CSSProperties}
+              style={{ '--cat-color': vis.colorVar, '--cat-bg': vis.bgVar } as React.CSSProperties}
               aria-pressed={activo}
               onClick={() => onToggleCategoria(activo ? null : cat.id)}
               title={`${cat.nombre}: ${cat.resumen}`}
             >
-              <span className="scratch-cat-dot" aria-hidden="true" />
+              <span className="scratch-cat-badge" aria-hidden="true">
+                {vis.icono}
+              </span>
               <span className="scratch-cat-label">{vis.corto}</span>
             </button>
           );
@@ -142,7 +177,7 @@ export function ScratchRail({
       {(categoriaActiva !== null || mobileVisible) && (
         <aside
           className={`wb-pane blocks-flyout ${mobileVisible ? '' : 'mobile-hidden'}`}
-          aria-label="Paleta de fichas .edu"
+          aria-label="Paleta de bloques"
         >
           <div className="wb-pane-header">
             <span className="wb-pane-title">
@@ -173,7 +208,6 @@ export function ScratchRail({
 
           <div className="overlay-scroll-host is-flex">
             <div ref={flyoutBodyRef} className="blocks-flyout-body">
-              {/* Filtro rápido en móvil donde el carril izquierdo está oculto */}
               {mobileVisible && (
                 <div className="sub-tabs-row" role="group" aria-label="Filtrar categoría de bloques">
                   <button
@@ -210,8 +244,8 @@ export function ScratchRail({
 
               <p className="blocks-flyout-hint">
                 {catMeta
-                  ? `${catMeta.resumen} Haz clic o arrastra una ficha al editor.`
-                  : 'Haz clic o arrastra cualquier ficha para insertarla en tu programa.'}
+                  ? `${catMeta.resumen} Toca o arrastra una ficha al editor.`
+                  : 'Toca o arrastra cualquier ficha para insertarla en tu juego.'}
               </p>
 
               {bloques.map((b) => (

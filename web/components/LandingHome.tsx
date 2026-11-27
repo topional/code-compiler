@@ -182,7 +182,7 @@ const RESPUESTAS_CHISPA: {
     texto:
       'Puedes repetir acciones con "repetir N veces ... fin" o con "mientras condicion hacer ... fin". Mira este contador:',
     snippet: {
-      nombre: 'ciclo_rapido.edu',
+      nombre: 'ciclo_rapido',
       codigo: `crear variable cuenta\nasignar cuenta valor de 5\nrepetir 5 veces\n    mostrar cuenta\n    asignar cuenta valor de cuenta - 1\nfin\nmostrar "¡Listo!"`,
     },
   },
@@ -191,7 +191,7 @@ const RESPUESTAS_CHISPA: {
     texto:
       'Las decisiones se escriben casi como hablas: "si ... entonces ... sino ... fin". Prueba este ejemplo:',
     snippet: {
-      nombre: 'decision.edu',
+      nombre: 'decision',
       codigo: `crear variable nota\nasignar nota valor de 18\nsi nota es mayor o igual que 14 entonces\n    mostrar "Aprobado"\nsino\n    mostrar "Sigue practicando"\nfin`,
     },
   },
@@ -200,7 +200,7 @@ const RESPUESTAS_CHISPA: {
     texto:
       'Declara funciones indicando el tipo de cada parámetro y lo que devuelve ("numero", "texto" o "logico"):',
     snippet: {
-      nombre: 'mi_funcion.edu',
+      nombre: 'mi_funcion',
       codigo: `definir cuadrado(numero n) devuelve numero\n    devolver n * n\nfin\nmostrar cuadrado(9)`,
     },
   },
@@ -209,7 +209,7 @@ const RESPUESTAS_CHISPA: {
     texto:
       'Usa "numero aleatorio entre A y B" para crear dados, duelos o adivina el número al instante:',
     snippet: {
-      nombre: 'dado_duelo.edu',
+      nombre: 'dado_duelo',
       codigo: `crear variable dado\nasignar dado valor de numero aleatorio entre 1 y 6\nmostrar "Sacaste:"\nmostrar dado`,
     },
   },
@@ -218,7 +218,7 @@ const RESPUESTAS_CHISPA: {
     texto:
       'Code Compiler revisa tu programa en 4 pasos rápidos: lee cada palabra, comprueba el orden, revisa los tipos y ejecuta tu código al instante.',
     snippet: {
-      nombre: 'mi_programa.edu',
+      nombre: 'mi_programa',
       codigo: `crear variable x\nasignar x valor de 12 + 30\nmostrar x`,
     },
   },
@@ -234,7 +234,7 @@ function responderChispa(consulta: string): Omit<MensajeChat, 'id' | 'rol'> {
     texto:
       'Puedo ayudarte con variables, ciclos (repetir/mientras), decisiones (si/sino), funciones o juegos con azar. Aquí tienes una plantilla lista:',
     snippet: {
-      nombre: 'hola.edu',
+      nombre: 'hola',
       codigo: `crear variable nombre\nasignar nombre valor de "Explorador"\nmostrar "Hola desde Chispa:"\nmostrar nombre`,
     },
   };
@@ -683,7 +683,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                   <div className="lp-runner-body">
                     <div className="lp-runner-bar">
                       <span className="mono" style={{ fontSize: '0.76rem' }}>
-                        mi_programa.edu · prueba rápida
+                        mi_programa · prueba rápida
                       </span>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button
@@ -776,7 +776,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       <button
                         type="button"
                         className="lp-cta-primary lp-cta-xs"
-                        onClick={() => onEntrarConCodigo('laboratorio.edu', codigoDemo)}
+                        onClick={() => onEntrarConCodigo('laboratorio', codigoDemo)}
                       >
                         <span>Llevar a Code Compiler</span>
                         <ArrowRight size={13} aria-hidden="true" />
@@ -1005,7 +1005,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                 <button
                   type="button"
                   className="lp-cta-primary lp-cta-xs"
-                  onClick={() => onEntrarConCodigo('mi_aventura.edu', codigoToy)}
+                  onClick={() => onEntrarConCodigo('mi_aventura', codigoToy)}
                 >
                   <span>Seguir en Code Compiler</span>
                   <ArrowRight size={13} aria-hidden="true" />
@@ -1068,7 +1068,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
             <button
               type="button"
               className="lp-cta-primary lp-cta-xs"
-              onClick={() => onEntrarConCodigo(`${presetPipe.id}.edu`, presetPipe.codigo)}
+              onClick={() => onEntrarConCodigo(presetPipe.id, presetPipe.codigo)}
             >
               <span>Editar en Code Compiler</span>
               <ArrowRight size={13} aria-hidden="true" />

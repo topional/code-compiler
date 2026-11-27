@@ -11,17 +11,23 @@ import { useMemo, useRef, useState } from 'react';
 import {
   Award,
   BookOpen,
+  Calculator,
   CheckCircle2,
   Code2,
+  Dices,
   Download,
   FolderOpen,
+  Gamepad2,
   History,
+  KeyRound,
   Lightbulb,
   Play,
   Plus,
+  Rocket,
   RotateCcw,
   Save,
   Search,
+  Swords,
   Trophy,
   Upload,
   X,
@@ -102,6 +108,31 @@ export function RightDrawer({
 
   const porcentajeMisiones = Math.round((misionesCompletadas.length / MISIONES_EDU.length) * 100);
   const xpTotal = misionesCompletadas.length * 100;
+  const rangoActual =
+    misionesCompletadas.length >= 6
+      ? 'Maestro Chispa'
+      : misionesCompletadas.length >= 4
+        ? 'Creador 2D'
+        : misionesCompletadas.length >= 2
+          ? 'Explorador'
+          : 'Aprendiz';
+
+  const iconoJuego = (id: string) => {
+    if (id === 'duelo_rpg') return { icon: <Swords size={15} aria-hidden="true" />, color: 'var(--cat-funcion)' };
+    if (id === 'piedra_papel_tijera') return { icon: <Gamepad2 size={15} aria-hidden="true" />, color: 'var(--cat-io)' };
+    if (id === 'mision_cohete') return { icon: <Rocket size={15} aria-hidden="true" />, color: 'var(--cat-control)' };
+    if (id === 'principal') return { icon: <KeyRound size={15} aria-hidden="true" />, color: 'var(--cat-operador)' };
+    if (id === 'basico') return { icon: <Dices size={15} aria-hidden="true" />, color: 'var(--cat-variable)' };
+    return { icon: <Calculator size={15} aria-hidden="true" />, color: 'var(--info)' };
+  };
+
+  const colorCategoria = (cat: string) => {
+    if (cat === 'variables') return 'var(--cat-variable)';
+    if (cat === 'io') return 'var(--cat-io)';
+    if (cat === 'control') return 'var(--cat-control)';
+    if (cat === 'operadores') return 'var(--cat-operador)';
+    return 'var(--cat-funcion)';
+  };
 
   const descargarDiploma = () => {
     const insignias = MISIONES_EDU.filter((m) => misionesCompletadas.includes(m.id))
@@ -110,32 +141,32 @@ export function RightDrawer({
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="880" height="520" viewBox="0 0 880 520">
   <rect width="880" height="520" rx="24" fill="#0C0F17"/>
   <rect x="20" y="20" width="840" height="480" rx="18" fill="#141926" stroke="#FACC15" stroke-width="4"/>
-  <text x="440" y="88" text-anchor="middle" font-family="sans-serif" font-size="30" font-weight="700" fill="#FACC15">DIPLOMA CODE COMPILER · CHISPA .EDU</text>
-  <text x="440" y="142" text-anchor="middle" font-family="monospace" font-size="20" fill="#F5F7FF">${misionesCompletadas.length}/${MISIONES_EDU.length} misiones completadas · ${xpTotal} XP</text>
+  <text x="440" y="88" text-anchor="middle" font-family="sans-serif" font-size="30" font-weight="700" fill="#FACC15">DIPLOMA CHISPA · CODE COMPILER</text>
+  <text x="440" y="142" text-anchor="middle" font-family="monospace" font-size="20" fill="#F5F7FF">${rangoActual} · ${misionesCompletadas.length}/${MISIONES_EDU.length} misiones · ${xpTotal} XP</text>
   <rect x="70" y="180" width="740" height="240" rx="12" fill="#10141F" stroke="#28324C" stroke-width="2"/>
-  ${(insignias || '• Completa misiones en Chispa .edu para desbloquear insignias')
+  ${(insignias || '• Completa misiones en Chispa para desbloquear insignias')
     .split('\n')
     .map(
       (line, i) =>
         `<text x="100" y="${224 + i * 32}" font-family="monospace" font-size="16" fill="#4ADE80">${line.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</text>`,
     )
     .join('')}
-  <text x="440" y="466" text-anchor="middle" font-family="monospace" font-size="13" fill="#98A8C7">topional/code-compiler · Lenguaje Educativo .edu</text>
+  <text x="440" y="466" text-anchor="middle" font-family="monospace" font-size="13" fill="#98A8C7">Chispa · Estudio de Programación 2D en Español</text>
 </svg>`;
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'diploma-chispa-edu.svg';
+    a.download = 'diploma-chispa.svg';
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const titulos: Record<Exclude<PanelDerechoTipo, null>, { texto: string; icono: React.ReactNode }> = {
-    misiones: { texto: 'Misiones', icono: <Trophy size={14} aria-hidden="true" /> },
+    misiones: { texto: 'Retos y XP', icono: <Trophy size={14} aria-hidden="true" /> },
     guia: { texto: 'Guía de Bloques', icono: <BookOpen size={14} aria-hidden="true" /> },
-    ejemplos: { texto: 'Juegos 2D y Archivos', icono: <FolderOpen size={14} aria-hidden="true" /> },
-    historial: { texto: 'Historial', icono: <History size={14} aria-hidden="true" /> },
+    ejemplos: { texto: 'Juegos 2D y Archivos', icono: <Gamepad2 size={14} aria-hidden="true" /> },
+    historial: { texto: 'Copias guardadas', icono: <History size={14} aria-hidden="true" /> },
   };
 
   return (
@@ -163,9 +194,9 @@ export function RightDrawer({
       {/* 1. MISIONES (estilo Codédex al lado del código) */}
       {panel === 'misiones' && (
         <div ref={drawerScrollRef} className="drawer-scroll">
-          <div className="drawer-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <strong style={{ fontSize: '0.84rem' }}>Progreso de aventura</strong>
+          <div className="drawer-card drawer-xp-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+              <strong style={{ fontSize: '0.86rem' }}>Rango: {rangoActual}</strong>
               <span className="pill-mini ok">{xpTotal} XP</span>
             </div>
             <div
@@ -266,7 +297,7 @@ export function RightDrawer({
         <div ref={drawerScrollRef} className="drawer-scroll">
           <div style={{ position: 'relative' }}>
             <label htmlFor="drawer-guide-search" className="sr-only">
-              Buscar comando en la guía .edu
+              Buscar comando en la guía de bloques
             </label>
             <Search
               size={14}
@@ -286,14 +317,18 @@ export function RightDrawer({
               style={{ width: '100%', paddingLeft: 30, minHeight: 34 }}
               value={busquedaGuia}
               onChange={(e) => setBusquedaGuia(e.target.value)}
-              placeholder="Buscar: bucle, dado, preguntar, si..."
+              placeholder="Buscar: texto, número, dado, preguntar, si..."
             />
           </div>
 
           {resultadosGuia.map((item) => (
-            <article key={item.id} className="drawer-card">
+            <article
+              key={item.id}
+              className="drawer-card"
+              style={{ borderLeft: `3.5px solid ${colorCategoria(item.categoria)}` }}
+            >
               <strong style={{ fontSize: '0.86rem' }}>{item.titulo}</strong>
-              <span className="pill-mini">Scratch: {item.bloqueScratch}</span>
+              <span className="pill-mini">{item.bloqueScratch}</span>
               <pre className="code-mini" tabIndex={0}>
                 <code>{item.ejemploCompleto}</code>
               </pre>
@@ -310,7 +345,7 @@ export function RightDrawer({
                   type="button"
                   className="btn btn-primary btn-sm"
                   style={{ flex: 1 }}
-                  onClick={() => onAbrirCodigoNuevo(`${item.id}.edu`, item.ejemploCompleto)}
+                  onClick={() => onAbrirCodigoNuevo(item.id, item.ejemploCompleto)}
                 >
                   <Play size={13} aria-hidden="true" /> Probar
                 </button>
@@ -320,49 +355,64 @@ export function RightDrawer({
         </div>
       )}
 
-      {/* 4. EJEMPLOS OFICIALES Y ARCHIVOS */}
+      {/* 3. JUEGOS 2D Y ARCHIVOS */}
       {panel === 'ejemplos' && (
         <div ref={drawerScrollRef} className="drawer-scroll">
           <div className="drawer-card">
-            <strong style={{ fontSize: '0.84rem' }}>Tus archivos</strong>
+            <strong style={{ fontSize: '0.84rem' }}>
+              <FolderOpen size={13} aria-hidden="true" style={{ verticalAlign: -2, marginRight: 5 }} />
+              Tus archivos
+            </strong>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button type="button" className="btn btn-sm" onClick={onImportarArchivo}>
-                <Upload size={13} aria-hidden="true" /> Importar archivo
+                <Upload size={13} aria-hidden="true" /> Abrir archivo
               </button>
               <button type="button" className="btn btn-sm" onClick={onExportarEdu}>
-                <Download size={13} aria-hidden="true" /> Descargar código
+                <Download size={13} aria-hidden="true" /> Guardar código
               </button>
             </div>
           </div>
 
-          <span className="section-tag">// juegos 2D listos para jugar</span>
-          {EJEMPLOS_EDU.map((ej) => (
-            <article key={ej.id} className="drawer-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                <strong style={{ fontSize: '0.88rem' }}>{ej.titulo}</strong>
-                <span className="pill-mini ok">{ej.nivel}</span>
-              </div>
-              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--ink-secondary)' }}>
-                {ej.subtitulo}
-              </p>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => onAbrirCodigoNuevo(ej.id, ej.codigo)}
+          <span className="section-tag">// 6 juegos 2D únicos para jugar y editar</span>
+          {EJEMPLOS_EDU.map((ej) => {
+            const ic = iconoJuego(ej.id);
+            return (
+              <article
+                key={ej.id}
+                className="drawer-card drawer-game-card"
+                style={{ borderLeft: `3.5px solid ${ic.color}` }}
               >
-                <Play size={13} aria-hidden="true" /> Jugar en nueva pestaña
-              </button>
-            </article>
-          ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="drawer-game-icon" style={{ color: ic.color }}>
+                    {ic.icon}
+                  </span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <strong style={{ fontSize: '0.86rem', display: 'block' }}>{ej.titulo}</strong>
+                    <span className="pill-mini ok">{ej.nivel}</span>
+                  </div>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--ink-secondary)' }}>
+                  {ej.subtitulo}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => onAbrirCodigoNuevo(ej.archivo, ej.codigo)}
+                >
+                  <Play size={13} aria-hidden="true" /> Jugar ahora
+                </button>
+              </article>
+            );
+          })}
         </div>
       )}
 
-      {/* 5. HISTORIAL DE INSTANTÁNEAS */}
+      {/* 4. COPIAS GUARDADAS (HISTORIAL) */}
       {panel === 'historial' && (
         <div ref={drawerScrollRef} className="drawer-scroll">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
-              {nombrePestanaActual}
+            <span style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', fontWeight: 700 }}>
+              {nombrePestanaActual.replace(/\.edu$/i, '')}
             </span>
             <button type="button" className="btn btn-primary btn-sm" onClick={onGuardarInstantanea}>
               <Save size={13} aria-hidden="true" /> Guardar versión

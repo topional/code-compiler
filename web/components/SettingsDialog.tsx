@@ -63,7 +63,7 @@ export function SettingsDialog({
     >
       <div className="dialog-head">
         <h2 id="settings-title" style={{ fontSize: '1.15rem' }}>
-          Ajustes de Chispa .edu · Code Compiler
+          Ajustes de Chispa · Code Compiler
         </h2>
         <button
           type="button"

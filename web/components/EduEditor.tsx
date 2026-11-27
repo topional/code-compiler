@@ -334,7 +334,7 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
     hoverLine = null,
     errorLines = [],
     compact = false,
-    ariaLabel = 'Editor de código en lenguaje educativo .edu',
+    ariaLabel = 'Editor de código de Chispa',
     onShortcutRun,
     onShortcutFormat,
     onCursorChange,

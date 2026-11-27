@@ -8,7 +8,7 @@ export interface EjemploEdu {
   subtitulo: string;
   nivel: 'Inicio' | 'Intermedio' | 'Avanzado' | 'Reto';
   archivo: string;
-  escena?: 'rpg' | 'aventura' | 'torneo' | 'cohete' | 'chispa';
+  escena?: 'rpg' | 'aventura' | 'torneo' | 'cohete' | 'boveda' | 'chispa';
   etiquetas: string[];
   codigo: string;
 }
@@ -154,11 +154,11 @@ mostrar "¡DESPEGUE AL ESPACIO!"`,
   {
     id: 'principal',
     titulo: 'Adivina el número secreto',
-    subtitulo: 'El clásico juego de pistas con números aleatorios y ciclos',
+    subtitulo: 'Abre la bóveda secreta con pistas de mayor o menor',
     nivel: 'Intermedio',
     archivo: 'adivina_numero',
-    escena: 'chispa',
-    etiquetas: ['juego 2D', 'azar', 'funciones'],
+    escena: 'boveda',
+    etiquetas: ['bóveda 2D', 'azar', 'funciones'],
     codigo: `# Adivina el número secreto del 1 al 10 con pistas en vivo
 definir pista(numero intento, numero secreto) devuelve texto
     si intento es menor que secreto entonces
@@ -211,7 +211,7 @@ mostrar intentos`,
     subtitulo: 'Suma, resta, multiplica y divide cuidando el cero',
     nivel: 'Intermedio',
     archivo: 'calculadora',
-    escena: 'chispa',
+    escena: 'boveda',
     etiquetas: ['matemática', 'preguntar', 'si/sino'],
     codigo: `# Calculadora mágica con 4 operaciones
 crear variable opcion

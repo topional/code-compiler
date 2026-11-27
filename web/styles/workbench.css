@@ -292,7 +292,24 @@ textarea {
 .scratch-cat-btn[aria-pressed='true'] {
   background: var(--bg-surface-alt);
   color: var(--ink-primary);
-  border-color: var(--border-subtle);
+  border-color: var(--cat-color, var(--accent));
+}
+
+.scratch-cat-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: var(--cat-bg, var(--bg-surface-alt));
+  color: var(--cat-color, var(--accent));
+  border: 1.5px solid color-mix(in srgb, var(--cat-color, var(--accent)) 45%, transparent);
+  transition: transform 0.14s ease, background-color 0.14s ease;
+}
+
+.scratch-cat-btn:hover .scratch-cat-badge,
+.scratch-cat-btn[aria-pressed='true'] .scratch-cat-badge {
+  transform: scale(1.06);
 }
 
 .scratch-cat-btn[aria-pressed='true']::before {
@@ -1355,8 +1372,8 @@ dialog.helper-dialog:not([open]) {
    DOCK VERTICAL DERECHO (46px EN DESKTOP — IGUAL QUE GOJS.APP/APP/)
    ========================================================================== */
 .wb-dock {
-  width: 46px;
-  min-width: 46px;
+  width: 56px;
+  min-width: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1366,27 +1383,40 @@ dialog.helper-dialog:not([open]) {
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   flex-shrink: 0;
+  overflow-y: auto;
 }
 
 .dock-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  width: 100%;
 }
 
 .dock-btn {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  min-height: 44px;
+  padding: 4px 2px;
   border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--ink-muted);
-  display: grid;
-  place-items: center;
+  color: var(--ink-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   cursor: pointer;
   position: relative;
   transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.dock-btn-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
 }
 
 .dock-btn:hover {
@@ -1398,6 +1428,33 @@ dialog.helper-dialog:not([open]) {
   background: var(--accent-soft);
   color: var(--accent-soft-ink);
   border-color: var(--accent);
+}
+
+.drawer-game-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-subtle);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.drawer-xp-card {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--bg-surface-alt), color-mix(in srgb, var(--accent) 10%, var(--bg-surface)));
+}
+
+.mem-chip-badge {
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--bg-surface-alt);
+  color: var(--ink-secondary);
+  border: 1px solid var(--border-subtle);
 }
 
 .dock-dot-badge {
@@ -2011,10 +2068,17 @@ dialog.cmd-dialog {
   border-color: transparent;
 }
 
+.stage-coords {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+  margin-left: 2px;
+}
+
 .game-stage-canvas {
   display: block;
   width: 100%;
-  height: 224px;
+  height: 248px;
   image-rendering: pixelated;
   cursor: pointer;
   background: var(--bg-app);

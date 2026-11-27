@@ -485,8 +485,18 @@ export function App() {
 
   const abrirNuevaPestana = (nombre?: string, codigo?: string) => {
     detenerEjecucion();
-    const id = `tab-${Date.now()}`;
+    setSalidas([]);
+    setVariables([]);
     const nombreLimpio = (nombre ?? `mi_juego_${pestanas.length + 1}`).replace(/\.edu$/i, '');
+    if (nombre) {
+      const existente = pestanas.find((p) => p.nombre.replace(/\.edu$/i, '') === nombreLimpio);
+      if (existente) {
+        setPestanaActivaId(existente.id);
+        setVistaMovil('editor');
+        return;
+      }
+    }
+    const id = `tab-${Date.now()}`;
     setPestanas((prev) => [
       ...prev,
       {
@@ -517,7 +527,7 @@ export function App() {
     setPestanas((prev) => {
       const existe = prev.find((p) => p.id === id);
       if (existe) return prev.map((p) => (p.id === id ? { ...p, codigo: mision.codigoInicial } : p));
-      return [...prev, { id, nombre: `${mision.id}.edu`, codigo: mision.codigoInicial }];
+      return [...prev, { id, nombre: mision.id, codigo: mision.codigoInicial }];
     });
     setPestanaActivaId(id);
     setVistaMovil('editor');
@@ -635,7 +645,7 @@ export function App() {
       ? `Encontré ${todosDiagnosticos.length} detalle(s) — haz clic en un aviso para ver la pista`
       : ultimaSalida
         ? ultimaSalida.texto
-        : 'Escribe código .edu o toca un bloque Scratch a la izquierda';
+        : 'Escribe tu código o usa Ayudante y los bloques de la izquierda';
 
   const modalesCompartidos = (
     <>
@@ -743,7 +753,7 @@ export function App() {
           accept=".edu,.txt"
           onChange={importarArchivo}
           className="sr-only"
-          aria-label="Importar archivo .edu"
+          aria-label="Abrir archivo de código"
         />
 
         {/* CUERPO DEL WORKBENCH: [Carril Scratch + Flyout] | [Editor + Salida] | [Drawer] | [Dock] */}
@@ -769,7 +779,7 @@ export function App() {
             {/* PANEL EDITOR */}
             <section
               className={`wb-pane wb-editor-pane ${vistaMovil === 'editor' ? '' : 'mobile-hidden'}`}
-              aria-label="Editor de código .edu"
+              aria-label="Editor de código de Chispa"
             >
               <div className="wb-pane-header">
                 <div className="tab-strip" role="region" aria-label="Pestañas de archivos">
@@ -887,8 +897,8 @@ export function App() {
                     type="button"
                     className="ide-icon-btn hide-narrow"
                     onClick={formatearActual}
-                    aria-label="Formatear código .edu"
-                    title="Indentar código (Ctrl + Shift + F)"
+                    aria-label="Ordenar código automáticamente"
+                    title="Ordenar código (Ctrl + Shift + F)"
                   >
                     <Wand2 size={14} aria-hidden="true" />
                   </button>
@@ -911,10 +921,14 @@ export function App() {
                     type="button"
                     className="ide-icon-btn hide-narrow"
                     onClick={() =>
-                      descargarArchivo(pestanaActual.nombre, pestanaActual.codigo, 'text/plain;charset=utf-8')
+                      descargarArchivo(
+                        `${pestanaActual.nombre.replace(/\.edu$/i, '')}.txt`,
+                        pestanaActual.codigo,
+                        'text/plain;charset=utf-8',
+                      )
                     }
-                    aria-label="Descargar archivo .edu"
-                    title="Descargar .edu"
+                    aria-label="Descargar código"
+                    title="Guardar código en tu dispositivo"
                   >
                     <Download size={14} aria-hidden="true" />
                   </button>
@@ -1219,31 +1233,43 @@ export function App() {
                 </div>
               )}
 
-              {/* Cajitas de memoria acopladas abajo */}
-              <div className="memory-dock" aria-label="Cajitas de memoria en vivo">
+              {/* Cajitas de memoria acopladas abajo (formato amigable para niños) */}
+              <div className="memory-dock" aria-label="Tus cajitas guardadas en vivo">
                 <div className="memory-dock-head">
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <Box size={12} aria-hidden="true" /> Memoria ({variables.length})
+                    <Box size={12} aria-hidden="true" /> Tus cajitas ({variables.length})
                   </span>
-                  <span className="mono">Pila: {pilaLlamadas.join(' → ')}</span>
+                  {pilaLlamadas.length > 1 && (
+                    <span className="mono">Receta: {pilaLlamadas.join(' → ')}</span>
+                  )}
                 </div>
                 {variables.length === 0 ? (
                   <span style={{ fontSize: '0.74rem', color: 'var(--ink-muted)' }}>
-                    Sin variables activas todavía.
+                    Cuando crees variables, aparecerán aquí como cajitas vivas.
                   </span>
                 ) : (
                   <div ref={wbMemAnimRef} className="memory-chips">
-                    {variables.map((v) => (
-                      <span
-                        key={v.idInterno}
-                        className={`mem-chip ${v.cambioReciente ? 'changed' : ''}`}
-                      >
-                        <span className="mem-chip-name">{v.nombre}</span>
-                        <span>=</span>
-                        <span className="mem-chip-val">{v.valor}</span>
-                        <span className="mem-chip-type">({v.tipo})</span>
-                      </span>
-                    ))}
+                    {variables.map((v) => {
+                      const badge =
+                        v.tipo === 'numero'
+                          ? '123'
+                          : v.tipo === 'texto'
+                            ? 'ABC'
+                            : v.tipo === 'logico'
+                              ? 'SÍ/NO'
+                              : 'vacía';
+                      return (
+                        <span
+                          key={v.idInterno}
+                          className={`mem-chip ${v.cambioReciente ? 'changed' : ''}`}
+                        >
+                          <span className="mem-chip-badge">{badge}</span>
+                          <span className="mem-chip-name">{v.nombre}</span>
+                          <span>=</span>
+                          <span className="mem-chip-val">{v.valor}</span>
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1266,7 +1292,11 @@ export function App() {
             onAbrirCodigoNuevo={(nombre, codigo) => abrirNuevaPestana(nombre, codigo)}
             onImportarArchivo={() => fileInputRef.current?.click()}
             onExportarEdu={() =>
-              descargarArchivo(pestanaActual.nombre, pestanaActual.codigo, 'text/plain;charset=utf-8')
+              descargarArchivo(
+                `${pestanaActual.nombre.replace(/\.edu$/i, '')}.txt`,
+                pestanaActual.codigo,
+                'text/plain;charset=utf-8',
+              )
             }
             historial={historialPestana}
             onGuardarInstantanea={() => guardarInstantanea('Guardado manual')}
@@ -1275,7 +1305,7 @@ export function App() {
             mobileVisible={vistaMovil === 'misiones'}
           />
 
-          {/* DOCK VERTICAL DERECHO (46px EN DESKTOP — ESTILO GOJS.APP/APP/) */}
+          {/* DOCK VERTICAL DERECHO CON ETIQUETAS CLARAS PARA NIÑOS */}
           <nav className="wb-dock" aria-label="Herramientas del entorno">
             <div className="dock-group">
               <button
@@ -1285,10 +1315,11 @@ export function App() {
                   detenerEjecucion();
                   setVistaApp('inicio');
                 }}
-                aria-label="Página principal"
+                aria-label="Volver a la página principal"
                 title="Volver a la página principal"
               >
-                <Home size={18} aria-hidden="true" />
+                <Home size={16} aria-hidden="true" />
+                <span className="dock-btn-label">Inicio</span>
               </button>
 
               <button
@@ -1299,7 +1330,8 @@ export function App() {
                 aria-label="Juegos 2D y proyectos"
                 title="Juegos 2D y archivos"
               >
-                <Gamepad2 size={18} aria-hidden="true" />
+                <Gamepad2 size={16} aria-hidden="true" />
+                <span className="dock-btn-label">Juegos</span>
               </button>
 
               <button
@@ -1308,9 +1340,10 @@ export function App() {
                 aria-pressed={panelDerecho === 'misiones'}
                 onClick={() => alternarPanelDerecho('misiones')}
                 aria-label="Misiones educativas"
-                title="Misiones guiadas"
+                title="Retos y XP"
               >
-                <Trophy size={18} aria-hidden="true" />
+                <Trophy size={16} aria-hidden="true" />
+                <span className="dock-btn-label">Retos</span>
                 {misionesCompletadas.length > 0 && <span className="dock-dot-badge" aria-hidden="true" />}
               </button>
 
@@ -1322,7 +1355,8 @@ export function App() {
                 aria-label="Guía rápida de bloques"
                 title="Guía de bloques"
               >
-                <BookOpen size={18} aria-hidden="true" />
+                <BookOpen size={16} aria-hidden="true" />
+                <span className="dock-btn-label">Guía</span>
               </button>
 
               <button
@@ -1330,10 +1364,11 @@ export function App() {
                 className="dock-btn"
                 aria-pressed={panelDerecho === 'historial'}
                 onClick={() => alternarPanelDerecho('historial')}
-                aria-label="Historial de versiones"
-                title="Historial de instantáneas"
+                aria-label="Copias guardadas"
+                title="Copias guardadas"
               >
-                <History size={18} aria-hidden="true" />
+                <History size={16} aria-hidden="true" />
+                <span className="dock-btn-label">Copias</span>
               </button>
             </div>
 
@@ -1343,9 +1378,10 @@ export function App() {
                 className="dock-btn"
                 onClick={() => setComandosAbiertos(true)}
                 aria-label="Paleta de comandos (Ctrl+K)"
-                title="Paleta rápida (Ctrl + K)"
+                title="Buscar rápido (Ctrl + K)"
               >
-                <Search size={18} aria-hidden="true" />
+                <Search size={16} aria-hidden="true" />
+                <span className="dock-btn-label">Buscar</span>
               </button>
 
               <button
@@ -1355,7 +1391,8 @@ export function App() {
                 aria-label={`Galería de ${TEMAS_CATALOGO.length} temas`}
                 title={`Temas (${temaMeta.nombre})`}
               >
-                <Palette size={18} aria-hidden="true" />
+                <Palette size={16} aria-hidden="true" />
+                <span className="dock-btn-label">Temas</span>
               </button>
 
               <button
@@ -1365,7 +1402,8 @@ export function App() {
                 aria-label="Ajustes"
                 title="Ajustes y accesibilidad"
               >
-                <SlidersHorizontal size={18} aria-hidden="true" />
+                <SlidersHorizontal size={16} aria-hidden="true" />
+                <span className="dock-btn-label">Ajustes</span>
               </button>
             </div>
           </nav>
