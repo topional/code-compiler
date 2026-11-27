@@ -1,6 +1,6 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { motion } from 'motion/react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
   Blocks,
@@ -27,7 +27,7 @@ import { ejecutarIntermedio } from '../engine/interprete';
 import type { VariableMemoria } from '../engine/types';
 import { ChispaBrandMark, ChispaMascota } from './ChispaLogo';
 import { InteractiveShaderBg, type ModoShader } from './InteractiveShaderBg';
-import { OverlayScrollbar } from './OverlayScrollbar';
+import { ContainerOverlayScrollbar, OverlayScrollbar } from './OverlayScrollbar';
 import {
   AnimatedNumber,
   KineticLetterStage,
@@ -234,6 +234,26 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   const [outputAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 200 });
   const [chatAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 220 });
   const [gridAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 260 });
+
+  const miniEditorRef = useRef<HTMLTextAreaElement | null>(null);
+  const runnerOutRef = useRef<HTMLDivElement | null>(null);
+  const chatMsgRef = useRef<HTMLDivElement | null>(null);
+
+  const setRunnerOutNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      outputAnimRef(node);
+      runnerOutRef.current = node;
+    },
+    [outputAnimRef],
+  );
+
+  const setChatMsgNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      chatAnimRef(node);
+      chatMsgRef.current = node;
+    },
+    [chatAnimRef],
+  );
 
   const temaMeta = obtenerTema(tema);
   const compilacionDemo = useMemo(() => compilarEdu(codigoDemo, 'intermedio'), [codigoDemo]);
@@ -550,14 +570,18 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                     <label htmlFor="lp-mini-editor" className="sr-only">
                       Editor interactivo de código
                     </label>
-                    <textarea
-                      id="lp-mini-editor"
-                      className="lp-hero-textarea"
-                      value={codigoDemo}
-                      onChange={(e) => setCodigoDemo(e.target.value)}
-                      spellCheck={false}
-                      aria-label="Editor interactivo de código"
-                    />
+                    <div className="overlay-scroll-host">
+                      <textarea
+                        ref={miniEditorRef}
+                        id="lp-mini-editor"
+                        className="lp-hero-textarea"
+                        value={codigoDemo}
+                        onChange={(e) => setCodigoDemo(e.target.value)}
+                        spellCheck={false}
+                        aria-label="Editor interactivo de código"
+                      />
+                      <ContainerOverlayScrollbar targetRef={miniEditorRef} />
+                    </div>
 
                     <div className="lp-runner-out-head">
                       <span>Salida en vivo</span>
@@ -573,31 +597,34 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       </span>
                     </div>
 
-                    <div
-                      ref={outputAnimRef}
-                      className="lp-runner-out"
-                      tabIndex={0}
-                      aria-label="Resultado del compilador"
-                    >
-                      {compilacionDemo.diagnosticos.length > 0
-                        ? compilacionDemo.diagnosticos.map((d, i) => (
-                            <div
-                              key={`e-${i}`}
-                              className="lp-out-row"
-                              style={{ borderLeftColor: 'var(--err)' }}
-                            >
-                              <span className="lp-out-ln">L{d.linea ?? '?'}</span>
-                              <span className="lp-out-val">
-                                [{d.etapa}] {d.mensaje}
-                              </span>
-                            </div>
-                          ))
-                        : salidasDemo.map((s) => (
-                            <div key={s.id} className="lp-out-row">
-                              <span className="lp-out-ln">L{s.linea ?? '·'}</span>
-                              <span className="lp-out-val">{s.texto}</span>
-                            </div>
-                          ))}
+                    <div className="overlay-scroll-host">
+                      <div
+                        ref={setRunnerOutNode}
+                        className="lp-runner-out"
+                        tabIndex={0}
+                        aria-label="Resultado del compilador"
+                      >
+                        {compilacionDemo.diagnosticos.length > 0
+                          ? compilacionDemo.diagnosticos.map((d, i) => (
+                              <div
+                                key={`e-${i}`}
+                                className="lp-out-row"
+                                style={{ borderLeftColor: 'var(--err)' }}
+                              >
+                                <span className="lp-out-ln">L{d.linea ?? '?'}</span>
+                                <span className="lp-out-val">
+                                  [{d.etapa}] {d.mensaje}
+                                </span>
+                              </div>
+                            ))
+                          : salidasDemo.map((s) => (
+                              <div key={s.id} className="lp-out-row">
+                                <span className="lp-out-ln">L{s.linea ?? '·'}</span>
+                                <span className="lp-out-val">{s.texto}</span>
+                              </div>
+                            ))}
+                      </div>
+                      <ContainerOverlayScrollbar targetRef={runnerOutRef} />
                     </div>
 
                     <div className="lp-runner-foot">
@@ -648,32 +675,35 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       ))}
                     </div>
 
-                    <div
-                      ref={chatAnimRef}
-                      className="lp-chat-messages"
-                      tabIndex={0}
-                      aria-label="Conversación con Chispa"
-                    >
-                      {mensajesChat.map((m) => (
-                        <div key={m.id} className={`lp-chat-msg is-${m.rol}`}>
-                          <p>{m.texto}</p>
-                          {m.snippet && (
-                            <div className="lp-chat-snippet">
-                              <pre>{m.snippet.codigo}</pre>
-                              <button
-                                type="button"
-                                className="lp-cta-primary lp-cta-xs"
-                                onClick={() =>
-                                  onEntrarConCodigo(m.snippet!.nombre, m.snippet!.codigo)
-                                }
-                              >
-                                <Play size={11} aria-hidden="true" />
-                                <span>Abrir en Code Compiler</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                    <div className="overlay-scroll-host is-flex">
+                      <div
+                        ref={setChatMsgNode}
+                        className="lp-chat-messages"
+                        tabIndex={0}
+                        aria-label="Conversación con Chispa"
+                      >
+                        {mensajesChat.map((m) => (
+                          <div key={m.id} className={`lp-chat-msg is-${m.rol}`}>
+                            <p>{m.texto}</p>
+                            {m.snippet && (
+                              <div className="lp-chat-snippet">
+                                <pre>{m.snippet.codigo}</pre>
+                                <button
+                                  type="button"
+                                  className="lp-cta-primary lp-cta-xs"
+                                  onClick={() =>
+                                    onEntrarConCodigo(m.snippet!.nombre, m.snippet!.codigo)
+                                  }
+                                >
+                                  <Play size={11} aria-hidden="true" />
+                                  <span>Abrir en Code Compiler</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <ContainerOverlayScrollbar targetRef={chatMsgRef} />
                     </div>
 
                     <form

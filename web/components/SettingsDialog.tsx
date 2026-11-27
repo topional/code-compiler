@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Palette, X } from 'lucide-react';
 
 import { obtenerTema, TEMAS_CATALOGO, type TemaId } from '../data/temas';
+import { ContainerOverlayScrollbar } from './OverlayScrollbar';
 
 export type EscalaTexto = 'small' | 'normal' | 'large';
 
@@ -37,6 +38,7 @@ export function SettingsDialog({
   onCambiarUrlApi,
 }: SettingsDialogProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const temaMeta = obtenerTema(tema);
 
   useEffect(() => {
@@ -73,7 +75,8 @@ export function SettingsDialog({
         </button>
       </div>
 
-      <div className="dialog-body">
+      <div className="overlay-scroll-host">
+        <div ref={bodyRef} className="dialog-body">
         <div className="setting-group">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <label htmlFor="settings-theme-select" className="setting-label">
@@ -189,6 +192,8 @@ export function SettingsDialog({
             </div>
           )}
         </div>
+        </div>
+        <ContainerOverlayScrollbar targetRef={bodyRef} />
       </div>
     </dialog>
   );

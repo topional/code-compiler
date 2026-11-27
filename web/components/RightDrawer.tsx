@@ -8,7 +8,7 @@
  */
 
 import Fuse from 'fuse.js';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Award,
   BookOpen,
@@ -33,6 +33,7 @@ import { BLOQUES_EDU } from '../data/bloques';
 import { EJEMPLOS_EDU } from '../data/ejemplos';
 import { MISIONES_EDU, type MisionEdu } from '../data/misiones';
 import type { NodoArbolVisual, ResultadoCompilacion } from '../engine/types';
+import { ContainerOverlayScrollbar } from './OverlayScrollbar';
 
 export type PanelDerechoTipo = 'misiones' | 'rayosx' | 'guia' | 'ejemplos' | 'historial' | null;
 
@@ -108,6 +109,7 @@ export function RightDrawer({
   mobileVisible = false,
 }: RightDrawerProps) {
   const [subRayosX, setSubRayosX] = useState<'tokens' | 'arbol' | 'simbolos' | 'ir'>('tokens');
+  const drawerScrollRef = useRef<HTMLDivElement | null>(null);
   const [busquedaGuia, setBusquedaGuia] = useState('');
 
   const fuseGuia = useMemo(
@@ -187,9 +189,10 @@ export function RightDrawer({
         </button>
       </div>
 
+      <div className="overlay-scroll-host is-flex">
       {/* 1. MISIONES (estilo Codédex al lado del código) */}
       {panel === 'misiones' && (
-        <div className="drawer-scroll">
+        <div ref={drawerScrollRef} className="drawer-scroll">
           <div className="drawer-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <strong style={{ fontSize: '0.84rem' }}>Progreso de aventura</strong>
@@ -290,7 +293,7 @@ export function RightDrawer({
 
       {/* 2. RAYOS X DEL COMPILADOR */}
       {panel === 'rayosx' && (
-        <div className="drawer-scroll">
+        <div ref={drawerScrollRef} className="drawer-scroll">
           <div className="sub-tabs-row" role="group" aria-label="Etapa del compilador">
             {(
               [
@@ -426,7 +429,7 @@ export function RightDrawer({
 
       {/* 3. GUÍA VISUAL SCRATCH <-> .EDU CON FUSE.JS */}
       {panel === 'guia' && (
-        <div className="drawer-scroll">
+        <div ref={drawerScrollRef} className="drawer-scroll">
           <div style={{ position: 'relative' }}>
             <label htmlFor="drawer-guide-search" className="sr-only">
               Buscar comando en la guía .edu
@@ -485,7 +488,7 @@ export function RightDrawer({
 
       {/* 4. EJEMPLOS OFICIALES Y ARCHIVOS */}
       {panel === 'ejemplos' && (
-        <div className="drawer-scroll">
+        <div ref={drawerScrollRef} className="drawer-scroll">
           <div className="drawer-card">
             <strong style={{ fontSize: '0.84rem' }}>Archivos locales</strong>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -530,7 +533,7 @@ export function RightDrawer({
 
       {/* 5. HISTORIAL DE INSTANTÁNEAS */}
       {panel === 'historial' && (
-        <div className="drawer-scroll">
+        <div ref={drawerScrollRef} className="drawer-scroll">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
               {nombrePestanaActual}
@@ -566,6 +569,8 @@ export function RightDrawer({
           )}
         </div>
       )}
+        <ContainerOverlayScrollbar key={panel} targetRef={drawerScrollRef} />
+      </div>
     </aside>
   );
 }

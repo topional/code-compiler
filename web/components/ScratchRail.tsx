@@ -3,10 +3,12 @@
  * Cada ficha muestra cápsulas visuales de parámetros y se inserta al cursor con clic o arrastre.
  */
 
+import { useRef } from 'react';
 import { X } from 'lucide-react';
 
 import { BLOQUES_EDU, CATEGORIAS_BLOQUE, type BloqueEdu, type CategoriaBloque } from '../data/bloques';
 import { ChispaLogo } from './ChispaLogo';
+import { ContainerOverlayScrollbar } from './OverlayScrollbar';
 
 interface ScratchRailProps {
   categoriaActiva: CategoriaBloque | null;
@@ -86,6 +88,8 @@ export function ScratchRail({
   onAbrirEjemplos,
   mobileVisible = false,
 }: ScratchRailProps) {
+  const flyoutBodyRef = useRef<HTMLDivElement | null>(null);
+
   const catMeta = categoriaActiva
     ? CATEGORIAS_BLOQUE.find((c) => c.id === categoriaActiva) ?? null
     : null;
@@ -163,41 +167,44 @@ export function ScratchRail({
             )}
           </div>
 
-          <div className="blocks-flyout-body">
-            {/* Filtro rápido en móvil donde el carril izquierdo está oculto */}
-            {mobileVisible && (
-              <div className="sub-tabs-row" role="group" aria-label="Filtrar categoría de bloques">
-                <button
-                  type="button"
-                  className="sub-pill"
-                  aria-pressed={categoriaActiva === null}
-                  onClick={() => onToggleCategoria(null)}
-                >
-                  Todos
-                </button>
-                {CATEGORIAS_BLOQUE.map((c) => (
+          <div className="overlay-scroll-host is-flex">
+            <div ref={flyoutBodyRef} className="blocks-flyout-body">
+              {/* Filtro rápido en móvil donde el carril izquierdo está oculto */}
+              {mobileVisible && (
+                <div className="sub-tabs-row" role="group" aria-label="Filtrar categoría de bloques">
                   <button
-                    key={c.id}
                     type="button"
                     className="sub-pill"
-                    aria-pressed={categoriaActiva === c.id}
-                    onClick={() => onToggleCategoria(c.id)}
+                    aria-pressed={categoriaActiva === null}
+                    onClick={() => onToggleCategoria(null)}
                   >
-                    {CAT_VISUAL[c.id].corto}
+                    Todos
                   </button>
-                ))}
-              </div>
-            )}
+                  {CATEGORIAS_BLOQUE.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="sub-pill"
+                      aria-pressed={categoriaActiva === c.id}
+                      onClick={() => onToggleCategoria(c.id)}
+                    >
+                      {CAT_VISUAL[c.id].corto}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            <p className="blocks-flyout-hint">
-              {catMeta
-                ? `${catMeta.resumen} Haz clic o arrastra una ficha al editor.`
-                : 'Haz clic o arrastra cualquier ficha para insertarla en tu programa.'}
-            </p>
+              <p className="blocks-flyout-hint">
+                {catMeta
+                  ? `${catMeta.resumen} Haz clic o arrastra una ficha al editor.`
+                  : 'Haz clic o arrastra cualquier ficha para insertarla en tu programa.'}
+              </p>
 
-            {bloques.map((b) => (
-              <PuzzleBlockCard key={b.id} bloque={b} onInsertar={onInsertarBloque} />
-            ))}
+              {bloques.map((b) => (
+                <PuzzleBlockCard key={b.id} bloque={b} onInsertar={onInsertarBloque} />
+              ))}
+            </div>
+            <ContainerOverlayScrollbar targetRef={flyoutBodyRef} />
           </div>
         </aside>
       )}

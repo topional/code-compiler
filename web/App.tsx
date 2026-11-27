@@ -1,7 +1,7 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import confetti from 'canvas-confetti';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Blocks,
   BookOpen,
@@ -37,6 +37,7 @@ import { ChispaMascota } from './components/ChispaLogo';
 import { CommandPalette } from './components/CommandPalette';
 import { EduEditor, type EduEditorHandle } from './components/EduEditor';
 import { LandingHome } from './components/LandingHome';
+import { ContainerOverlayScrollbar } from './components/OverlayScrollbar';
 import {
   RightDrawer,
   type InstantaneaCodigo,
@@ -121,7 +122,15 @@ export function App() {
   const editorRef = useRef<EduEditorHandle | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const outputEndRef = useRef<HTMLDivElement | null>(null);
+  const wbOutputScrollRef = useRef<HTMLDivElement | null>(null);
   const [wbOutputAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 180 });
+  const setWbOutputNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      wbOutputAnimRef(node);
+      wbOutputScrollRef.current = node;
+    },
+    [wbOutputAnimRef],
+  );
   const [wbMemAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 180 });
 
   // Preferencias globales
@@ -951,47 +960,50 @@ export function App() {
               </div>
 
               {/* Salida anclada por número de línea (estilo GoJS.app) */}
-              <div
-                ref={wbOutputAnimRef}
-                className="output-stream"
-                role="log"
-                aria-live="polite"
-                aria-label="Consola de salida"
-              >
-                {salidas.length === 0 && !preguntaPendiente && todosDiagnosticos.length === 0 && (
-                  <p className="output-empty">
-                    Pulsa <strong>Ejecutar</strong> (`Ctrl + Enter`) para ver cada salida alineada
-                    con su número de línea.
-                  </p>
-                )}
+              <div className="overlay-scroll-host is-flex">
+                <div
+                  ref={setWbOutputNode}
+                  className="output-stream"
+                  role="log"
+                  aria-live="polite"
+                  aria-label="Consola de salida"
+                >
+                  {salidas.length === 0 && !preguntaPendiente && todosDiagnosticos.length === 0 && (
+                    <p className="output-empty">
+                      Pulsa <strong>Ejecutar</strong> (`Ctrl + Enter`) para ver cada salida alineada
+                      con su número de línea.
+                    </p>
+                  )}
 
-                {salidas.map((item) => {
-                  const valClass = item.clase === 'salida' ? clasificarValorSalida(item.texto) : '';
-                  const rowClass =
-                    item.clase === 'salida'
-                      ? valClass
-                      : `is-${item.clase}`;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`output-row ${rowClass}`}
-                      onMouseEnter={() => setHoverLine(item.linea)}
-                      onMouseLeave={() => setHoverLine(null)}
-                      onClick={() => {
-                        if (item.linea) editorRef.current?.focusLine(item.linea, 1);
-                      }}
-                    >
-                      <span className="output-ln">{item.linea ?? '·'}</span>
-                      <span className="output-val">
-                        {item.clase === 'salida' && valClass === ''
-                          ? `"${item.texto}"`
-                          : item.texto}
-                      </span>
-                    </button>
-                  );
-                })}
-                <div ref={outputEndRef} />
+                  {salidas.map((item) => {
+                    const valClass = item.clase === 'salida' ? clasificarValorSalida(item.texto) : '';
+                    const rowClass =
+                      item.clase === 'salida'
+                        ? valClass
+                        : `is-${item.clase}`;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={`output-row ${rowClass}`}
+                        onMouseEnter={() => setHoverLine(item.linea)}
+                        onMouseLeave={() => setHoverLine(null)}
+                        onClick={() => {
+                          if (item.linea) editorRef.current?.focusLine(item.linea, 1);
+                        }}
+                      >
+                        <span className="output-ln">{item.linea ?? '·'}</span>
+                        <span className="output-val">
+                          {item.clase === 'salida' && valClass === ''
+                            ? `"${item.texto}"`
+                            : item.texto}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  <div ref={outputEndRef} />
+                </div>
+                <ContainerOverlayScrollbar targetRef={wbOutputScrollRef} />
               </div>
 
               {/* Entrada interactiva para `preguntar` */}

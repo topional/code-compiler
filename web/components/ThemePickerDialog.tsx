@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Check, Palette, X } from 'lucide-react';
 
 import { TEMAS_CATALOGO, type TemaId } from '../data/temas';
+import { ContainerOverlayScrollbar } from './OverlayScrollbar';
 
 interface ThemePickerDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ export function ThemePickerDialog({
   onSeleccionarTema,
 }: ThemePickerDialogProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = dialogRef.current;
@@ -66,7 +68,8 @@ export function ThemePickerDialog({
         </button>
       </div>
 
-      <div className="dialog-body">
+      <div className="overlay-scroll-host">
+        <div ref={bodyRef} className="dialog-body">
         {GRUPOS.map((grupo) => {
           const items = TEMAS_CATALOGO.filter((t) => t.grupo === grupo);
           return (
@@ -124,6 +127,8 @@ export function ThemePickerDialog({
             </div>
           );
         })}
+        </div>
+        <ContainerOverlayScrollbar targetRef={bodyRef} />
       </div>
     </dialog>
   );

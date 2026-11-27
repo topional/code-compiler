@@ -17,6 +17,7 @@ import {
 import { EJEMPLOS_EDU } from '../data/ejemplos';
 import { MISIONES_EDU, type MisionEdu } from '../data/misiones';
 import { TEMAS_CATALOGO, type TemaId } from '../data/temas';
+import { ContainerOverlayScrollbar } from './OverlayScrollbar';
 import type { PanelDerechoTipo } from './RightDrawer';
 
 interface AccionComando {
@@ -50,6 +51,7 @@ export function CommandPalette({
 }: CommandPaletteProps) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -204,33 +206,42 @@ export function CommandPalette({
         </button>
       </div>
 
-      <div className="cmd-list" role="region" aria-label="Resultados de comandos">
-        {filtradas.length === 0 ? (
-          <p style={{ padding: 16, margin: 0, textAlign: 'center', color: 'var(--ink-muted)' }}>
-            No se encontraron acciones para «{query}».
-          </p>
-        ) : (
-          filtradas.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="cmd-item"
-              onClick={() => {
-                item.ejecutar();
-                onClose();
-              }}
-            >
-              <span className="cmd-item-icon">{iconoDe(item)}</span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <strong style={{ display: 'block', fontSize: '0.86rem' }}>{item.titulo}</strong>
-                <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--ink-muted)' }}>
-                  {item.subtitulo}
+      <div className="overlay-scroll-host">
+        <div
+          ref={listRef}
+          className="cmd-list"
+          style={{ overscrollBehavior: 'contain' }}
+          role="region"
+          aria-label="Resultados de comandos"
+        >
+          {filtradas.length === 0 ? (
+            <p style={{ padding: 16, margin: 0, textAlign: 'center', color: 'var(--ink-muted)' }}>
+              No se encontraron acciones para «{query}».
+            </p>
+          ) : (
+            filtradas.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="cmd-item"
+                onClick={() => {
+                  item.ejecutar();
+                  onClose();
+                }}
+              >
+                <span className="cmd-item-icon">{iconoDe(item)}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <strong style={{ display: 'block', fontSize: '0.86rem' }}>{item.titulo}</strong>
+                  <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--ink-muted)' }}>
+                    {item.subtitulo}
+                  </span>
                 </span>
-              </span>
-              <span className="pill-mini">{item.grupo}</span>
-            </button>
-          ))
-        )}
+                <span className="pill-mini">{item.grupo}</span>
+              </button>
+            ))
+          )}
+        </div>
+        <ContainerOverlayScrollbar targetRef={listRef} />
       </div>
     </dialog>
   );
