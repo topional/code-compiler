@@ -12,6 +12,7 @@ from .diagnostico import Diagnostico
 from .generador import ErrorGeneracion, GeneradorCodigo
 from .instruccion import Instruccion
 from .semantico import AnalizadorSemantico
+from .tabla_simbolos import Simbolo
 
 
 PREFIJOS = {
@@ -37,9 +38,10 @@ class Compilacion:
     arbol: EducativoParser.ProgramaContext | None = None
     instrucciones: list[Instruccion] | None = None
     diagnosticos: list[Diagnostico] = field(default_factory=list)
+    simbolos: list[tuple[Simbolo, bool]] = field(default_factory=list)
 
 
-def compilar(codigo, *, etapa="intermedio"):
+def compilar(codigo, *, etapa="intermedio", registrar_simbolos=False):
     """Analiza código fuente hasta la etapa indicada y devuelve sus resultados."""
     if etapa not in PREFIJOS:
         raise ValueError(f"Etapa desconocida: {etapa}")
@@ -60,9 +62,11 @@ def compilar(codigo, *, etapa="intermedio"):
     if resultado.diagnosticos or etapa == "gramatica":
         return resultado
 
-    semantico = AnalizadorSemantico()
+    semantico = AnalizadorSemantico(registrar_simbolos=registrar_simbolos)
     semantico.visit(resultado.arbol)
     resultado.diagnosticos.extend(semantico.errores)
+    if registrar_simbolos:
+        resultado.simbolos = [simbolo for _, simbolo in sorted(semantico.simbolos.items())]
     if resultado.diagnosticos or etapa == "semantica":
         return resultado
 
