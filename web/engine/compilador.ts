@@ -319,33 +319,232 @@ export function obtenerPistaPedagogica(diag: Diagnostico, codigoFuente = ''): Pi
 }
 
 /**
- * Cliente opcional para conectar con la API Python FastAPI local (`POST /compilar`).
+ * Cliente para compilar con la API Python FastAPI (`POST /compilar`).
  */
 export async function compilarConApiRemota(
   baseUrl: string,
   codigo: string,
+  signal?: AbortSignal,
 ): Promise<{ intermedio: ProgramaIntermedio | null; diagnosticos: Diagnostico[] }> {
   const url = `${baseUrl.replace(/\/$/, '')}/compilar`;
   const resp = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ codigo }),
+    signal,
   });
-  const data = (await resp.json()) as {
+
+  let data: {
     version?: 1;
     instrucciones?: ProgramaIntermedio['instrucciones'];
     diagnosticos?: Diagnostico[];
-  };
-  if (resp.ok && data.version === 1 && Array.isArray(data.instrucciones)) {
+  } | null = null;
+  try {
+    data = (await resp.json()) as {
+      version?: 1;
+      instrucciones?: ProgramaIntermedio['instrucciones'];
+      diagnosticos?: Diagnostico[];
+    };
+  } catch {
+    data = null;
+  }
+
+  if (resp.ok && data?.version === 1 && Array.isArray(data.instrucciones)) {
     return {
       intermedio: { version: 1, instrucciones: data.instrucciones },
       diagnosticos: [],
     };
   }
+  const mensajeFallback =
+    resp.status === 403
+      ? 'El servidor rechazó el origen web (403). Verifica EDU_ORIGENES en la API Python.'
+      : `La API Python respondió con estado ${resp.status}.`;
   return {
     intermedio: null,
-    diagnosticos: data.diagnosticos ?? [
-      { etapa: 'servicio', mensaje: `La API respondió con estado ${resp.status}.`, linea: null, columna: null },
+    diagnosticos: data?.diagnosticos ?? [
+      { etapa: 'servicio', mensaje: mensajeFallback, linea: null, columna: null },
     ],
   };
+}
+
+export function construirUrlWebSocketApi(baseUrl: string): string {
+  const limpia = baseUrl.trim().replace(/\/$/, '');
+  if (/^wss?:\/\//i.test(limpia)) return `${limpia}/ejecutar`;
+  if (/^https:\/\//i.test(limpia)) return `${limpia.replace(/^https:/i, 'wss:')}/ejecutar`;
+  if (/^http:\/\//i.test(limpia)) return `${limpia.replace(/^http:/i, 'ws:')}/ejecutar`;
+  return `wss://${limpia}/ejecutar`;
+}
+
+export interface EventoEjecucionRemota {
+  tipo: 'salida' | 'pregunta' | 'entrada_invalida' | 'fin' | 'error';
+  texto?: string;
+  mensaje?: string;
+  duracionMs?: number;
+  diagnosticos?: Diagnostico[];
+}
+
+/**
+ * Ejecuta el código intermedio directamente en el intérprete Python remoto vía WebSocket (`/ejecutar`)
+ * siguiendo el contrato de `docs/api.md`.
+ */
+export function ejecutarConApiRemota(
+  baseUrl: string,
+  intermedio: ProgramaIntermedio,
+  opciones: {
+    signal?: AbortSignal;
+    onEvento: (ev: EventoEjecucionRemota) => void;
+    leerEntrada: (mensaje: string) => Promise<string | null>;
+  },
+): Promise<void> {
+  return new Promise((resolve) => {
+    if (opciones.signal?.aborted) {
+      resolve();
+      return;
+    }
+
+    const wsUrl = construirUrlWebSocketApi(baseUrl);
+    const t0 = performance.now();
+    let terminado = false;
+    let recibioFinal = false;
+    let ws: WebSocket;
+
+    const finalizar = () => {
+      if (terminado) return;
+      terminado = true;
+      opciones.signal?.removeEventListener('abort', onAbort);
+      resolve();
+    };
+
+    const onAbort = () => {
+      try {
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+          ws.close();
+        }
+      } catch {
+        // ignorar cierre
+      }
+      finalizar();
+    };
+
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch {
+      opciones.onEvento({
+        tipo: 'error',
+        diagnosticos: [
+          {
+            etapa: 'servicio',
+            mensaje: `No se pudo abrir la conexión WebSocket hacia ${wsUrl}.`,
+            linea: null,
+            columna: null,
+          },
+        ],
+      });
+      finalizar();
+      return;
+    }
+
+    opciones.signal?.addEventListener('abort', onAbort, { once: true });
+
+    ws.addEventListener('open', () => {
+      if (opciones.signal?.aborted) {
+        onAbort();
+        return;
+      }
+      ws.send(JSON.stringify({ tipo: 'iniciar', intermedio }));
+    });
+
+    ws.addEventListener('message', (event) => {
+      if (terminado || opciones.signal?.aborted) return;
+      let msg: {
+        tipo?: string;
+        texto?: string;
+        mensaje?: string;
+        diagnosticos?: Diagnostico[];
+      };
+      try {
+        msg = JSON.parse(String(event.data)) as typeof msg;
+      } catch {
+        return;
+      }
+
+      if (msg.tipo === 'salida') {
+        opciones.onEvento({ tipo: 'salida', texto: String(msg.texto ?? '') });
+      } else if (msg.tipo === 'entrada_invalida') {
+        opciones.onEvento({
+          tipo: 'entrada_invalida',
+          mensaje: String(msg.mensaje ?? 'Entrada inválida.'),
+        });
+      } else if (msg.tipo === 'pregunta') {
+        const pregunta = String(msg.mensaje ?? 'Escribe tu respuesta');
+        opciones.onEvento({ tipo: 'pregunta', mensaje: pregunta });
+        void opciones.leerEntrada(pregunta).then((respuesta) => {
+          if (terminado || opciones.signal?.aborted) return;
+          if (respuesta === null) {
+            onAbort();
+            return;
+          }
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ tipo: 'respuesta', texto: respuesta }));
+          }
+        });
+      } else if (msg.tipo === 'fin') {
+        recibioFinal = true;
+        opciones.onEvento({ tipo: 'fin', duracionMs: performance.now() - t0 });
+        finalizar();
+      } else if (msg.tipo === 'error') {
+        recibioFinal = true;
+        opciones.onEvento({
+          tipo: 'error',
+          diagnosticos:
+            Array.isArray(msg.diagnosticos) && msg.diagnosticos.length > 0
+              ? msg.diagnosticos
+              : [
+                  {
+                    etapa: 'ejecucion',
+                    mensaje: 'La ejecución remota en Python terminó con error.',
+                    linea: null,
+                    columna: null,
+                  },
+                ],
+        });
+        finalizar();
+      }
+    });
+
+    ws.addEventListener('error', () => {
+      if (terminado || opciones.signal?.aborted || recibioFinal) return;
+      recibioFinal = true;
+      opciones.onEvento({
+        tipo: 'error',
+        diagnosticos: [
+          {
+            etapa: 'servicio',
+            mensaje: `No se pudo ejecutar por WebSocket en ${wsUrl}. Verifica que la API Python acepte este origen.`,
+            linea: null,
+            columna: null,
+          },
+        ],
+      });
+      finalizar();
+    });
+
+    ws.addEventListener('close', () => {
+      if (terminado || opciones.signal?.aborted) return;
+      if (!recibioFinal) {
+        opciones.onEvento({
+          tipo: 'error',
+          diagnosticos: [
+            {
+              etapa: 'servicio',
+              mensaje: 'La conexión con el intérprete Python se cerró antes de terminar.',
+              linea: null,
+              columna: null,
+            },
+          ],
+        });
+      }
+      finalizar();
+    });
+  });
 }

@@ -1,7 +1,7 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import confetti from 'canvas-confetti';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Blocks,
   BookOpen,
@@ -39,8 +39,12 @@ import {
 import { CodeHelperModal } from './components/CodeHelperModal';
 import { CommandPalette } from './components/CommandPalette';
 import { Divisor } from './components/Divisor';
-import { EduEditor, type EduEditorHandle } from './components/EduEditor';
+import type { EduEditorHandle } from './components/EduEditor';
 import { GameStage2D, textoOtraVez, type EscenaJuego2D } from './components/GameStage2D';
+
+const EduEditor = lazy(() =>
+  import('./components/EduEditor').then((m) => ({ default: m.EduEditor })),
+);
 import { LandingHome } from './components/LandingHome';
 import { ContainerOverlayScrollbar, HorizontalOverlayScrollbar } from './components/OverlayScrollbar';
 import {
@@ -58,6 +62,7 @@ import { obtenerTema, TEMAS_CATALOGO, TEMAS_VALIDOS, type TemaId } from './data/
 import {
   compilarConApiRemota,
   compilarEdu,
+  ejecutarConApiRemota,
   obtenerPistaPedagogica,
 } from './engine/compilador';
 import { formatearCodigoEdu } from './engine/formateador';
@@ -253,9 +258,11 @@ export function App() {
 
   // Motor y ejecución
   const [modoMotor, setModoMotor] = useState<'navegador' | 'api'>('navegador');
-  const [urlApi, setUrlApi] = useState('http://127.0.0.1:8000');
+  const [urlApi, setUrlApi] = useState('https://code-compiler-api.onrender.com');
   const [velocidadMs, setVelocidadMs] = useState(0);
   const [autoRun, setAutoRun] = useState(true);
+  const pestanaActualRef = useRef(pestanaActual);
+  pestanaActualRef.current = pestanaActual;
 
   const [cursorPos, setCursorPos] = useState<{ linea: number; columna: number }>({ linea: 1, columna: 1 });
   const [estadoEjec, setEstadoEjec] = useState<'inactivo' | 'corriendo' | 'pausado' | 'esperando_paso'>('inactivo');
@@ -295,7 +302,18 @@ export function App() {
   );
 
   const todosDiagnosticos =
-    compilacion.diagnosticos.length > 0 ? compilacion.diagnosticos : diagnosticosEjec;
+    modoMotor === 'api'
+      ? diagnosticosEjec.length > 0
+        ? diagnosticosEjec
+        : compilacion.diagnosticos
+      : compilacion.diagnosticos.length > 0
+        ? compilacion.diagnosticos
+        : diagnosticosEjec;
+
+  // Limpia diagnósticos de ejecución al cambiar de pestaña o editar el código
+  useEffect(() => {
+    setDiagnosticosEjec([]);
+  }, [pestanaActual.id, pestanaActual.codigo, modoMotor]);
 
   const lineasError = useMemo(
     () => todosDiagnosticos.map((d) => d.linea).filter((l): l is number => typeof l === 'number'),
@@ -428,6 +446,16 @@ export function App() {
 
   const iniciarEjecucion = async (pasoAPaso: boolean, silencioso = false) => {
     detenerEjecucion();
+    const tabIdEjec = pestanaActual.id;
+    const codigoEjec = pestanaActual.codigo;
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const sigueVigente = () =>
+      !controller.signal.aborted &&
+      pestanaActualRef.current.id === tabIdEjec &&
+      pestanaActualRef.current.codigo === codigoEjec;
+
     setRunSeq((n) => n + 1);
     setSalidas([]);
     setVariables([]);
@@ -443,22 +471,27 @@ export function App() {
 
     let intermedio: ProgramaIntermedio | null = null;
     if (modoMotor === 'api') {
+      setEstadoEjec('corriendo');
       try {
-        const resRemota = await compilarConApiRemota(urlApi, pestanaActual.codigo);
+        const resRemota = await compilarConApiRemota(urlApi, codigoEjec, controller.signal);
+        if (!sigueVigente()) return;
         if (resRemota.diagnosticos.length > 0 || !resRemota.intermedio) {
           setDiagnosticosEjec(resRemota.diagnosticos);
+          setEstadoEjec('inactivo');
           return;
         }
         intermedio = resRemota.intermedio;
-      } catch {
+      } catch (err) {
+        if (!sigueVigente() || (err instanceof Error && err.name === 'AbortError')) return;
         setDiagnosticosEjec([
           {
             etapa: 'servicio',
-            mensaje: `No se pudo conectar con la API Python en ${urlApi}. Cambia a Navegador en Ajustes.`,
+            mensaje: `No se pudo conectar con la API Python en ${urlApi}. Puedes cambiar a Navegador en Ajustes.`,
             linea: null,
             columna: null,
           },
         ]);
+        setEstadoEjec('inactivo');
         return;
       }
     } else {
@@ -466,57 +499,83 @@ export function App() {
       intermedio = compilacion.intermedio;
     }
 
-    const controller = new AbortController();
-    abortRef.current = controller;
     modoPasoRef.current = pasoAPaso;
     pausadoRef.current = false;
     setEstadoEjec(pasoAPaso ? 'esperando_paso' : 'corriendo');
 
-    await ejecutarIntermedio(intermedio, {
-      signal: controller.signal,
-      onEvento: (ev) => {
-        if (ev.tipo === 'salida') agregarSalida('salida', ev.texto, ev.linea);
-        else if (ev.tipo === 'pregunta') agregarSalida('pregunta', ev.mensaje, ev.linea);
-        else if (ev.tipo === 'entrada_invalida') agregarSalida('aviso', ev.mensaje, ev.linea);
-        else if (ev.tipo === 'motivacion') {
-          agregarSalida(
-            'motivacion',
-            ev.modo === 'juego' ? 'Modo juego activado' : 'Modo calculadora activado',
-            ev.linea,
-          );
-        } else if (ev.tipo === 'paso') {
-          setVariables(ev.estado.variables);
-          setPilaLlamadas(ev.estado.pilaLlamadas);
-          setLineaActiva(ev.estado.linea);
-        } else if (ev.tipo === 'fin') {
-          setTiempoUltEjec(Math.max(0.1, ev.duracionMs));
-        } else if (ev.tipo === 'error') {
-          setDiagnosticosEjec(ev.diagnosticos);
-        }
-      },
-      leerEntrada: (mensaje, tipo) =>
-        new Promise<string | null>((resolve) => {
-          setTextoRespuesta('');
-          setPreguntaPendiente({ mensaje, tipo, resolver: resolve });
-        }),
-      esperarPaso: silencioso
-        ? undefined
-        : async () => {
-            if (controller.signal.aborted) return false;
-            if (modoPasoRef.current || pausadoRef.current) {
-              setEstadoEjec(modoPasoRef.current ? 'esperando_paso' : 'pausado');
-              return new Promise<boolean>((resolve) => {
-                pasoResolverRef.current = resolve;
-              });
+    if (modoMotor === 'api' && !pasoAPaso) {
+      await ejecutarConApiRemota(urlApi, intermedio, {
+        signal: controller.signal,
+        onEvento: (ev) => {
+          if (!sigueVigente()) return;
+          if (ev.tipo === 'salida') agregarSalida('salida', ev.texto ?? '', null);
+          else if (ev.tipo === 'pregunta') agregarSalida('pregunta', ev.mensaje ?? '', null);
+          else if (ev.tipo === 'entrada_invalida') agregarSalida('aviso', ev.mensaje ?? '', null);
+          else if (ev.tipo === 'fin') setTiempoUltEjec(Math.max(0.1, ev.duracionMs ?? 0.1));
+          else if (ev.tipo === 'error' && ev.diagnosticos) setDiagnosticosEjec(ev.diagnosticos);
+        },
+        leerEntrada: (mensaje) =>
+          new Promise<string | null>((resolve) => {
+            if (!sigueVigente()) {
+              resolve(null);
+              return;
             }
-            if (velocidadRef.current > 0) {
-              await new Promise((r) => setTimeout(r, velocidadRef.current));
+            setTextoRespuesta('');
+            setPreguntaPendiente({ mensaje, tipo: 'texto', resolver: resolve });
+          }),
+      });
+    } else {
+      await ejecutarIntermedio(intermedio, {
+        signal: controller.signal,
+        onEvento: (ev) => {
+          if (!sigueVigente()) return;
+          if (ev.tipo === 'salida') agregarSalida('salida', ev.texto, ev.linea);
+          else if (ev.tipo === 'pregunta') agregarSalida('pregunta', ev.mensaje, ev.linea);
+          else if (ev.tipo === 'entrada_invalida') agregarSalida('aviso', ev.mensaje, ev.linea);
+          else if (ev.tipo === 'motivacion') {
+            agregarSalida(
+              'motivacion',
+              ev.modo === 'juego' ? 'Modo juego activado' : 'Modo calculadora activado',
+              ev.linea,
+            );
+          } else if (ev.tipo === 'paso') {
+            setVariables(ev.estado.variables);
+            setPilaLlamadas(ev.estado.pilaLlamadas);
+            setLineaActiva(ev.estado.linea);
+          } else if (ev.tipo === 'fin') {
+            setTiempoUltEjec(Math.max(0.1, ev.duracionMs));
+          } else if (ev.tipo === 'error') {
+            setDiagnosticosEjec(ev.diagnosticos);
+          }
+        },
+        leerEntrada: (mensaje, tipo) =>
+          new Promise<string | null>((resolve) => {
+            if (!sigueVigente()) {
+              resolve(null);
+              return;
             }
-            return !controller.signal.aborted;
-          },
-    });
+            setTextoRespuesta('');
+            setPreguntaPendiente({ mensaje, tipo, resolver: resolve });
+          }),
+        esperarPaso: silencioso
+          ? undefined
+          : async () => {
+              if (!sigueVigente()) return false;
+              if (modoPasoRef.current || pausadoRef.current) {
+                setEstadoEjec(modoPasoRef.current ? 'esperando_paso' : 'pausado');
+                return new Promise<boolean>((resolve) => {
+                  pasoResolverRef.current = resolve;
+                });
+              }
+              if (velocidadRef.current > 0) {
+                await new Promise((r) => setTimeout(r, velocidadRef.current));
+              }
+              return sigueVigente();
+            },
+      });
+    }
 
-    if (!controller.signal.aborted) {
+    if (sigueVigente()) {
       setEstadoEjec('inactivo');
       setLineaActiva(null);
     }
@@ -1112,17 +1171,34 @@ mostrar heroe`,
                 </div>
               )}
 
-              <EduEditor
-                ref={editorRef}
-                value={pestanaActual.codigo}
-                onChange={actualizarCodigoActual}
-                activeLine={lineaActiva}
-                hoverLine={hoverLine}
-                errorLines={lineasError}
-                onShortcutRun={() => void iniciarEjecucion(false)}
-                onShortcutFormat={formatearActual}
-                onCursorChange={(linea, columna) => setCursorPos({ linea, columna })}
-              />
+              <Suspense
+                fallback={
+                  <div
+                    className="edu-cm-wrapper"
+                    style={{
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: 'var(--ink-secondary)',
+                      fontSize: '0.86rem',
+                    }}
+                  >
+                    Cargando editor…
+                  </div>
+                }
+              >
+                <EduEditor
+                  ref={editorRef}
+                  docId={pestanaActual.id}
+                  value={pestanaActual.codigo}
+                  onChange={actualizarCodigoActual}
+                  activeLine={lineaActiva}
+                  hoverLine={hoverLine}
+                  errorLines={lineasError}
+                  onShortcutRun={() => void iniciarEjecucion(false)}
+                  onShortcutFormat={formatearActual}
+                  onCursorChange={(linea, columna) => setCursorPos({ linea, columna })}
+                />
+              </Suspense>
             </section>
 
             <Divisor

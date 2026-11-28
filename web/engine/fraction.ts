@@ -62,15 +62,15 @@ export class Fraction {
       return new Fraction(BigInt(left), BigInt(right));
     }
 
-    // Entero o decimal con signo opcional (y notación científica para entradas de usuario)
-    const match = /^([+-]?)(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/.exec(text);
+    // Entero o decimal con signo opcional (incluye .5, -.5, 5. y notación científica como Fraction en Python)
+    const match = /^([+-]?)(?:(\d+)(?:\.(\d*))?|\.(\d+))(?:[eE]([+-]?\d+))?$/.exec(text);
     if (!match) {
       throw new Error(`Número inválido: '${raw}'`);
     }
     const sign = match[1] === '-' ? -1n : 1n;
-    const intPart = match[2];
-    const fracPart = match[3] ?? '';
-    const exp = match[4] ? Number.parseInt(match[4], 10) : 0;
+    const intPart = match[2] ?? '';
+    const fracPart = match[3] ?? match[4] ?? '';
+    const exp = match[5] ? Number.parseInt(match[5], 10) : 0;
 
     if (!Number.isFinite(exp) || Math.abs(exp) > 10000) {
       throw new Error('el literal numérico supera el tamaño admitido.');

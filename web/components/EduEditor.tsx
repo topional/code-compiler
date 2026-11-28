@@ -19,7 +19,7 @@ import {
 } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { HighlightStyle, StreamLanguage, syntaxHighlighting } from '@codemirror/language';
-import { Prec, StateEffect, StateField, type Range } from '@codemirror/state';
+import { EditorState, Prec, StateEffect, StateField, type Extension, type Range } from '@codemirror/state';
 import {
   Decoration,
   type DecorationSet,
@@ -314,6 +314,7 @@ export interface EduEditorHandle {
 }
 
 interface EduEditorProps {
+  docId?: string;
   value: string;
   onChange: (value: string) => void;
   activeLine?: number | null;
@@ -328,6 +329,7 @@ interface EduEditorProps {
 
 export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function EduEditor(
   {
+    docId = 'default',
     value,
     onChange,
     activeLine = null,
@@ -343,6 +345,9 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
 ) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const extensionsRef = useRef<Extension[]>([]);
+  const statesRef = useRef<Map<string, EditorState>>(new Map());
+  const activeDocIdRef = useRef<string>(docId);
   const onChangeRef = useRef(onChange);
   const onRunRef = useRef(onShortcutRun);
   const onFormatRef = useRef(onShortcutFormat);
@@ -356,10 +361,7 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
     const host = hostRef.current;
     if (!host) return;
 
-    const view = new EditorView({
-      doc: value,
-      parent: host,
-      extensions: [
+    const extensions: Extension[] = [
         lineNumbers(),
         highlightActiveLineGutter(),
         highlightActiveLine(),
@@ -444,7 +446,16 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
             onCursorRef.current?.(line.number, head - line.from + 1);
           }
         }),
-      ],
+      ];
+
+    extensionsRef.current = extensions;
+    const initialState = EditorState.create({ doc: value, extensions });
+    statesRef.current.set(docId, initialState);
+    activeDocIdRef.current = docId;
+
+    const view = new EditorView({
+      state: initialState,
+      parent: host,
     });
 
     view.scrollDOM.setAttribute('tabindex', '0');
@@ -452,20 +463,42 @@ export const EduEditor = forwardRef<EduEditorHandle, EduEditorProps>(function Ed
     return () => {
       view.destroy();
       viewRef.current = null;
+      statesRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Cada pestaña mantiene su propio EditorState e historial de Ctrl+Z / Ctrl+Y independiente
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
+
+    if (activeDocIdRef.current !== docId) {
+      statesRef.current.set(activeDocIdRef.current, view.state);
+      const guardado = statesRef.current.get(docId);
+      const nuevoEstado =
+        guardado && guardado.doc.toString() === value
+          ? guardado
+          : EditorState.create({ doc: value, extensions: extensionsRef.current });
+      activeDocIdRef.current = docId;
+      view.setState(nuevoEstado);
+      view.dispatch({
+        effects: setDecorationsEffect.of({ activeLine, hoverLine, errorLines }),
+      });
+      const head = view.state.selection.main.head;
+      const line = view.state.doc.lineAt(head);
+      onCursorRef.current?.(line.number, head - line.from + 1);
+      return;
+    }
+
     const current = view.state.doc.toString();
     if (current !== value) {
       view.dispatch({
         changes: { from: 0, to: current.length, insert: value },
       });
     }
-  }, [value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docId, value]);
 
   useEffect(() => {
     const view = viewRef.current;

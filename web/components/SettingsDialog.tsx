@@ -152,7 +152,7 @@ export function SettingsDialog({
         </div>
 
         <div className="setting-group">
-          <span className="setting-label">Motor de compilación</span>
+          <span className="setting-label">Motor de compilación y ejecución</span>
           <div className="segmented" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
             <button
               type="button"
@@ -168,17 +168,17 @@ export function SettingsDialog({
               aria-pressed={modoMotor === 'api'}
               onClick={() => onCambiarModoMotor('api')}
             >
-              API Python local
+              API Python (Render / local)
             </button>
           </div>
           {modoMotor === 'api' && (
-            <div style={{ marginTop: 6 }}>
+            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label
                 htmlFor="api-url-input"
                 className="setting-label"
-                style={{ display: 'block', marginBottom: 4 }}
+                style={{ display: 'block' }}
               >
-                URL del servidor FastAPI
+                URL del servidor FastAPI (POST /compilar + WebSocket /ejecutar)
               </label>
               <input
                 id="api-url-input"
@@ -187,8 +187,28 @@ export function SettingsDialog({
                 style={{ width: '100%' }}
                 value={urlApi}
                 onChange={(e) => onCambiarUrlApi(e.target.value)}
-                placeholder="http://127.0.0.1:8000"
+                placeholder="https://code-compiler-api.onrender.com"
               />
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onCambiarUrlApi('https://code-compiler-api.onrender.com')}
+                >
+                  Usar Render
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onCambiarUrlApi('http://127.0.0.1:8000')}
+                >
+                  Usar local (127.0.0.1:8000)
+                </button>
+              </div>
+              <small style={{ color: 'var(--ink-secondary)', fontSize: '0.74rem', lineHeight: 1.45 }}>
+                «Jugar» compila y ejecuta en Python remoto vía WebSocket. «Paso» usa el depurador visual del
+                navegador para inspeccionar variables y pila línea a línea.
+              </small>
             </div>
           )}
         </div>

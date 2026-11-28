@@ -377,8 +377,19 @@ export async function ejecutarIntermedio(
           }
           const mensaje = exigirTipo(marco.valor(primero), 'texto') as string;
           let convertido: ValorEdu | undefined;
+          let reintentos = 0;
+          const maxReintentos = 50;
           while (convertido === undefined) {
             if (opciones.signal?.aborted) return;
+            pasosTotales += 1;
+            if (pasosTotales > maxPasos || reintentos >= maxReintentos) {
+              emitirDiagnostico(
+                ins,
+                'limite',
+                `Demasiados intentos inválidos al pedir un valor de tipo ${tipo}.`,
+              );
+              return;
+            }
             opciones.onEvento({ tipo: 'pregunta', mensaje, tipoEsperado: tipo, linea: ins.linea });
             const respuesta = await opciones.leerEntrada(mensaje, tipo, ins.linea);
             if (respuesta === null || opciones.signal?.aborted) {
@@ -396,6 +407,7 @@ export async function ejecutarIntermedio(
                 convertido = respuesta;
               }
             } catch {
+              reintentos += 1;
               opciones.onEvento({
                 tipo: 'entrada_invalida',
                 mensaje: `Entrada inválida. Se esperaba un valor de tipo ${tipo}.`,

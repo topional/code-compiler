@@ -23,7 +23,7 @@ import { MISIONES_EDU, type MisionEdu } from '../data/misiones';
 import { obtenerTema, type TemaId } from '../data/temas';
 import { compilarEdu } from '../engine/compilador';
 import { ejecutarIntermedio } from '../engine/interprete';
-import type { VariableMemoria } from '../engine/types';
+import type { Diagnostico, VariableMemoria } from '../engine/types';
 import { ChispaBrandMark, ChispaMascota } from './ChispaLogo';
 import { ContainerOverlayScrollbar, OverlayScrollbar } from './OverlayScrollbar';
 import { UnifiedBackdrop, type ModoFondoContinuo } from './UnifiedBackdrop';
@@ -298,6 +298,8 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   const [codigoDemo, setCodigoDemo] = useState<string>(CODIGO_HERO_PLAYGROUND);
   const [salidasDemo, setSalidasDemo] = useState<SalidaDemo[]>([]);
   const [varsDemo, setVarsDemo] = useState<VariableMemoria[]>([]);
+  const [erroresDemo, setErroresDemo] = useState<Diagnostico[]>([]);
+  const [preguntaDemoDetenida, setPreguntaDemoDetenida] = useState<string | null>(null);
   const [tiempoDemoMs, setTiempoDemoMs] = useState<number>(0);
   const [runSeq, setRunSeq] = useState(0);
 
@@ -347,19 +349,26 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
 
   const temaMeta = obtenerTema(tema);
   const compilacionDemo = useMemo(() => compilarEdu(codigoDemo, 'intermedio'), [codigoDemo]);
+  const todosErroresDemo =
+    compilacionDemo.diagnosticos.length > 0 ? compilacionDemo.diagnosticos : erroresDemo;
 
   useEffect(() => {
-    let cancelado = false;
+    const controller = new AbortController();
     const t0 = performance.now();
     if (compilacionDemo.diagnosticos.length > 0 || !compilacionDemo.intermedio) {
       setSalidasDemo([]);
       setVarsDemo([]);
+      setErroresDemo([]);
+      setPreguntaDemoDetenida(null);
       setTiempoDemoMs(compilacionDemo.duracionMs);
       return;
     }
     const localOut: SalidaDemo[] = [];
+    const localErrors: Diagnostico[] = [];
     let lastVars: VariableMemoria[] = [];
+    let preguntaDetenida: string | null = null;
     void ejecutarIntermedio(compilacionDemo.intermedio, {
+      signal: controller.signal,
       onEvento: (ev) => {
         if (ev.tipo === 'salida') {
           localOut.push({
@@ -369,18 +378,27 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
           });
         } else if (ev.tipo === 'paso') {
           lastVars = ev.estado.variables;
+        } else if (ev.tipo === 'error') {
+          localErrors.push(...ev.diagnosticos);
         }
       },
-      leerEntrada: async () => '1',
+      // En portada no respondemos preguntas automáticamente para evitar bucles con variables lógicas:
+      // detenemos la demo limpiamente e invitamos a abrir el programa en Code Compiler.
+      leerEntrada: async (mensaje) => {
+        preguntaDetenida = mensaje;
+        return null;
+      },
       maxPasos: 3000,
     }).then(() => {
-      if (cancelado) return;
+      if (controller.signal.aborted) return;
       setSalidasDemo(localOut);
       setVarsDemo(lastVars);
+      setErroresDemo(localErrors);
+      setPreguntaDemoDetenida(preguntaDetenida);
       setTiempoDemoMs(performance.now() - t0);
     });
     return () => {
-      cancelado = true;
+      controller.abort();
     };
   }, [compilacionDemo, runSeq]);
 
@@ -724,12 +742,18 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                       <span
                         className="mono"
                         style={{
-                          color: compilacionDemo.diagnosticos.length ? 'var(--err)' : 'var(--ok)',
+                          color: todosErroresDemo.length
+                            ? 'var(--err)'
+                            : preguntaDemoDetenida
+                              ? 'var(--accent)'
+                              : 'var(--ok)',
                         }}
                       >
-                        {compilacionDemo.diagnosticos.length
-                          ? `${compilacionDemo.diagnosticos.length} aviso(s)`
-                          : `✓ ${tiempoDemoMs.toFixed(1)} ms`}
+                        {todosErroresDemo.length
+                          ? `${todosErroresDemo.length} aviso(s)`
+                          : preguntaDemoDetenida
+                            ? 'Pregunta interactiva'
+                            : `✓ ${tiempoDemoMs.toFixed(1)} ms`}
                       </span>
                     </div>
 
@@ -740,8 +764,8 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                         tabIndex={0}
                         aria-label="Resultado del compilador"
                       >
-                        {compilacionDemo.diagnosticos.length > 0
-                          ? compilacionDemo.diagnosticos.map((d, i) => (
+                        {todosErroresDemo.length > 0
+                          ? todosErroresDemo.map((d, i) => (
                               <div
                                 key={`e-${i}`}
                                 className="lp-out-row"
@@ -753,12 +777,28 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                                 </span>
                               </div>
                             ))
-                          : salidasDemo.map((s) => (
-                              <div key={s.id} className="lp-out-row">
-                                <span className="lp-out-ln">L{s.linea ?? '·'}</span>
-                                <span className="lp-out-val">{s.texto}</span>
-                              </div>
-                            ))}
+                          : (
+                              <>
+                                {salidasDemo.map((s) => (
+                                  <div key={s.id} className="lp-out-row">
+                                    <span className="lp-out-ln">L{s.linea ?? '·'}</span>
+                                    <span className="lp-out-val">{s.texto}</span>
+                                  </div>
+                                ))}
+                                {preguntaDemoDetenida && (
+                                  <div
+                                    className="lp-out-row"
+                                    style={{ borderLeftColor: 'var(--accent)' }}
+                                  >
+                                    <span className="lp-out-ln">?</span>
+                                    <span className="lp-out-val">
+                                      «{preguntaDemoDetenida}» — pulsa «Llevar a Code Compiler» para
+                                      responder en vivo.
+                                    </span>
+                                  </div>
+                                )}
+                              </>
+                            )}
                       </div>
                       <ContainerOverlayScrollbar targetRef={runnerOutRef} />
                     </div>

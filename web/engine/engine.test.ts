@@ -3,7 +3,8 @@ import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { EJEMPLOS_EDU } from '../data/ejemplos';
-import { compilarEdu, obtenerPistaPedagogica } from './compilador';
+import { compilarEdu, construirUrlWebSocketApi, obtenerPistaPedagogica } from './compilador';
+import { Fraction } from './fraction';
 import { ejecutarIntermedio } from './interprete';
 
 const RAIZ = resolve(process.cwd());
@@ -354,5 +355,52 @@ mostrar 3 / 2
 `);
     expect(res.errores).toEqual([]);
     expect(res.salidas).toEqual(['22', '99', '3/2']);
+  });
+
+  it('acepta decimales sin cero inicial (.5, -.5, 5.) igual que Fraction en Python', async () => {
+    expect(Fraction.parse('.5').toString()).toBe('1/2');
+    expect(Fraction.parse('-.5').toString()).toBe('-1/2');
+    expect(Fraction.parse('+.25').toString()).toBe('1/4');
+    expect(Fraction.parse('5.').toString()).toBe('5');
+
+    const res = await correrPrograma(
+      `crear variable n
+asignar n valor de 0
+preguntar "Número" guardar en n
+mostrar n`,
+      ['.5'],
+    );
+    expect(res.errores).toEqual([]);
+    expect(res.invalidas).toEqual([]);
+    expect(res.salidas).toEqual(['1/2']);
+  });
+
+  it('corta el bucle de reintentos inválidos en preguntar con límite de seguridad', async () => {
+    const comp = compilarEdu(
+      `crear variable ok
+asignar ok valor de falso
+preguntar "¿Seguimos?" guardar en ok
+mostrar ok`,
+      'intermedio',
+    );
+    const errores: string[] = [];
+    await ejecutarIntermedio(comp.intermedio!, {
+      onEvento: (ev) => {
+        if (ev.tipo === 'error') errores.push(...ev.diagnosticos.map((d) => d.mensaje));
+      },
+      leerEntrada: async () => '1',
+      maxPasos: 500,
+    });
+    expect(errores.length).toBeGreaterThan(0);
+    expect(errores[0]).toContain('intentos inválidos');
+  });
+
+  it('construye la URL WebSocket /ejecutar para Render y servidor local', () => {
+    expect(construirUrlWebSocketApi('https://code-compiler-api.onrender.com')).toBe(
+      'wss://code-compiler-api.onrender.com/ejecutar',
+    );
+    expect(construirUrlWebSocketApi('http://127.0.0.1:8000/')).toBe(
+      'ws://127.0.0.1:8000/ejecutar',
+    );
   });
 });
