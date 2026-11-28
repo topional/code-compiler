@@ -60,17 +60,17 @@ import { CODIGO_HERO_DEFAULT, EJEMPLOS_EDU } from './data/ejemplos';
 import type { MisionEdu } from './data/misiones';
 import { obtenerTema, TEMAS_CATALOGO, TEMAS_VALIDOS, type TemaId } from './data/temas';
 import {
-  compilarConApiRemota,
-  compilarEdu,
-  ejecutarConApiRemota,
+  ControladorCompilacion,
+  iniciarEjecucionRemota,
   obtenerPistaPedagogica,
+  URL_API_PYTHON_DEFECTO,
+  type SesionEjecucionRemota,
 } from './engine/compilador';
 import { formatearCodigoEdu } from './engine/formateador';
-import { ejecutarIntermedio } from './engine/interprete';
 import type {
   Diagnostico,
-  ProgramaIntermedio,
-  TipoEdu,
+  ModoEjecucionRemota,
+  ResultadoCompilacionApi,
   VariableMemoria,
 } from './engine/types';
 
@@ -89,8 +89,6 @@ interface ItemSalida {
 
 interface PreguntaPendiente {
   mensaje: string;
-  tipo: TipoEdu;
-  resolver: (valor: string | null) => void;
 }
 
 type VistaMovil = 'editor' | 'salida' | 'bloques' | 'misiones';
@@ -102,7 +100,18 @@ const STORAGE_KEYS = {
   pestanas: 'chispa_edu_wb_pestanas_v5',
   misiones: 'chispa_edu_misiones_ok',
   paneles: 'chispa_edu_tamano_paneles',
+  urlApi: 'chispa_edu_api_url_v1',
 };
+
+function leerUrlApiInicial(): string {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.urlApi)?.trim();
+    if (raw) return raw;
+  } catch {
+    // ignorar
+  }
+  return URL_API_PYTHON_DEFECTO;
+}
 
 /**
  * Tamaño inicial: el editor ocupa el 44 % y el juego mide 320 px de alto.
@@ -256,64 +265,76 @@ export function App() {
   const [misionActiva, setMisionActiva] = useState<MisionEdu | null>(null);
   const [feedbackMision, setFeedbackMision] = useState<{ ok: boolean; texto: string } | null>(null);
 
-  // Motor y ejecución
-  const [modoMotor, setModoMotor] = useState<'navegador' | 'api'>('navegador');
-  const [urlApi, setUrlApi] = useState('https://code-compiler-api.onrender.com');
-  const [velocidadMs, setVelocidadMs] = useState(0);
-  const [autoRun, setAutoRun] = useState(true);
+  // Motor Python (único motor de compilación, ejecución y depuración)
+  const [urlApi, setUrlApi] = useState<string>(leerUrlApiInicial);
   const pestanaActualRef = useRef(pestanaActual);
   pestanaActualRef.current = pestanaActual;
 
   const [cursorPos, setCursorPos] = useState<{ linea: number; columna: number }>({ linea: 1, columna: 1 });
+  const [compilacion, setCompilacion] = useState<ResultadoCompilacionApi | null>(null);
+  const [conectandoPython, setConectandoPython] = useState(false);
+  const [comprobandoMision, setComprobandoMision] = useState(false);
   const [estadoEjec, setEstadoEjec] = useState<'inactivo' | 'corriendo' | 'pausado' | 'esperando_paso'>('inactivo');
   const [salidas, setSalidas] = useState<ItemSalida[]>([]);
   const [variables, setVariables] = useState<VariableMemoria[]>([]);
   const [pilaLlamadas, setPilaLlamadas] = useState<string[]>(['programa']);
   const [lineaActiva, setLineaActiva] = useState<number | null>(null);
+  const lineaActivaRef = useRef<number | null>(null);
   const [hoverLine, setHoverLine] = useState<number | null>(null);
   const [diagnosticosEjec, setDiagnosticosEjec] = useState<Diagnostico[]>([]);
+  const [falloConexionEjec, setFalloConexionEjec] = useState(false);
   const [tiempoUltEjec, setTiempoUltEjec] = useState<number | null>(null);
   const [preguntaPendiente, setPreguntaPendiente] = useState<PreguntaPendiente | null>(null);
   const [textoRespuesta, setTextoRespuesta] = useState('');
   const [comandoTerminal, setComandoTerminal] = useState('');
   const [runSeq, setRunSeq] = useState(0);
   const [historial, setHistorial] = useState<InstantaneaCodigo[]>([]);
-  const pendingAutoPlayRef = useRef(false);
+  const pendingPlayRef = useRef(false);
 
+  const compCtrlRef = useRef<ControladorCompilacion | null>(null);
+  if (!compCtrlRef.current) {
+    compCtrlRef.current = new ControladorCompilacion();
+  }
   const abortRef = useRef<AbortController | null>(null);
-  const pasoResolverRef = useRef<((continuar: boolean) => void) | null>(null);
-  const modoPasoRef = useRef(false);
-  const pausadoRef = useRef(false);
-  const velocidadRef = useRef(velocidadMs);
-  velocidadRef.current = velocidadMs;
+  const sesionRef = useRef<SesionEjecucionRemota | null>(null);
+  const conectandoTimerRef = useRef<number | null>(null);
+  const ultimaAccionRef = useRef<'compilar' | 'continuo' | 'paso'>('compilar');
   const seqRef = useRef(0);
+
+  const iniciarAvisoConexion = useCallback(() => {
+    if (conectandoTimerRef.current !== null) window.clearTimeout(conectandoTimerRef.current);
+    conectandoTimerRef.current = window.setTimeout(() => {
+      setConectandoPython(true);
+    }, 450);
+  }, []);
+
+  const limpiarAvisoConexion = useCallback(() => {
+    if (conectandoTimerRef.current !== null) {
+      window.clearTimeout(conectandoTimerRef.current);
+      conectandoTimerRef.current = null;
+    }
+    setConectandoPython(false);
+  }, []);
 
   const temaMeta = obtenerTema(tema);
 
-  // Compilación en vivo en navegador (< 1 ms)
-  const compilacion = useMemo(
-    () => compilarEdu(pestanaActual.codigo, 'intermedio'),
-    [pestanaActual.codigo],
-  );
-
-  const tienePreguntar = useMemo(
-    () => compilacion.tokens.some((t) => t.tipo === 'PREGUNTAR'),
-    [compilacion.tokens],
-  );
-
   const todosDiagnosticos =
-    modoMotor === 'api'
-      ? diagnosticosEjec.length > 0
-        ? diagnosticosEjec
-        : compilacion.diagnosticos
-      : compilacion.diagnosticos.length > 0
-        ? compilacion.diagnosticos
-        : diagnosticosEjec;
+    diagnosticosEjec.length > 0 ? diagnosticosEjec : (compilacion?.diagnosticos ?? []);
+  const falloConexionActual = Boolean(falloConexionEjec || compilacion?.falloConexion);
 
-  // Limpia diagnósticos de ejecución al cambiar de pestaña o editar el código
+  // Limpia diagnósticos de ejecución al cambiar de pestaña, editar código o cambiar URL
   useEffect(() => {
     setDiagnosticosEjec([]);
-  }, [pestanaActual.id, pestanaActual.codigo, modoMotor]);
+    setFalloConexionEjec(false);
+  }, [pestanaActual.id, pestanaActual.codigo, urlApi]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.urlApi, urlApi);
+    } catch {
+      // ignorar
+    }
+  }, [urlApi]);
 
   const lineasError = useMemo(
     () => todosDiagnosticos.map((d) => d.linea).filter((l): l is number => typeof l === 'number'),
@@ -425,29 +446,34 @@ export function App() {
     });
   };
 
-  const detenerEjecucion = () => {
+  const detenerEjecucion = useCallback(() => {
+    sesionRef.current?.detener();
+    sesionRef.current = null;
     abortRef.current?.abort();
     abortRef.current = null;
-    if (pasoResolverRef.current) {
-      pasoResolverRef.current(false);
-      pasoResolverRef.current = null;
-    }
-    if (preguntaPendiente) {
-      preguntaPendiente.resolver(null);
-      setPreguntaPendiente(null);
-    }
-    pausadoRef.current = false;
-    modoPasoRef.current = false;
+    limpiarAvisoConexion();
+    lineaActivaRef.current = null;
+    setPreguntaPendiente(null);
     setEstadoEjec('inactivo');
     setLineaActiva(null);
-  };
+  }, [limpiarAvisoConexion]);
 
-  useEffect(() => () => detenerEjecucion(), []);
+  useEffect(
+    () => () => {
+      detenerEjecucion();
+      compCtrlRef.current?.cancelar();
+    },
+    [detenerEjecucion],
+  );
 
-  const iniciarEjecucion = async (pasoAPaso: boolean, silencioso = false) => {
+  const iniciarEjecucion = async (modo: Exclude<ModoEjecucionRemota, 'normal'>, forzarRecompilar = false) => {
     detenerEjecucion();
-    const tabIdEjec = pestanaActual.id;
-    const codigoEjec = pestanaActual.codigo;
+    ultimaAccionRef.current = modo;
+
+    const tabIdEjec = pestanaActualRef.current.id;
+    const codigoEjec = pestanaActualRef.current.codigo;
+    const urlEjec = urlApi;
+    const conAnalisis = misionActiva !== null;
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -461,150 +487,159 @@ export function App() {
     setVariables([]);
     setPilaLlamadas(['programa']);
     setDiagnosticosEjec([]);
-    if (!silencioso) {
-      setFeedbackMision(null);
-      guardarInstantanea(pasoAPaso ? 'Paso a paso' : 'Ejecución');
-      if (window.innerWidth <= 960 && !pasoAPaso) {
-        setVistaMovil('salida');
-      }
+    setFalloConexionEjec(false);
+    setFeedbackMision(null);
+    guardarInstantanea(modo === 'paso' ? 'Paso a paso' : 'Ejecución');
+    if (window.innerWidth <= 960 && modo !== 'paso') {
+      setVistaMovil('salida');
     }
 
-    let intermedio: ProgramaIntermedio | null = null;
-    if (modoMotor === 'api') {
-      setEstadoEjec('corriendo');
-      try {
-        const resRemota = await compilarConApiRemota(urlApi, codigoEjec, controller.signal);
+    setEstadoEjec('corriendo');
+    iniciarAvisoConexion();
+
+    const resComp = await compCtrlRef.current!.compilarAhora(tabIdEjec, urlEjec, codigoEjec, {
+      analisis: conAnalisis,
+      forzar: forzarRecompilar,
+      signal: controller.signal,
+    });
+    if (!sigueVigente()) {
+      limpiarAvisoConexion();
+      return;
+    }
+    if (!resComp) {
+      limpiarAvisoConexion();
+      setEstadoEjec('inactivo');
+      return;
+    }
+
+    setCompilacion(resComp);
+    if (resComp.diagnosticos.length > 0 || !resComp.intermedio) {
+      limpiarAvisoConexion();
+      setEstadoEjec('inactivo');
+      return;
+    }
+
+    const sesion = iniciarEjecucionRemota(urlEjec, resComp.intermedio, {
+      modo,
+      signal: controller.signal,
+      onAbierto: () => {
+        if (sigueVigente()) limpiarAvisoConexion();
+      },
+      onEvento: (ev) => {
         if (!sigueVigente()) return;
-        if (resRemota.diagnosticos.length > 0 || !resRemota.intermedio) {
-          setDiagnosticosEjec(resRemota.diagnosticos);
-          setEstadoEjec('inactivo');
-          return;
-        }
-        intermedio = resRemota.intermedio;
-      } catch (err) {
-        if (!sigueVigente() || (err instanceof Error && err.name === 'AbortError')) return;
-        setDiagnosticosEjec([
-          {
-            etapa: 'servicio',
-            mensaje: `No se pudo conectar con la API Python en ${urlApi}. Puedes cambiar a Navegador en Ajustes.`,
-            linea: null,
-            columna: null,
-          },
-        ]);
-        setEstadoEjec('inactivo');
-        return;
-      }
-    } else {
-      if (compilacion.diagnosticos.length > 0 || !compilacion.intermedio) return;
-      intermedio = compilacion.intermedio;
-    }
-
-    modoPasoRef.current = pasoAPaso;
-    pausadoRef.current = false;
-    setEstadoEjec(pasoAPaso ? 'esperando_paso' : 'corriendo');
-
-    if (modoMotor === 'api' && !pasoAPaso) {
-      await ejecutarConApiRemota(urlApi, intermedio, {
-        signal: controller.signal,
-        onEvento: (ev) => {
-          if (!sigueVigente()) return;
-          if (ev.tipo === 'salida') agregarSalida('salida', ev.texto ?? '', null);
-          else if (ev.tipo === 'pregunta') agregarSalida('pregunta', ev.mensaje ?? '', null);
-          else if (ev.tipo === 'entrada_invalida') agregarSalida('aviso', ev.mensaje ?? '', null);
-          else if (ev.tipo === 'fin') setTiempoUltEjec(Math.max(0.1, ev.duracionMs ?? 0.1));
-          else if (ev.tipo === 'error' && ev.diagnosticos) setDiagnosticosEjec(ev.diagnosticos);
-        },
-        leerEntrada: (mensaje) =>
-          new Promise<string | null>((resolve) => {
-            if (!sigueVigente()) {
-              resolve(null);
-              return;
-            }
-            setTextoRespuesta('');
-            setPreguntaPendiente({ mensaje, tipo: 'texto', resolver: resolve });
-          }),
-      });
-    } else {
-      await ejecutarIntermedio(intermedio, {
-        signal: controller.signal,
-        onEvento: (ev) => {
-          if (!sigueVigente()) return;
-          if (ev.tipo === 'salida') agregarSalida('salida', ev.texto, ev.linea);
-          else if (ev.tipo === 'pregunta') agregarSalida('pregunta', ev.mensaje, ev.linea);
-          else if (ev.tipo === 'entrada_invalida') agregarSalida('aviso', ev.mensaje, ev.linea);
-          else if (ev.tipo === 'motivacion') {
-            agregarSalida(
-              'motivacion',
-              ev.modo === 'juego' ? 'Modo juego activado' : 'Modo calculadora activado',
-              ev.linea,
-            );
-          } else if (ev.tipo === 'paso') {
-            setVariables(ev.estado.variables);
-            setPilaLlamadas(ev.estado.pilaLlamadas);
-            setLineaActiva(ev.estado.linea);
-          } else if (ev.tipo === 'fin') {
-            setTiempoUltEjec(Math.max(0.1, ev.duracionMs));
-          } else if (ev.tipo === 'error') {
-            setDiagnosticosEjec(ev.diagnosticos);
+        if (ev.tipo === 'salida') {
+          agregarSalida('salida', ev.texto, lineaActivaRef.current);
+        } else if (ev.tipo === 'pregunta') {
+          agregarSalida('pregunta', ev.mensaje, lineaActivaRef.current);
+          setTextoRespuesta('');
+          setPreguntaPendiente({ mensaje: ev.mensaje });
+        } else if (ev.tipo === 'entrada_invalida') {
+          agregarSalida('aviso', ev.mensaje, lineaActivaRef.current);
+        } else if (ev.tipo === 'estado') {
+          lineaActivaRef.current = ev.linea;
+          setLineaActiva(ev.linea);
+          setVariables(ev.variables);
+          setPilaLlamadas(ev.pila);
+          if (ev.pausado) {
+            setEstadoEjec('esperando_paso');
+          } else if (modo === 'paso') {
+            setEstadoEjec('corriendo');
           }
-        },
-        leerEntrada: (mensaje, tipo) =>
-          new Promise<string | null>((resolve) => {
-            if (!sigueVigente()) {
-              resolve(null);
-              return;
-            }
-            setTextoRespuesta('');
-            setPreguntaPendiente({ mensaje, tipo, resolver: resolve });
-          }),
-        esperarPaso: silencioso
-          ? undefined
-          : async () => {
-              if (!sigueVigente()) return false;
-              if (modoPasoRef.current || pausadoRef.current) {
-                setEstadoEjec(modoPasoRef.current ? 'esperando_paso' : 'pausado');
-                return new Promise<boolean>((resolve) => {
-                  pasoResolverRef.current = resolve;
-                });
-              }
-              if (velocidadRef.current > 0) {
-                await new Promise((r) => setTimeout(r, velocidadRef.current));
-              }
-              return sigueVigente();
-            },
-      });
-    }
+        } else if (ev.tipo === 'fin') {
+          limpiarAvisoConexion();
+          lineaActivaRef.current = null;
+          setTiempoUltEjec(Math.max(0.1, ev.duracionMs));
+          setPreguntaPendiente(null);
+          setEstadoEjec('inactivo');
+          setLineaActiva(null);
+        } else if (ev.tipo === 'error') {
+          limpiarAvisoConexion();
+          lineaActivaRef.current = null;
+          setDiagnosticosEjec(ev.diagnosticos);
+          setFalloConexionEjec(Boolean(ev.falloConexion));
+          setPreguntaPendiente(null);
+          setEstadoEjec('inactivo');
+          setLineaActiva(null);
+        }
+      },
+    });
+    sesionRef.current = sesion;
 
+    await sesion.promesa;
+    if (sesionRef.current === sesion) {
+      sesionRef.current = null;
+    }
     if (sigueVigente()) {
+      limpiarAvisoConexion();
       setEstadoEjec('inactivo');
       setLineaActiva(null);
     }
   };
 
-  // Auto-run inmediato al elegir un juego directo o en pestañas sin `preguntar`, y debounce 450 ms al escribir
-  const primeraCargaRef = useRef(true);
+  // Compila en Python tras 750 ms sin escribir (solo HTTP /compilar; nunca abre WebSocket al escribir)
   useEffect(() => {
-    if (compilacion.diagnosticos.length > 0) {
-      pendingAutoPlayRef.current = false;
+    if (vistaApp !== 'ide') {
+      compCtrlRef.current?.cancelar();
+      limpiarAvisoConexion();
       return;
     }
-    if (pendingAutoPlayRef.current) {
-      pendingAutoPlayRef.current = false;
-      void iniciarEjecucion(false, false);
+
+    if (pendingPlayRef.current) {
+      pendingPlayRef.current = false;
+      void iniciarEjecucion('continuo');
       return;
     }
-    if (!autoRun || tienePreguntar) return;
-    if (primeraCargaRef.current) {
-      primeraCargaRef.current = false;
-      void iniciarEjecucion(false, true);
-      return;
-    }
-    const t = setTimeout(() => {
-      void iniciarEjecucion(false, true);
-    }, 450);
-    return () => clearTimeout(t);
+
+    const tabId = pestanaActual.id;
+    const codigo = pestanaActual.codigo;
+    const conAnalisis = misionActiva !== null;
+    ultimaAccionRef.current = 'compilar';
+
+    compCtrlRef.current?.programar(tabId, urlApi, codigo, {
+      analisis: conAnalisis,
+      delayMs: 750,
+      onInicio: iniciarAvisoConexion,
+      onResultado: (res) => {
+        limpiarAvisoConexion();
+        if (pestanaActualRef.current.id !== tabId || pestanaActualRef.current.codigo !== codigo) {
+          return;
+        }
+        setCompilacion(res);
+      },
+    });
+
+    return () => {
+      compCtrlRef.current?.cancelar();
+      limpiarAvisoConexion();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pestanaActual.id, pestanaActual.codigo, autoRun, tienePreguntar]);
+  }, [vistaApp, pestanaActual.id, pestanaActual.codigo, urlApi, misionActiva?.id]);
+
+  const reintentarConexion = () => {
+    compCtrlRef.current?.invalidarCache();
+    setDiagnosticosEjec([]);
+    setFalloConexionEjec(false);
+    const accion = ultimaAccionRef.current;
+    if (accion === 'continuo' || accion === 'paso') {
+      void iniciarEjecucion(accion, true);
+      return;
+    }
+    const tabId = pestanaActual.id;
+    const codigo = pestanaActual.codigo;
+    iniciarAvisoConexion();
+    void compCtrlRef.current
+      ?.compilarAhora(tabId, urlApi, codigo, {
+        analisis: misionActiva !== null,
+        forzar: true,
+      })
+      .then((res) => {
+        limpiarAvisoConexion();
+        if (!res) return;
+        if (pestanaActualRef.current.id === tabId && pestanaActualRef.current.codigo === codigo) {
+          setCompilacion(res);
+        }
+      });
+  };
 
   const seleccionarJuegoDirecto = (juego: EscenaJuego2D) => {
     const mapa: Record<EscenaJuego2D, { nombre: string; codigo: string }> = {
@@ -628,20 +663,22 @@ mostrar heroe`,
     const meta = mapa[juego];
     const yaActiva = pestanaActual.nombre.replace(/\.edu$/i, '') === meta.nombre;
     if (yaActiva) {
-      void iniciarEjecucion(false);
+      void iniciarEjecucion('continuo');
       return;
     }
-    pendingAutoPlayRef.current = true;
+    pendingPlayRef.current = true;
     abrirNuevaPestana(meta.nombre, meta.codigo);
   };
 
   const avanzarUnPaso = () => {
-    if (pasoResolverRef.current) {
-      const fn = pasoResolverRef.current;
-      pasoResolverRef.current = null;
-      fn(true);
-    } else if (estadoEjec === 'inactivo') {
-      void iniciarEjecucion(true);
+    if (estadoEjec === 'esperando_paso' && sesionRef.current) {
+      if (sesionRef.current.siguiente()) {
+        setEstadoEjec('corriendo');
+      }
+      return;
+    }
+    if (estadoEjec === 'inactivo') {
+      void iniciarEjecucion('paso');
     }
   };
 
@@ -700,17 +737,32 @@ mostrar heroe`,
   };
 
   const comprobarMisionActiva = async () => {
-    if (!misionActiva) return;
-    const res = await misionActiva.verificar(pestanaActual.codigo);
-    setFeedbackMision({ ok: res.completada, texto: res.mensaje });
-    if (res.completada) {
-      setMisionesCompletadas((prev) => (prev.includes(misionActiva.id) ? prev : [...prev, misionActiva.id]));
-      if (
-        !movimientoReducido &&
-        !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      ) {
-        void confetti({ particleCount: 70, spread: 68, origin: { y: 0.65 } });
+    if (!misionActiva || comprobandoMision) return;
+    detenerEjecucion();
+    setComprobandoMision(true);
+    iniciarAvisoConexion();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const res = await misionActiva.verificar(pestanaActual.codigo, urlApi, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setFeedbackMision({ ok: res.completada, texto: res.mensaje });
+      if (res.completada) {
+        setMisionesCompletadas((prev) =>
+          prev.includes(misionActiva.id) ? prev : [...prev, misionActiva.id],
+        );
+        if (
+          !movimientoReducido &&
+          !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ) {
+          void confetti({ particleCount: 70, spread: 68, origin: { y: 0.65 } });
+        }
       }
+    } finally {
+      limpiarAvisoConexion();
+      setComprobandoMision(false);
     }
   };
 
@@ -720,12 +772,12 @@ mostrar heroe`,
   };
 
   const enviarValorRespuesta = (val: string) => {
-    if (!preguntaPendiente) return;
-    const { resolver } = preguntaPendiente;
-    setPreguntaPendiente(null);
-    setTextoRespuesta('');
-    agregarSalida('respuesta', val);
-    resolver(val);
+    if (!preguntaPendiente || !sesionRef.current) return;
+    if (sesionRef.current.responder(val)) {
+      setPreguntaPendiente(null);
+      setTextoRespuesta('');
+      agregarSalida('respuesta', val);
+    }
   };
 
   const opcionesRapidasPregunta = useMemo(() => {
@@ -839,8 +891,6 @@ mostrar heroe`,
         onCambiarEscala={setEscalaTexto}
         movimientoReducido={movimientoReducido}
         onCambiarMovimiento={setMovimientoReducido}
-        modoMotor={modoMotor}
-        onCambiarModoMotor={setModoMotor}
         urlApi={urlApi}
         onCambiarUrlApi={setUrlApi}
       />
@@ -860,6 +910,7 @@ mostrar heroe`,
           >
             <LandingHome
               tema={tema}
+              urlApi={urlApi}
               movimientoReducido={movimientoReducido}
               onAbrirGaleriaTemas={() => setTemasAbiertos(true)}
               onAbrirBuscador={() => setComandosAbiertos(true)}
@@ -1017,9 +1068,8 @@ mostrar heroe`,
                   <button
                     type="button"
                     className="ide-icon-btn run-btn"
-                    onClick={() => void iniciarEjecucion(false)}
-                    disabled={compilacion.diagnosticos.length > 0 && modoMotor === 'navegador'}
-                    title="Jugar y ejecutar programa (Ctrl + Enter)"
+                    onClick={() => void iniciarEjecucion('continuo')}
+                    title="Jugar y ejecutar programa en Python (Ctrl + Enter)"
                   >
                     <Play size={13} aria-hidden="true" />
                     <span>Jugar</span>
@@ -1029,8 +1079,8 @@ mostrar heroe`,
                     type="button"
                     className="ide-icon-btn accent-btn"
                     onClick={avanzarUnPaso}
-                    disabled={compilacion.diagnosticos.length > 0 && modoMotor === 'navegador'}
-                    title="Ejecutar paso a paso"
+                    disabled={estadoEjec === 'corriendo'}
+                    title="Ejecutar paso a paso en Python"
                   >
                     <SkipForward size={13} aria-hidden="true" />
                     <span className="hide-narrow">
@@ -1052,22 +1102,6 @@ mostrar heroe`,
                 </div>
 
                 <div className="ide-actions">
-                  <button
-                    type="button"
-                    className={`ide-icon-btn hide-narrow ${autoRun ? 'active-toggle' : ''}`}
-                    aria-pressed={autoRun}
-                    onClick={() => setAutoRun((v) => !v)}
-                    aria-label="Ejecución automática al escribir"
-                    title={
-                      autoRun
-                        ? 'Ejecución automática ACTIVADA: el programa se vuelve a ejecutar al escribir (clic para desactivar)'
-                        : 'Ejecución automática DESACTIVADA: pulsa Jugar para ejecutar (clic para activar)'
-                    }
-                  >
-                    <Zap size={13} aria-hidden="true" />
-                    <span>Auto</span>
-                  </button>
-
                   <button
                     type="button"
                     className="ide-icon-btn hide-narrow"
@@ -1123,7 +1157,11 @@ mostrar heroe`,
                     {misionActiva.pasos.length > 0 && (
                       <div className="mission-steps-live" aria-label="Pasos de la misión">
                         {misionActiva.pasos.map((paso, idx) => {
-                          const ok = paso.cumplido(compilacion, pestanaActual.codigo);
+                          const ok = paso.cumplido(
+                            compilacion?.analisis ?? null,
+                            todosDiagnosticos,
+                            pestanaActual.codigo,
+                          );
                           return (
                             <div key={idx} className={`mission-step-row ${ok ? 'is-done' : ''}`}>
                               {ok ? (
@@ -1152,9 +1190,11 @@ mostrar heroe`,
                     <button
                       type="button"
                       className="btn btn-ok btn-sm"
+                      disabled={comprobandoMision}
                       onClick={() => void comprobarMisionActiva()}
                     >
-                      <Trophy size={13} aria-hidden="true" /> Comprobar
+                      <Trophy size={13} aria-hidden="true" />{' '}
+                      {comprobandoMision ? 'Comprobando…' : 'Comprobar'}
                     </button>
                     <button
                       type="button"
@@ -1194,7 +1234,7 @@ mostrar heroe`,
                   activeLine={lineaActiva}
                   hoverLine={hoverLine}
                   errorLines={lineasError}
-                  onShortcutRun={() => void iniciarEjecucion(false)}
+                  onShortcutRun={() => void iniciarEjecucion('continuo')}
                   onShortcutFormat={formatearActual}
                   onCursorChange={(linea, columna) => setCursorPos({ linea, columna })}
                 />
@@ -1243,7 +1283,7 @@ mostrar heroe`,
                 preguntaActiva={preguntaPendiente?.mensaje ?? null}
                 opcionesRapidas={opcionesRapidasPregunta}
                 onElegirOpcion={enviarValorRespuesta}
-                onJugar={() => void iniciarEjecucion(false)}
+                onJugar={() => void iniciarEjecucion('continuo')}
                 onDetener={detenerEjecucion}
                 onSeleccionarJuego={seleccionarJuegoDirecto}
                 desactivarAnimacion={movimientoReducido}
@@ -1290,8 +1330,12 @@ mostrar heroe`,
                   <span className="wb-pane-title">
                     <Terminal size={14} aria-hidden="true" style={{ color: 'var(--accent)' }} />
                     <span>Terminal</span>
-                    {preguntaPendiente ? (
+                    {conectandoPython ? (
+                      <span className="pill-mini">Conectando con Python…</span>
+                    ) : preguntaPendiente ? (
                       <span className="pill-mini ok">● Tu turno</span>
+                    ) : estadoEjec === 'esperando_paso' ? (
+                      <span className="pill-mini ok">● En pausa</span>
                     ) : estadoEjec !== 'inactivo' ? (
                       <span className="pill-mini">● En marcha</span>
                     ) : salidas.length > 0 ? (
@@ -1301,26 +1345,6 @@ mostrar heroe`,
                   </span>
 
                   <div className="ide-actions">
-                    <label htmlFor="wb-speed" className="sr-only">
-                      Velocidad de ejecución
-                    </label>
-                    <select
-                      id="wb-speed"
-                      className="ide-icon-btn"
-                      style={{
-                        border: '1px solid var(--border-subtle)',
-                        background: 'var(--bg-surface-alt)',
-                        padding: '0 6px',
-                      }}
-                      value={String(velocidadMs)}
-                      onChange={(e) => setVelocidadMs(Number(e.target.value))}
-                      aria-label="Velocidad de ejecución"
-                    >
-                      <option value="0">Turbo</option>
-                      <option value="180">Normal</option>
-                      <option value="450">Paso lento</option>
-                    </select>
-
                     <button
                       type="button"
                       className="ide-icon-btn"
@@ -1356,7 +1380,7 @@ mostrar heroe`,
                         <button
                           type="button"
                           className="btn btn-primary btn-sm"
-                          onClick={() => void iniciarEjecucion(false)}
+                          onClick={() => void iniciarEjecucion('continuo')}
                         >
                           <Play size={13} aria-hidden="true" /> Jugar ahora
                         </button>
@@ -1411,9 +1435,11 @@ mostrar heroe`,
                       e.preventDefault();
                       if (preguntaPendiente) {
                         enviarValorRespuesta(textoRespuesta);
+                      } else if (estadoEjec !== 'inactivo') {
+                        return;
                       } else {
                         setComandoTerminal('');
-                        void iniciarEjecucion(false);
+                        void iniciarEjecucion('continuo');
                       }
                     }}
                   >
@@ -1435,20 +1461,25 @@ mostrar heroe`,
                       placeholder={
                         preguntaPendiente
                           ? `${preguntaPendiente.mensaje} (escribe aquí y pulsa Enter)`
-                          : salidas.length > 0
-                            ? `Partida terminada · pulsa Enter o «${textoOtraVez(pestanaActual.nombre, pestanaActual.codigo, variables)}»`
-                            : 'Pulsa Enter o Jugar para iniciar en la terminal...'
+                          : estadoEjec !== 'inactivo'
+                            ? 'Ejecutando en Python…'
+                            : salidas.length > 0
+                              ? `Partida terminada · pulsa Enter o «${textoOtraVez(pestanaActual.nombre, pestanaActual.codigo, variables)}»`
+                              : 'Pulsa Enter o Jugar para iniciar en la terminal...'
                       }
                     />
                     {preguntaPendiente ? (
                       <button type="submit" className="btn btn-primary btn-sm">
                         <Send size={13} aria-hidden="true" /> Enviar
                       </button>
+                    ) : estadoEjec !== 'inactivo' ? (
+                      <button type="button" className="btn btn-sm" disabled>
+                        En marcha…
+                      </button>
                     ) : (
                       <button
                         type="submit"
                         className="btn btn-primary btn-sm"
-                        disabled={compilacion.diagnosticos.length > 0 && modoMotor === 'navegador'}
                       >
                         {salidas.length > 0 ? (
                           <>
@@ -1500,6 +1531,16 @@ mostrar heroe`,
                             <pre className="diag-example-code">{pista.ejemplo}</pre>
                           )}
                           <div className="diag-actions-row">
+                            {falloConexionActual && (
+                              <button
+                                type="button"
+                                className="diag-autofix-btn"
+                                onClick={reintentarConexion}
+                              >
+                                <RotateCcw size={13} aria-hidden="true" />
+                                Reintentar
+                              </button>
+                            )}
                             {pista.autoFix && (
                               <button
                                 type="button"
@@ -1536,7 +1577,9 @@ mostrar heroe`,
                     <Box size={12} aria-hidden="true" /> Tus cajitas ({variables.length})
                   </span>
                   {pilaLlamadas.length > 1 && (
-                    <span className="mono">Receta: {pilaLlamadas.join(' → ')}</span>
+                    <span className="mono" style={{ textTransform: 'none' }}>
+                      Receta: {pilaLlamadas.join(' → ')}
+                    </span>
                   )}
                 </div>
                 {variables.length === 0 ? (
@@ -1719,11 +1762,22 @@ mostrar heroe`,
               <span>Code Compiler · Chispa</span>
             </a>
 
-            <span>{modoMotor === 'navegador' ? 'Navegador' : 'API Python'}</span>
+            <span>
+              {urlApi.includes('127.0.0.1') || urlApi.includes('localhost')
+                ? 'Python · local'
+                : 'Python · Render'}
+            </span>
 
-            {todosDiagnosticos.length === 0 ? (
+            {conectandoPython ? (
+              <span className="status-ok">Conectando con Python…</span>
+            ) : todosDiagnosticos.length === 0 ? (
               <span className="status-ok">
-                ✓ Listo {tiempoUltEjec !== null ? `en ${tiempoUltEjec.toFixed(1)} ms` : `(${compilacion.duracionMs.toFixed(1)} ms)`}
+                ✓ Listo{' '}
+                {tiempoUltEjec !== null
+                  ? `en ${tiempoUltEjec.toFixed(1)} ms`
+                  : compilacion
+                    ? `(${compilacion.duracionMs.toFixed(1)} ms)`
+                    : ''}
               </span>
             ) : (
               <span className="status-err">

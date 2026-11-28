@@ -1,16 +1,31 @@
 /**
- * Misiones educativas graduales (inspiradas en Hedy y Pilas Bloques)
- * con verificación automática real sobre la compilación y salida del programa.
+ * Misiones educativas graduales con verificación automática real sobre
+ * la API Python (`/compilar?analisis=true` + `/ejecutar`).
  */
 
-import { compilarEdu } from '../engine/compilador';
-import { ejecutarIntermedio } from '../engine/interprete';
-import type { ResultadoCompilacion } from '../engine/types';
+import {
+  compilarConApiRemota,
+  iniciarEjecucionRemota,
+  type WebSocketFactory,
+} from '../engine/compilador';
+import type { AnalisisCompilacion, Diagnostico } from '../engine/types';
 
 export interface PasoMision {
   etiqueta: string;
   ejemplo: string;
-  cumplido: (comp: ResultadoCompilacion, codigo: string) => boolean;
+  cumplido: (analisis: AnalisisCompilacion | null, diagnosticos: Diagnostico[], codigo: string) => boolean;
+}
+
+export interface ResultadoMision {
+  completada: boolean;
+  mensaje: string;
+  falloConexion?: boolean;
+}
+
+export interface OpcionesEvaluacionMision {
+  signal?: AbortSignal;
+  fetchImpl?: typeof fetch;
+  crearWebSocket?: WebSocketFactory;
 }
 
 export interface MisionEdu {
@@ -25,36 +40,90 @@ export interface MisionEdu {
   pista: string;
   pasos: PasoMision[];
   entradasPrueba?: string[];
-  verificar: (codigo: string) => Promise<{ completada: boolean; mensaje: string }>;
+  verificar: (
+    codigo: string,
+    urlApi: string,
+    opciones?: OpcionesEvaluacionMision,
+  ) => Promise<ResultadoMision>;
 }
 
-async function evaluar(codigo: string, entradas: string[] = []) {
-  const comp = compilarEdu(codigo, 'intermedio');
-  if (comp.diagnosticos.length > 0 || !comp.intermedio) {
+/**
+ * Compila con `/compilar?analisis=true` y ejecuta en `/ejecutar` usando únicamente
+ * las `entradasPrueba` de la misión (detiene la sesión si se agotan las entradas).
+ */
+export async function evaluarMisionConPython(
+  codigo: string,
+  urlApi: string,
+  entradas: string[] = [],
+  opciones: OpcionesEvaluacionMision = {},
+) {
+  const comp = await compilarConApiRemota(urlApi, codigo, {
+    analisis: true,
+    signal: opciones.signal,
+    fetchImpl: opciones.fetchImpl,
+  });
+
+  if (comp.falloConexion) {
     return {
       ok: false,
+      falloConexion: true,
       comp,
       salidas: [] as string[],
       errores: comp.diagnosticos.map((d) => d.mensaje),
+      entradasAgotadas: false,
     };
   }
+
+  if (comp.diagnosticos.length > 0 || !comp.intermedio) {
+    return {
+      ok: false,
+      falloConexion: false,
+      comp,
+      salidas: [] as string[],
+      errores: comp.diagnosticos.map((d) => d.mensaje),
+      entradasAgotadas: false,
+    };
+  }
+
   const salidas: string[] = [];
   const errores: string[] = [];
+  let falloConexion = false;
+  let entradasAgotadas = false;
   let idx = 0;
-  await ejecutarIntermedio(comp.intermedio, {
+
+  const sesion = iniciarEjecucionRemota(urlApi, comp.intermedio, {
+    modo: 'normal',
+    signal: opciones.signal,
+    crearWebSocket: opciones.crearWebSocket,
     onEvento: (ev) => {
-      if (ev.tipo === 'salida') salidas.push(ev.texto);
-      if (ev.tipo === 'error') errores.push(...ev.diagnosticos.map((d) => d.mensaje));
+      if (ev.tipo === 'salida') {
+        salidas.push(ev.texto);
+      } else if (ev.tipo === 'pregunta') {
+        if (idx >= entradas.length) {
+          entradasAgotadas = true;
+          sesion.detener();
+          return;
+        }
+        const valor = entradas[idx];
+        idx += 1;
+        sesion.responder(valor);
+      } else if (ev.tipo === 'error') {
+        if (ev.falloConexion) falloConexion = true;
+        errores.push(...ev.diagnosticos.map((d) => d.mensaje));
+      }
     },
-    leerEntrada: async () => {
-      if (idx >= entradas.length) return '1';
-      const v = entradas[idx];
-      idx += 1;
-      return v;
-    },
-    maxPasos: 15_000,
   });
-  return { ok: errores.length === 0, comp, salidas, errores };
+
+  await sesion.promesa;
+
+  return {
+    ok: !falloConexion && errores.length === 0 && !entradasAgotadas,
+    falloConexion,
+    comp,
+    salidas,
+    errores,
+    entradasAgotadas,
+  };
 }
 
 export const MISIONES_EDU: MisionEdu[] = [
@@ -64,7 +133,8 @@ export const MISIONES_EDU: MisionEdu[] = [
     etiquetaNivel: 'Nivel 1 · Variables',
     titulo: 'Tu credencial de explorador',
     historia: 'Chispa necesita saber tu nombre y tu edad para imprimir tu pase al laboratorio.',
-    objetivo: 'Crea una cajita "nombre" con palabras (entre comillas) y una cajita "edad" con un número (sin comillas), y muéstralas.',
+    objetivo:
+      'Crea una cajita "nombre" con palabras (entre comillas) y una cajita "edad" con un número (sin comillas), y muéstralas.',
     insignia: 'Explorador de Variables',
     codigoInicial: `# Misión 1: Completa tu credencial
 crear variable nombre
@@ -76,24 +146,39 @@ mostrar nombre`,
       {
         etiqueta: 'Cajita "nombre" con texto entre comillas',
         ejemplo: 'asignar nombre valor de "Sofía"',
-        cumplido: (c) => c.simbolos.some((s) => s.nombre === 'nombre' && s.tipo === 'texto'),
+        cumplido: (a) => Boolean(a?.simbolos.some((s) => s.nombre === 'nombre' && s.tipo === 'texto')),
       },
       {
         etiqueta: 'Cajita "edad" con un número (sin comillas)',
         ejemplo: 'crear variable edad / asignar edad valor de 10',
-        cumplido: (c) => c.simbolos.some((s) => s.nombre === 'edad' && s.tipo === 'numero'),
+        cumplido: (a) => Boolean(a?.simbolos.some((s) => s.nombre === 'edad' && s.tipo === 'numero')),
       },
       {
         etiqueta: 'Mostrar "edad" en pantalla',
         ejemplo: 'mostrar edad',
-        cumplido: (_c, cod) => /\bmostrar\s+edad\b/i.test(cod),
+        cumplido: (_a, _d, cod) => /\bmostrar\s+edad\b/i.test(cod),
       },
     ],
-    verificar: async (codigo) => {
-      const r = await evaluar(codigo);
-      if (!r.ok) return { completada: false, mensaje: 'Aún hay errores en el código. Revisa los avisos.' };
-      const tieneNombre = r.comp.simbolos.some((s) => s.nombre === 'nombre' && s.tipo === 'texto');
-      const tieneEdad = r.comp.simbolos.some((s) => s.nombre === 'edad' && s.tipo === 'numero');
+    verificar: async (codigo, urlApi, opciones) => {
+      const r = await evaluarMisionConPython(codigo, urlApi, [], opciones);
+      if (r.falloConexion) {
+        return {
+          completada: false,
+          falloConexion: true,
+          mensaje: 'No se pudo conectar con Python para comprobar la misión. Pulsa Comprobar de nuevo.',
+        };
+      }
+      if (!r.ok) {
+        return {
+          completada: false,
+          mensaje: r.entradasAgotadas
+            ? 'Tu programa pidió datos de entrada que esta misión no requiere.'
+            : 'Aún hay errores en el código. Revisa los avisos.',
+        };
+      }
+      const simbolos = r.comp.analisis?.simbolos ?? [];
+      const tieneNombre = simbolos.some((s) => s.nombre === 'nombre' && s.tipo === 'texto');
+      const tieneEdad = simbolos.some((s) => s.nombre === 'edad' && s.tipo === 'numero');
       if (!tieneNombre || !tieneEdad) {
         return {
           completada: false,
@@ -125,23 +210,31 @@ asignar puntos valor de 65
       {
         etiqueta: 'Abrir decisión "si puntos ... entonces"',
         ejemplo: 'si puntos es mayor o igual que 50 entonces',
-        cumplido: (c) => c.tokens.some((t) => t.tipo === 'SI'),
+        cumplido: (a) => Boolean(a?.tokens.some((t) => t.tipo === 'SI')),
       },
       {
         etiqueta: 'Agregar el camino contrario "sino"',
         ejemplo: 'sino / mostrar "Espera"',
-        cumplido: (c) => c.tokens.some((t) => t.tipo === 'SINO'),
+        cumplido: (a) => Boolean(a?.tokens.some((t) => t.tipo === 'SINO')),
       },
       {
         etiqueta: 'Cerrar con "fin" sin errores',
         ejemplo: 'fin',
-        cumplido: (c) => c.tokens.some((t) => t.tipo === 'FIN') && c.diagnosticos.length === 0,
+        cumplido: (a, d) => Boolean(a?.tokens.some((t) => t.tipo === 'FIN')) && d.length === 0,
       },
     ],
-    verificar: async (codigo) => {
-      const r = await evaluar(codigo);
+    verificar: async (codigo, urlApi, opciones) => {
+      const r = await evaluarMisionConPython(codigo, urlApi, [], opciones);
+      if (r.falloConexion) {
+        return {
+          completada: false,
+          falloConexion: true,
+          mensaje: 'No se pudo conectar con Python para comprobar la misión. Pulsa Comprobar de nuevo.',
+        };
+      }
       if (!r.ok) return { completada: false, mensaje: 'Corrige los errores antes de comprobar la misión.' };
-      const usaSi = r.comp.tokens.some((t) => t.tipo === 'SI') && r.comp.tokens.some((t) => t.tipo === 'SINO');
+      const tokens = r.comp.analisis?.tokens ?? [];
+      const usaSi = tokens.some((t) => t.tipo === 'SI') && tokens.some((t) => t.tipo === 'SINO');
       if (!usaSi) {
         return { completada: false, mensaje: 'Necesitas usar un bloque completo con "si" y "sino".' };
       }
@@ -174,18 +267,26 @@ fin
       {
         etiqueta: 'Ciclo "repetir 5 veces" contando hacia atrás',
         ejemplo: 'repetir 5 veces ... fin',
-        cumplido: (c) => c.tokens.some((t) => t.tipo === 'REPETIR' || t.tipo === 'MIENTRAS'),
+        cumplido: (a) => Boolean(a?.tokens.some((t) => t.tipo === 'REPETIR' || t.tipo === 'MIENTRAS')),
       },
       {
         etiqueta: 'Mostrar "¡Despegue!" al terminar',
         ejemplo: 'mostrar "¡Despegue!"',
-        cumplido: (_c, cod) => /mostrar\s+"[^"]*despegue/i.test(cod),
+        cumplido: (_a, _d, cod) => /mostrar\s+"[^"]*despegue/i.test(cod),
       },
     ],
-    verificar: async (codigo) => {
-      const r = await evaluar(codigo);
+    verificar: async (codigo, urlApi, opciones) => {
+      const r = await evaluarMisionConPython(codigo, urlApi, [], opciones);
+      if (r.falloConexion) {
+        return {
+          completada: false,
+          falloConexion: true,
+          mensaje: 'No se pudo conectar con Python para comprobar la misión. Pulsa Comprobar de nuevo.',
+        };
+      }
       if (!r.ok) return { completada: false, mensaje: 'Revisa los errores del compilador primero.' };
-      const usaCiclo = r.comp.tokens.some((t) => t.tipo === 'REPETIR' || t.tipo === 'MIENTRAS');
+      const tokens = r.comp.analisis?.tokens ?? [];
+      const usaCiclo = tokens.some((t) => t.tipo === 'REPETIR' || t.tipo === 'MIENTRAS');
       if (!usaCiclo) return { completada: false, mensaje: 'Usa un ciclo "repetir" o "mientras".' };
       const primeros = r.salidas.slice(0, 5);
       const ult = (r.salidas.at(-1) ?? '').toLowerCase();
@@ -217,19 +318,27 @@ fin`,
       {
         etiqueta: 'Usar "numero aleatorio entre 1 y 6"',
         ejemplo: 'asignar dado valor de numero aleatorio entre 1 y 6',
-        cumplido: (c) => c.tokens.some((t) => t.tipo === 'ALEATORIO'),
+        cumplido: (a) => Boolean(a?.tokens.some((t) => t.tipo === 'ALEATORIO')),
       },
       {
         etiqueta: 'Mostrar "dado" dentro del repetir',
         ejemplo: 'mostrar dado',
-        cumplido: (_c, cod) => /\bmostrar\s+dado\b/i.test(cod),
+        cumplido: (_a, _d, cod) => /\bmostrar\s+dado\b/i.test(cod),
       },
     ],
-    verificar: async (codigo) => {
-      const r = await evaluar(codigo);
+    verificar: async (codigo, urlApi, opciones) => {
+      const r = await evaluarMisionConPython(codigo, urlApi, [], opciones);
+      if (r.falloConexion) {
+        return {
+          completada: false,
+          falloConexion: true,
+          mensaje: 'No se pudo conectar con Python para comprobar la misión. Pulsa Comprobar de nuevo.',
+        };
+      }
       if (!r.ok) return { completada: false, mensaje: 'Corrige los errores antes de lanzar el dado.' };
-      const usaAleatorio = r.comp.tokens.some((t) => t.tipo === 'ALEATORIO');
-      const usaRepetir = r.comp.tokens.some((t) => t.tipo === 'REPETIR');
+      const tokens = r.comp.analisis?.tokens ?? [];
+      const usaAleatorio = tokens.some((t) => t.tipo === 'ALEATORIO');
+      const usaRepetir = tokens.some((t) => t.tipo === 'REPETIR');
       if (!usaAleatorio || !usaRepetir) {
         return { completada: false, mensaje: 'Combina "repetir" con "numero aleatorio entre 1 y 6".' };
       }
@@ -246,7 +355,8 @@ fin`,
     etiquetaNivel: 'Nivel 5 · Funciones',
     titulo: 'La fábrica del triple',
     historia: 'En lugar de repetir la misma multiplicación, crea una receta reutilizable.',
-    objetivo: 'Define una función "triple(numero n) devuelve numero" que devuelva n * 3 y muestra triple(4) (debe salir 12).',
+    objetivo:
+      'Define una función "triple(numero n) devuelve numero" que devuelva n * 3 y muestra triple(4) (debe salir 12).',
     insignia: 'Arquitecto de Funciones',
     codigoInicial: `# Misión 5: Crea tu propia función
 definir triple(numero n) devuelve numero
@@ -260,18 +370,26 @@ fin
       {
         etiqueta: 'Definir la receta "triple"',
         ejemplo: 'definir triple(numero n) devuelve numero',
-        cumplido: (c) => c.simbolos.some((s) => s.esFuncion && s.nombre === 'triple'),
+        cumplido: (a) => Boolean(a?.simbolos.some((s) => s.esFuncion && s.nombre === 'triple')),
       },
       {
         etiqueta: 'Mostrar el resultado de triple(4)',
         ejemplo: 'mostrar triple(4)',
-        cumplido: (_c, cod) => /mostrar\s+triple\s*\(\s*4\s*\)/i.test(cod),
+        cumplido: (_a, _d, cod) => /mostrar\s+triple\s*\(\s*4\s*\)/i.test(cod),
       },
     ],
-    verificar: async (codigo) => {
-      const r = await evaluar(codigo);
+    verificar: async (codigo, urlApi, opciones) => {
+      const r = await evaluarMisionConPython(codigo, urlApi, [], opciones);
+      if (r.falloConexion) {
+        return {
+          completada: false,
+          falloConexion: true,
+          mensaje: 'No se pudo conectar con Python para comprobar la misión. Pulsa Comprobar de nuevo.',
+        };
+      }
       if (!r.ok) return { completada: false, mensaje: 'Hay errores de compilación en tu función.' };
-      const tieneFn = r.comp.simbolos.some((s) => s.esFuncion && s.nombre === 'triple');
+      const simbolos = r.comp.analisis?.simbolos ?? [];
+      const tieneFn = simbolos.some((s) => s.esFuncion && s.nombre === 'triple');
       if (!tieneFn) return { completada: false, mensaje: 'Define la función llamada "triple".' };
       if (!r.salidas.includes('12')) {
         return { completada: false, mensaje: 'Muestra el resultado de triple(4) para obtener 12.' };
@@ -307,29 +425,41 @@ mostrar triple(3)
 repetir 2.5 veces
     mostrar "Hola"
 fin`,
-    pista: 'Revisa cada pista roja de Chispa: cambia "diez" por número, crea vidas, quita el duplicado de puntos, compara puntos es mayor que 0, pasa 5 a doble, usa doble(3) y cambia 2.5 por 2.',
+    pista:
+      'Revisa cada pista roja de Chispa: cambia "diez" por número, crea vidas, quita el duplicado de puntos, compara puntos es mayor que 0, pasa 5 a doble, usa doble(3) y cambia 2.5 por 2.',
     pasos: [
       {
         etiqueta: 'Conservar la función "doble" y el ciclo "repetir"',
         ejemplo: 'definir doble(...) / repetir 2 veces',
-        cumplido: (c) => c.simbolos.some((s) => s.esFuncion && s.nombre === 'doble') && c.tokens.some((t) => t.tipo === 'REPETIR'),
+        cumplido: (a) =>
+          Boolean(a?.simbolos.some((s) => s.esFuncion && s.nombre === 'doble')) &&
+          Boolean(a?.tokens.some((t) => t.tipo === 'REPETIR')),
       },
       {
         etiqueta: 'Dejar el programa con 0 avisos de error',
         ejemplo: '¡Usa los botones de ayuda en cada pista!',
-        cumplido: (c) => c.diagnosticos.length === 0,
+        cumplido: (a, d) => Boolean(a) && d.length === 0,
       },
     ],
-    verificar: async (codigo) => {
-      const r = await evaluar(codigo);
+    verificar: async (codigo, urlApi, opciones) => {
+      const r = await evaluarMisionConPython(codigo, urlApi, [], opciones);
+      if (r.falloConexion) {
+        return {
+          completada: false,
+          falloConexion: true,
+          mensaje: 'No se pudo conectar con Python para comprobar la misión. Pulsa Comprobar de nuevo.',
+        };
+      }
       if (!r.ok) {
         return {
           completada: false,
           mensaje: `Todavía quedan ${r.comp.diagnosticos.length || r.errores.length} error(es) por cazar.`,
         };
       }
-      const tieneDoble = r.comp.simbolos.some((s) => s.esFuncion && s.nombre === 'doble');
-      const usaRepetir = r.comp.tokens.some((t) => t.tipo === 'REPETIR');
+      const simbolos = r.comp.analisis?.simbolos ?? [];
+      const tokens = r.comp.analisis?.tokens ?? [];
+      const tieneDoble = simbolos.some((s) => s.esFuncion && s.nombre === 'doble');
+      const usaRepetir = tokens.some((t) => t.tipo === 'REPETIR');
       if (!tieneDoble || !usaRepetir || r.salidas.length < 3) {
         return {
           completada: false,

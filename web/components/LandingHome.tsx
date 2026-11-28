@@ -21,9 +21,17 @@ import {
 import { EJEMPLOS_EDU, type EjemploEdu } from '../data/ejemplos';
 import { MISIONES_EDU, type MisionEdu } from '../data/misiones';
 import { obtenerTema, type TemaId } from '../data/temas';
-import { compilarEdu } from '../engine/compilador';
-import { ejecutarIntermedio } from '../engine/interprete';
-import type { Diagnostico, VariableMemoria } from '../engine/types';
+import {
+  compilarConApiRemota,
+  iniciarEjecucionRemota,
+  type SesionEjecucionRemota,
+} from '../engine/compilador';
+import type {
+  AnalisisCompilacion,
+  Diagnostico,
+  ResultadoCompilacionApi,
+  VariableMemoria,
+} from '../engine/types';
 import { ChispaBrandMark, ChispaMascota } from './ChispaLogo';
 import { ContainerOverlayScrollbar, OverlayScrollbar } from './OverlayScrollbar';
 import { UnifiedBackdrop, type ModoFondoContinuo } from './UnifiedBackdrop';
@@ -38,6 +46,7 @@ import {
 
 interface LandingHomeProps {
   tema: TemaId;
+  urlApi: string;
   movimientoReducido: boolean;
   onAbrirGaleriaTemas: () => void;
   onAbrirBuscador: () => void;
@@ -268,6 +277,7 @@ function leerMundoInicial(): ModoFondoContinuo {
 
 export const LandingHome: React.FC<LandingHomeProps> = ({
   tema,
+  urlApi,
   movimientoReducido,
   onAbrirGaleriaTemas,
   onAbrirBuscador,
@@ -296,12 +306,36 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   }, []);
   const [tabHero, setTabHero] = useState<TabHeroCard>('runner');
   const [codigoDemo, setCodigoDemo] = useState<string>(CODIGO_HERO_PLAYGROUND);
-  const [salidasDemo, setSalidasDemo] = useState<SalidaDemo[]>([]);
-  const [varsDemo, setVarsDemo] = useState<VariableMemoria[]>([]);
+  const [salidasDemo, setSalidasDemo] = useState<SalidaDemo[]>([
+    { id: 'init-1', linea: 6, texto: '¡Motor Chispa encendido!' },
+    { id: 'init-2', linea: 7, texto: 'Nova' },
+    { id: 'init-3', linea: 8, texto: '84' },
+    { id: 'init-4', linea: 10, texto: 'Potencia máxima alcanzada' },
+  ]);
+  const [varsDemo, setVarsDemo] = useState<VariableMemoria[]>([
+    {
+      idInterno: 'piloto',
+      nombre: 'piloto',
+      tipo: 'texto',
+      valor: 'Nova',
+      ambito: 'global',
+      cambioReciente: false,
+    },
+    {
+      idInterno: 'energia',
+      nombre: 'energia',
+      tipo: 'numero',
+      valor: '84',
+      ambito: 'global',
+      cambioReciente: false,
+    },
+  ]);
   const [erroresDemo, setErroresDemo] = useState<Diagnostico[]>([]);
+  const [falloConexionDemo, setFalloConexionDemo] = useState(false);
   const [preguntaDemoDetenida, setPreguntaDemoDetenida] = useState<string | null>(null);
-  const [tiempoDemoMs, setTiempoDemoMs] = useState<number>(0);
-  const [runSeq, setRunSeq] = useState(0);
+  const [ejecutandoDemo, setEjecutandoDemo] = useState(false);
+  const [conectandoDemo, setConectandoDemo] = useState(false);
+  const [tiempoDemoMs, setTiempoDemoMs] = useState<number | null>(null);
 
   // Chat interactivo con Chispa
   const [mensajesChat, setMensajesChat] = useState<MensajeChat[]>([
@@ -319,10 +353,28 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   const [toyPowerId, setToyPowerId] = useState<(typeof TOY_POWERS)[number]['id']>('dado');
   const [toyEndId, setToyEndId] = useState<(typeof TOY_ENDINGS)[number]['id']>('celebrar');
   const [salidasToy, setSalidasToy] = useState<string[]>([]);
+  const [errorToy, setErrorToy] = useState<string | null>(null);
+  const [ejecutandoToy, setEjecutandoToy] = useState(false);
 
-  // Simulador amigable de 4 pasos
+  // Simulador amigable de 4 pasos (usa POST /compilar?analisis=true + /ejecutar en Python)
   const [presetPipeId, setPresetPipeId] = useState<string>(PRESETS_PIPELINE[0].id);
+  const [compPipe, setCompPipe] = useState<ResultadoCompilacionApi | null>(null);
+  const [analisisPipe, setAnalisisPipe] = useState<AnalisisCompilacion | null>(null);
   const [salidasPipe, setSalidasPipe] = useState<string[]>([]);
+  const [ejecutandoPipe, setEjecutandoPipe] = useState(false);
+  const [conectandoPipe, setConectandoPipe] = useState(false);
+
+  const demoAbortRef = useRef<AbortController | null>(null);
+  const demoSesionRef = useRef<SesionEjecucionRemota | null>(null);
+
+  const cancelarDemoActiva = useCallback(() => {
+    demoSesionRef.current?.detener();
+    demoSesionRef.current = null;
+    demoAbortRef.current?.abort();
+    demoAbortRef.current = null;
+  }, []);
+
+  useEffect(() => () => cancelarDemoActiva(), [cancelarDemoActiva]);
 
   const [outputAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 200 });
   const [chatAnimRef] = useAutoAnimate<HTMLDivElement>({ duration: 220 });
@@ -348,59 +400,91 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
   );
 
   const temaMeta = obtenerTema(tema);
-  const compilacionDemo = useMemo(() => compilarEdu(codigoDemo, 'intermedio'), [codigoDemo]);
-  const todosErroresDemo =
-    compilacionDemo.diagnosticos.length > 0 ? compilacionDemo.diagnosticos : erroresDemo;
+  const todosErroresDemo = erroresDemo;
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const t0 = performance.now();
-    if (compilacionDemo.diagnosticos.length > 0 || !compilacionDemo.intermedio) {
-      setSalidasDemo([]);
-      setVarsDemo([]);
-      setErroresDemo([]);
+  const ejecutarDemoHero = useCallback(
+    async (codigoActual: string) => {
+      cancelarDemoActiva();
+      const controller = new AbortController();
+      demoAbortRef.current = controller;
+      setEjecutandoDemo(true);
+      setConectandoDemo(false);
+      setFalloConexionDemo(false);
       setPreguntaDemoDetenida(null);
-      setTiempoDemoMs(compilacionDemo.duracionMs);
-      return;
-    }
-    const localOut: SalidaDemo[] = [];
-    const localErrors: Diagnostico[] = [];
-    let lastVars: VariableMemoria[] = [];
-    let preguntaDetenida: string | null = null;
-    void ejecutarIntermedio(compilacionDemo.intermedio, {
-      signal: controller.signal,
-      onEvento: (ev) => {
-        if (ev.tipo === 'salida') {
-          localOut.push({
-            id: `${runSeq}-${localOut.length}-${ev.linea ?? 0}`,
-            linea: ev.linea ?? null,
-            texto: ev.texto,
-          });
-        } else if (ev.tipo === 'paso') {
-          lastVars = ev.estado.variables;
-        } else if (ev.tipo === 'error') {
-          localErrors.push(...ev.diagnosticos);
+      setErroresDemo([]);
+      const slowTimer = window.setTimeout(() => {
+        if (!controller.signal.aborted) setConectandoDemo(true);
+      }, 450);
+
+      const t0 = performance.now();
+      try {
+        const res = await compilarConApiRemota(urlApi, codigoActual, {
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        if (res.diagnosticos.length > 0 || !res.intermedio) {
+          setSalidasDemo([]);
+          setVarsDemo([]);
+          setErroresDemo(res.diagnosticos);
+          setFalloConexionDemo(res.falloConexion);
+          setTiempoDemoMs(res.duracionMs);
+          return;
         }
-      },
-      // En portada no respondemos preguntas automáticamente para evitar bucles con variables lógicas:
-      // detenemos la demo limpiamente e invitamos a abrir el programa en Code Compiler.
-      leerEntrada: async (mensaje) => {
-        preguntaDetenida = mensaje;
-        return null;
-      },
-      maxPasos: 3000,
-    }).then(() => {
-      if (controller.signal.aborted) return;
-      setSalidasDemo(localOut);
-      setVarsDemo(lastVars);
-      setErroresDemo(localErrors);
-      setPreguntaDemoDetenida(preguntaDetenida);
-      setTiempoDemoMs(performance.now() - t0);
-    });
-    return () => {
-      controller.abort();
-    };
-  }, [compilacionDemo, runSeq]);
+
+        const localOut: SalidaDemo[] = [];
+        const localErrors: Diagnostico[] = [];
+        let lastVars: VariableMemoria[] = [];
+        let preguntaDetenida: string | null = null;
+        let falloWs = false;
+        let lineaActual: number | null = null;
+
+        const sesion = iniciarEjecucionRemota(urlApi, res.intermedio, {
+          modo: 'continuo',
+          signal: controller.signal,
+          onAbierto: () => {
+            window.clearTimeout(slowTimer);
+            setConectandoDemo(false);
+          },
+          onEvento: (ev) => {
+            if (ev.tipo === 'salida') {
+              localOut.push({
+                id: `${Date.now()}-${localOut.length}`,
+                linea: lineaActual,
+                texto: ev.texto,
+              });
+            } else if (ev.tipo === 'estado') {
+              lineaActual = ev.linea;
+              lastVars = ev.variables;
+            } else if (ev.tipo === 'pregunta') {
+              preguntaDetenida = ev.mensaje;
+              sesion.detener();
+            } else if (ev.tipo === 'error') {
+              if (ev.falloConexion) falloWs = true;
+              localErrors.push(...ev.diagnosticos);
+            }
+          },
+        });
+        demoSesionRef.current = sesion;
+        await sesion.promesa;
+        if (controller.signal.aborted) return;
+        setSalidasDemo(localOut);
+        setVarsDemo(lastVars);
+        setErroresDemo(localErrors);
+        setFalloConexionDemo(falloWs);
+        setPreguntaDemoDetenida(preguntaDetenida);
+        setTiempoDemoMs(Math.round((performance.now() - t0) * 10) / 10);
+      } catch {
+        // Abortado por nueva ejecución o desmontaje
+      } finally {
+        window.clearTimeout(slowTimer);
+        if (demoAbortRef.current === controller) {
+          setConectandoDemo(false);
+          setEjecutandoDemo(false);
+        }
+      }
+    },
+    [cancelarDemoActiva, urlApi],
+  );
 
   const toyHero = TOY_HEROES.find((h) => h.id === toyHeroId) ?? TOY_HEROES[0];
   const toyPower = TOY_POWERS.find((p) => p.id === toyPowerId) ?? TOY_POWERS[0];
@@ -410,53 +494,103 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
       `crear variable heroe\nasignar heroe valor de "${toyHero.valor}"\ncrear variable puntos\n${toyPower.linea}\n${toyEnd.lineas}`,
     [toyHero.valor, toyPower.linea, toyEnd.lineas],
   );
-  const compToy = useMemo(() => compilarEdu(codigoToy, 'intermedio'), [codigoToy]);
 
-  useEffect(() => {
-    let cancelado = false;
-    if (compToy.diagnosticos.length > 0 || !compToy.intermedio) {
-      setSalidasToy([]);
-      return;
+  const ejecutarDemoToy = useCallback(async () => {
+    cancelarDemoActiva();
+    const controller = new AbortController();
+    demoAbortRef.current = controller;
+    setEjecutandoToy(true);
+    setErrorToy(null);
+    try {
+      const res = await compilarConApiRemota(urlApi, codigoToy, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      if (res.diagnosticos.length > 0 || !res.intermedio) {
+        setSalidasToy([]);
+        setErrorToy(res.diagnosticos[0]?.mensaje ?? 'No se pudo compilar en Python.');
+        return;
+      }
+      const out: string[] = [];
+      let errMsg: string | null = null;
+      const sesion = iniciarEjecucionRemota(urlApi, res.intermedio, {
+        modo: 'normal',
+        signal: controller.signal,
+        onEvento: (ev) => {
+          if (ev.tipo === 'salida') out.push(ev.texto);
+          else if (ev.tipo === 'pregunta') sesion.detener();
+          else if (ev.tipo === 'error') errMsg = ev.diagnosticos[0]?.mensaje ?? 'Error en Python.';
+        },
+      });
+      demoSesionRef.current = sesion;
+      await sesion.promesa;
+      if (controller.signal.aborted) return;
+      setSalidasToy(out);
+      setErrorToy(errMsg);
+    } catch {
+      // cancelado
+    } finally {
+      if (demoAbortRef.current === controller) {
+        setEjecutandoToy(false);
+      }
     }
-    const out: string[] = [];
-    void ejecutarIntermedio(compToy.intermedio, {
-      onEvento: (ev) => {
-        if (ev.tipo === 'salida') out.push(ev.texto);
-      },
-      leerEntrada: async () => '1',
-      maxPasos: 2000,
-    }).then(() => {
-      if (!cancelado) setSalidasToy(out);
-    });
-    return () => {
-      cancelado = true;
-    };
-  }, [compToy]);
+  }, [cancelarDemoActiva, codigoToy, urlApi]);
 
   const presetPipe =
     PRESETS_PIPELINE.find((p) => p.id === presetPipeId) ?? PRESETS_PIPELINE[0];
-  const compPipe = useMemo(() => compilarEdu(presetPipe.codigo, 'intermedio'), [presetPipe.codigo]);
 
-  useEffect(() => {
-    let cancelado = false;
-    if (compPipe.diagnosticos.length > 0 || !compPipe.intermedio) {
-      setSalidasPipe([]);
-      return;
-    }
-    const out: string[] = [];
-    void ejecutarIntermedio(compPipe.intermedio, {
-      onEvento: (ev) => {
-        if (ev.tipo === 'salida') out.push(ev.texto);
-      },
-      leerEntrada: async () => '1',
-      maxPasos: 2000,
-    }).then(() => {
-      if (!cancelado) setSalidasPipe(out);
-    });
-    return () => {
-      cancelado = true;
-    };
-  }, [compPipe]);
+  const ejecutarDemoEtapas = useCallback(
+    async (codigoObjetivo: string) => {
+      cancelarDemoActiva();
+      const controller = new AbortController();
+      demoAbortRef.current = controller;
+      setEjecutandoPipe(true);
+      setConectandoPipe(false);
+      const slowTimer = window.setTimeout(() => {
+        if (!controller.signal.aborted) setConectandoPipe(true);
+      }, 450);
+
+      try {
+        const res = await compilarConApiRemota(urlApi, codigoObjetivo, {
+          analisis: true,
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        setCompPipe(res);
+        setAnalisisPipe(res.analisis);
+        if (res.diagnosticos.length > 0 || !res.intermedio) {
+          setSalidasPipe([]);
+          return;
+        }
+        const out: string[] = [];
+        const sesion = iniciarEjecucionRemota(urlApi, res.intermedio, {
+          modo: 'normal',
+          signal: controller.signal,
+          onAbierto: () => {
+            window.clearTimeout(slowTimer);
+            setConectandoPipe(false);
+          },
+          onEvento: (ev) => {
+            if (ev.tipo === 'salida') out.push(ev.texto);
+            else if (ev.tipo === 'pregunta') sesion.detener();
+          },
+        });
+        demoSesionRef.current = sesion;
+        await sesion.promesa;
+        if (controller.signal.aborted) return;
+        setSalidasPipe(out);
+      } catch {
+        // cancelado
+      } finally {
+        window.clearTimeout(slowTimer);
+        if (demoAbortRef.current === controller) {
+          setConectandoPipe(false);
+          setEjecutandoPipe(false);
+        }
+      }
+    },
+    [cancelarDemoActiva, urlApi],
+  );
 
   const enviarConsultaChat = (textoCrudo: string) => {
     const q = textoCrudo.trim();
@@ -705,14 +839,20 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                         <button
                           type="button"
                           className="lp-mini-btn"
-                          onClick={() => setRunSeq((n) => n + 1)}
+                          disabled={ejecutandoDemo}
+                          onClick={() => void ejecutarDemoHero(codigoDemo)}
                         >
-                          <Play size={12} aria-hidden="true" /> Probar otra vez
+                          <Play size={12} aria-hidden="true" />{' '}
+                          {ejecutandoDemo ? 'Ejecutando…' : 'Probar en Python'}
                         </button>
                         <button
                           type="button"
                           className="lp-mini-btn"
-                          onClick={() => setCodigoDemo(CODIGO_HERO_PLAYGROUND)}
+                          onClick={() => {
+                            setCodigoDemo(CODIGO_HERO_PLAYGROUND);
+                            setErroresDemo([]);
+                            setPreguntaDemoDetenida(null);
+                          }}
                           aria-label="Restaurar código de ejemplo"
                           title="Restaurar"
                         >
@@ -738,22 +878,28 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                     </div>
 
                     <div className="lp-runner-out-head">
-                      <span>Salida en vivo</span>
+                      <span>Salida en vivo (Python)</span>
                       <span
                         className="mono"
                         style={{
-                          color: todosErroresDemo.length
-                            ? 'var(--err)'
-                            : preguntaDemoDetenida
-                              ? 'var(--accent)'
-                              : 'var(--ok)',
+                          color: conectandoDemo
+                            ? 'var(--accent)'
+                            : todosErroresDemo.length
+                              ? 'var(--err)'
+                              : preguntaDemoDetenida
+                                ? 'var(--accent)'
+                                : 'var(--ok)',
                         }}
                       >
-                        {todosErroresDemo.length
-                          ? `${todosErroresDemo.length} aviso(s)`
-                          : preguntaDemoDetenida
-                            ? 'Pregunta interactiva'
-                            : `✓ ${tiempoDemoMs.toFixed(1)} ms`}
+                        {conectandoDemo
+                          ? 'Conectando con Python…'
+                          : todosErroresDemo.length
+                            ? `${todosErroresDemo.length} aviso(s)`
+                            : preguntaDemoDetenida
+                              ? 'Pregunta interactiva'
+                              : tiempoDemoMs !== null
+                                ? `✓ ${tiempoDemoMs.toFixed(1)} ms`
+                                : 'Listo · pulsa Probar'}
                       </span>
                     </div>
 
@@ -764,8 +910,9 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                         tabIndex={0}
                         aria-label="Resultado del compilador"
                       >
-                        {todosErroresDemo.length > 0
-                          ? todosErroresDemo.map((d, i) => (
+                        {todosErroresDemo.length > 0 ? (
+                          <>
+                            {todosErroresDemo.map((d, i) => (
                               <div
                                 key={`e-${i}`}
                                 className="lp-out-row"
@@ -776,29 +923,41 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                                   [{d.etapa}] {d.mensaje}
                                 </span>
                               </div>
-                            ))
-                          : (
-                              <>
-                                {salidasDemo.map((s) => (
-                                  <div key={s.id} className="lp-out-row">
-                                    <span className="lp-out-ln">L{s.linea ?? '·'}</span>
-                                    <span className="lp-out-val">{s.texto}</span>
-                                  </div>
-                                ))}
-                                {preguntaDemoDetenida && (
-                                  <div
-                                    className="lp-out-row"
-                                    style={{ borderLeftColor: 'var(--accent)' }}
-                                  >
-                                    <span className="lp-out-ln">?</span>
-                                    <span className="lp-out-val">
-                                      «{preguntaDemoDetenida}» — pulsa «Llevar a Code Compiler» para
-                                      responder en vivo.
-                                    </span>
-                                  </div>
-                                )}
-                              </>
+                            ))}
+                            {falloConexionDemo && (
+                              <div style={{ marginTop: 6 }}>
+                                <button
+                                  type="button"
+                                  className="lp-mini-btn"
+                                  onClick={() => void ejecutarDemoHero(codigoDemo)}
+                                >
+                                  <RotateCcw size={12} aria-hidden="true" /> Reintentar
+                                </button>
+                              </div>
                             )}
+                          </>
+                        ) : (
+                          <>
+                            {salidasDemo.map((s) => (
+                              <div key={s.id} className="lp-out-row">
+                                <span className="lp-out-ln">L{s.linea ?? '·'}</span>
+                                <span className="lp-out-val">{s.texto}</span>
+                              </div>
+                            ))}
+                            {preguntaDemoDetenida && (
+                              <div
+                                className="lp-out-row"
+                                style={{ borderLeftColor: 'var(--accent)' }}
+                              >
+                                <span className="lp-out-ln">?</span>
+                                <span className="lp-out-val">
+                                  «{preguntaDemoDetenida}» — pulsa «Llevar a Code Compiler» para
+                                  responder en vivo.
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                       <ContainerOverlayScrollbar targetRef={runnerOutRef} />
                     </div>
@@ -1040,28 +1199,49 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                     </div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="lp-cta-primary lp-cta-xs"
-                  onClick={() => onEntrarConCodigo('mi_aventura', codigoToy)}
-                >
-                  <span>Seguir en Code Compiler</span>
-                  <ArrowRight size={13} aria-hidden="true" />
-                </button>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="lp-mini-btn"
+                    disabled={ejecutandoToy}
+                    onClick={() => void ejecutarDemoToy()}
+                  >
+                    <Play size={12} aria-hidden="true" />{' '}
+                    {ejecutandoToy ? 'Ejecutando…' : 'Probar programa'}
+                  </button>
+                  <button
+                    type="button"
+                    className="lp-cta-primary lp-cta-xs"
+                    onClick={() => onEntrarConCodigo('mi_aventura', codigoToy)}
+                  >
+                    <span>Seguir en Code Compiler</span>
+                    <ArrowRight size={13} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
 
               <pre className="lp-toy-code">{codigoToy}</pre>
 
               <div className="lp-toy-out" aria-label="Resultado del programa creado">
                 <span className="lp-toy-step-label">RESPUESTA EN PANTALLA</span>
-                {salidasToy.map((linea, idx) => (
-                  <div key={`${idx}-${linea}`} className="lp-toy-out-line">
-                    <span className="lp-toy-out-arrow" aria-hidden="true">
-                      →
-                    </span>
-                    <span>{linea}</span>
+                {errorToy ? (
+                  <div className="lp-toy-out-line" style={{ color: 'var(--err)' }}>
+                    <span>{errorToy}</span>
                   </div>
-                ))}
+                ) : salidasToy.length > 0 ? (
+                  salidasToy.map((linea, idx) => (
+                    <div key={`${idx}-${linea}`} className="lp-toy-out-line">
+                      <span className="lp-toy-out-arrow" aria-hidden="true">
+                        →
+                      </span>
+                      <span>{linea}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="lp-toy-out-line" style={{ color: 'var(--ink-secondary)' }}>
+                    <span>Pulsa «Probar programa» para ejecutarlo en Python.</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1075,7 +1255,7 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
             </h3>
             <p className="lp-lead">
               Toca un ejemplo sencillo y mira cómo <strong>Chispa</strong> lee tus frases, revisa
-              que todo encaje y pone tu idea en marcha.
+              que todo encaje y pone tu idea en marcha con el motor Python.
             </p>
           </div>
 
@@ -1086,7 +1266,10 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
                 type="button"
                 className="lp-filter-pill"
                 aria-pressed={presetPipeId === p.id}
-                onClick={() => setPresetPipeId(p.id)}
+                onClick={() => {
+                  setPresetPipeId(p.id);
+                  void ejecutarDemoEtapas(p.codigo);
+                }}
               >
                 {presetPipeId === p.id && (
                   <motion.span
@@ -1103,22 +1286,41 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
 
           <div className="lp-pipe-source">
             <pre>{presetPipe.codigo}</pre>
-            <button
-              type="button"
-              className="lp-cta-primary lp-cta-xs"
-              onClick={() => onEntrarConCodigo(presetPipe.id, presetPipe.codigo)}
-            >
-              <span>Editar en Code Compiler</span>
-              <ArrowRight size={13} aria-hidden="true" />
-            </button>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="lp-mini-btn"
+                disabled={ejecutandoPipe}
+                onClick={() => void ejecutarDemoEtapas(presetPipe.codigo)}
+              >
+                <Play size={12} aria-hidden="true" />{' '}
+                {conectandoPipe
+                  ? 'Conectando con Python…'
+                  : ejecutandoPipe
+                    ? 'Analizando…'
+                    : 'Analizar en Python'}
+              </button>
+              <button
+                type="button"
+                className="lp-cta-primary lp-cta-xs"
+                onClick={() => onEntrarConCodigo(presetPipe.id, presetPipe.codigo)}
+              >
+                <span>Editar en Code Compiler</span>
+                <ArrowRight size={13} aria-hidden="true" />
+              </button>
+            </div>
           </div>
 
           <div className="lp-pipeline-grid">
             <SpotlightCard desactivarAnimacion={movimientoReducido} className="lp-stage-card">
               <span className="lp-stage-num">PASO 1 · LEE TUS PALABRAS</span>
-              <h3>{compPipe.tokens.filter((t) => t.texto.trim()).length} piezas encontradas</h3>
+              <h3>
+                {analisisPipe
+                  ? `${analisisPipe.tokens.filter((t) => t.texto.trim()).length} piezas encontradas`
+                  : 'Toca un ejemplo para analizar'}
+              </h3>
               <div className="lp-token-cloud">
-                {compPipe.tokens
+                {(analisisPipe?.tokens ?? [])
                   .filter((t) => t.texto.trim().length > 0)
                   .slice(0, 7)
                   .map((t, i) => (
@@ -1137,9 +1339,11 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               <span className="lp-stage-num">PASO 2 · ARMA EL PLAN</span>
               <h3>Orden de instrucciones</h3>
               <p>
-                {compPipe.diagnosticos.some((d) => d.etapa === 'gramatica')
-                  ? '¡Uy! Falta acomodar o cerrar una instrucción antes de jugar.'
-                  : `¡Orden perfecto! Tu programa tiene ${compPipe.arbolVisual?.hijos.length ?? 0} paso(s) claros.`}
+                {!compPipe
+                  ? 'Pulsa un ejemplo arriba o «Analizar en Python» para inspeccionar su estructura.'
+                  : compPipe.diagnosticos.some((d) => d.etapa === 'gramatica') || !analisisPipe?.arbol
+                    ? '¡Uy! Falta acomodar o cerrar una instrucción antes de jugar.'
+                    : `¡Orden perfecto! Tu programa tiene ${analisisPipe.arbol.sentencias} paso(s) claros.`}
               </p>
             </SpotlightCard>
 
@@ -1150,14 +1354,18 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
             >
               <span className="lp-stage-num">PASO 3 · REVISA LAS REGLAS</span>
               <h3>
-                {compPipe.diagnosticos.length > 0
-                  ? `¡Pista detectada! (${compPipe.diagnosticos.length})`
-                  : '¡Todo encaja perfecto!'}
+                {!compPipe
+                  ? 'Esperando análisis'
+                  : compPipe.diagnosticos.length > 0
+                    ? `¡Pista detectada! (${compPipe.diagnosticos.length})`
+                    : '¡Todo encaja perfecto!'}
               </h3>
               <p>
-                {compPipe.diagnosticos.length > 0
-                  ? compPipe.diagnosticos[0].mensaje
-                  : `Tus cajas guardadas (${compPipe.simbolos.map((s) => s.nombre).join(', ') || 'ninguna'}) tienen el tipo correcto.`}
+                {!compPipe
+                  ? 'Python comprobará tus variables y tipos en vivo.'
+                  : compPipe.diagnosticos.length > 0
+                    ? compPipe.diagnosticos[0].mensaje
+                    : `Tus cajas guardadas (${(analisisPipe?.simbolos ?? []).map((s) => s.nombre).join(', ') || 'ninguna'}) tienen el tipo correcto.`}
               </p>
             </SpotlightCard>
 
@@ -1167,16 +1375,24 @@ export const LandingHome: React.FC<LandingHomeProps> = ({
               className="lp-stage-card"
             >
               <span className="lp-stage-num">PASO 4 · ¡EN ACCIÓN!</span>
-              <h3>{compPipe.intermedio ? '¡Programa en marcha!' : 'Pausa para corregir'}</h3>
+              <h3>
+                {!compPipe
+                  ? 'Listo para correr'
+                  : compPipe.intermedio
+                    ? '¡Programa en marcha!'
+                    : 'Pausa para corregir'}
+              </h3>
               <p
                 className="mono"
-                style={{ color: compPipe.diagnosticos.length ? 'var(--err)' : 'var(--ok)' }}
+                style={{ color: compPipe?.diagnosticos.length ? 'var(--err)' : 'var(--ok)' }}
               >
-                {compPipe.diagnosticos.length > 0
-                  ? 'Corrige la pista del Paso 3 y volverá a funcionar.'
-                  : salidasPipe.length > 0
-                    ? `Resultado → ${salidasPipe.join(' | ')}`
-                    : '¡Listo para jugar!'}
+                {!compPipe
+                  ? 'Toca cualquier ejemplo arriba para verlo correr en Python.'
+                  : compPipe.diagnosticos.length > 0
+                    ? 'Corrige la pista del Paso 3 y volverá a funcionar.'
+                    : salidasPipe.length > 0
+                      ? `Resultado → ${salidasPipe.join(' | ')}`
+                      : '¡Listo para jugar!'}
               </p>
             </SpotlightCard>
           </div>

@@ -1,72 +1,25 @@
 /**
- * Orquestador completo del compilador .edu en navegador + pistas pedagógicas
- * amigables para niños + cliente opcional para la API FastAPI local.
+ * Cliente HTTP/WebSocket para el compilador e intérprete Python (`docs/api.md`)
+ * + ayudas editoriales (pistas pedagógicas con corrección en 1 clic para niños).
  */
 
-import { generarIntermedio } from './generador';
-import { tokenizar } from './lexer';
-import { parsear } from './parser';
-import { analizarSemantica } from './semantico';
 import type {
+  AnalisisCompilacion,
   Diagnostico,
   EtapaCompilacion,
+  EventoEjecucionRemota,
+  ModoEjecucionRemota,
   PistaPedagogica,
   ProgramaIntermedio,
-  ResultadoCompilacion,
+  ResultadoCompilacionApi,
+  VariableMemoria,
 } from './types';
 
-export function compilarEdu(
-  codigo: string,
-  etapa: 'lexer' | 'gramatica' | 'semantica' | 'intermedio' = 'intermedio',
-): ResultadoCompilacion {
-  const inicio = performance.now();
+export const URL_API_PYTHON_DEFECTO = 'https://code-compiler-api.onrender.com';
 
-  const lex = tokenizar(codigo);
-  if (lex.diagnosticos.length > 0 || etapa === 'lexer') {
-    return {
-      tokens: lex.tokens,
-      arbolVisual: null,
-      simbolos: [],
-      intermedio: null,
-      diagnosticos: lex.diagnosticos,
-      duracionMs: Math.round((performance.now() - inicio) * 100) / 100,
-    };
-  }
-
-  const par = parsear(lex.tokens);
-  if (par.diagnosticos.length > 0 || !par.ast || etapa === 'gramatica') {
-    return {
-      tokens: lex.tokens,
-      arbolVisual: par.arbolVisual,
-      simbolos: [],
-      intermedio: null,
-      diagnosticos: par.diagnosticos,
-      duracionMs: Math.round((performance.now() - inicio) * 100) / 100,
-    };
-  }
-
-  const sem = analizarSemantica(par.ast);
-  if (sem.diagnosticos.length > 0 || etapa === 'semantica') {
-    return {
-      tokens: lex.tokens,
-      arbolVisual: par.arbolVisual,
-      simbolos: sem.simbolos,
-      intermedio: null,
-      diagnosticos: sem.diagnosticos,
-      duracionMs: Math.round((performance.now() - inicio) * 100) / 100,
-    };
-  }
-
-  const intermedio = generarIntermedio(par.ast, sem.tiposEntrada);
-  return {
-    tokens: lex.tokens,
-    arbolVisual: par.arbolVisual,
-    simbolos: sem.simbolos,
-    intermedio,
-    diagnosticos: [],
-    duracionMs: Math.round((performance.now() - inicio) * 100) / 100,
-  };
-}
+/* ==========================================================================
+   AYUDAS EDITORIALES: PISTAS PEDAGÓGICAS Y CORRECCIÓN RÁPIDA EN 1 CLIC
+   ========================================================================== */
 
 function insertarAntesDePreguntar(codigo: string, nombreVar: string): string {
   const lineas = codigo.split(/\r?\n/);
@@ -104,13 +57,12 @@ function encontrarVariableDePreguntar(codigo: string, lineaErr?: number | null):
 }
 
 /**
- * Traduce diagnósticos técnicos del compilador a pistas cálidas y accionables
+ * Traduce diagnósticos técnicos del compilador Python a pistas cálidas y accionables
  * con ejemplos visuales y botón de corrección rápida en 1 clic para niños.
  */
 export function obtenerPistaPedagogica(diag: Diagnostico, codigoFuente = ''): PistaPedagogica {
   const msg = diag.mensaje.toLowerCase();
 
-  // Caso clave: usar +, -, *, / con una variable llenada con "preguntar" (que guarda texto por defecto)
   if (
     (msg.includes('requiere operandos de tipo numero') || msg.includes('debe ser de tipo numero')) &&
     msg.includes('texto')
@@ -118,164 +70,131 @@ export function obtenerPistaPedagogica(diag: Diagnostico, codigoFuente = ''): Pi
     const varPreg = codigoFuente ? encontrarVariableDePreguntar(codigoFuente, diag.linea) : null;
     if (varPreg) {
       return {
-        titulo: `¡Truco clave! "${varPreg}" se guardó como texto`,
-        explicacion: `Cuando usas "preguntar" en una cajita nueva, Chispa guarda la respuesta como palabras (texto). Para poder sumar o restar con "${varPreg}", dale primero "valor de 0" antes de preguntar.`,
+        titulo: `¡Truco clave! "${varPreg}" se guardó como texto al preguntar`,
+        explicacion: `Cuando usas "preguntar" en una cajita vacía, Chispa guarda la respuesta como texto (palabras). Si antes le pones "asignar ${varPreg} valor de 0", Chispa ya sabe que ahí va un número y podrás sumar o restar.`,
         ejemplo: `crear variable ${varPreg}\nasignar ${varPreg} valor de 0\npreguntar "¿Cuál es tu número?" guardar en ${varPreg}`,
         autoFix: {
-          etiqueta: `Hacer que "${varPreg}" guarde número`,
+          etiqueta: `Poner "valor de 0" a ${varPreg}`,
           aplicar: (cod) => insertarAntesDePreguntar(cod, varPreg),
         },
       };
     }
     return {
-      titulo: 'No se pueden sumar palabras con números',
+      titulo: 'Estás mezclando texto con un número',
       explicacion:
-        'Los signos +, -, * y / solo funcionan con números (SIN comillas). Si una cajita guarda texto entre comillas ("5") o viene de "preguntar" sin "valor de 0", no se puede sumar.',
-      ejemplo: 'crear variable numero1\nasignar numero1 valor de 0\npreguntar "¿Tu número?" guardar en numero1',
+        'Para sumar, restar, multiplicar o dividir, ambas cajitas deben guardar números (sin comillas). Si una viene de "preguntar", dale "valor de 0" antes de preguntar.',
+      ejemplo: 'crear variable numero1\nasignar numero1 valor de 0\npreguntar "Escribe un número" guardar en numero1',
     };
   }
 
-  if (msg.includes('no está declarada') && msg.includes('variable')) {
-    const match = /variable '([^']+)'/.exec(diag.mensaje);
-    const nombre = match ? match[1] : 'mi_dato';
+  if (msg.includes('no está declarada')) {
+    const mVar = /variable\s+'([^']+)'/i.exec(diag.mensaje);
+    const nombre = mVar?.[1];
     return {
-      titulo: '¡Primero crea la cajita!',
-      explicacion: `Antes de usar "${nombre}", necesitas crearla arriba para que Chispa reserve espacio.`,
-      ejemplo: `crear variable ${nombre}\nasignar ${nombre} valor de 0`,
-      autoFix: {
-        etiqueta: `Crear cajita "${nombre}" arriba`,
-        aplicar: (cod) => `crear variable ${nombre}\nasignar ${nombre} valor de 0\n${cod}`,
-      },
-    };
-  }
-
-  if (msg.includes('ya está declarada')) {
-    const match = /variable '([^']+)'/.exec(diag.mensaje);
-    const nombre = match ? match[1] : 'puntos';
-    return {
-      titulo: 'Esa cajita ya existe',
-      explicacion: `Solo se escribe "crear variable ${nombre}" una vez. Para cambiar su valor después, usa "asignar".`,
-      ejemplo: `asignar ${nombre} valor de 20`,
-    };
-  }
-
-  if (msg.includes('sin inicializar')) {
-    const match = /variable '([^']+)'/.exec(diag.mensaje);
-    const nombre = match ? match[1] : 'dato';
-    return {
-      titulo: `La cajita "${nombre}" está vacía`,
-      explicacion: `Creaste "${nombre}", pero todavía no guardaste ningún valor adentro antes de usarla.`,
-      ejemplo: `asignar ${nombre} valor de 10`,
-      autoFix: {
-        etiqueta: `Darle valor inicial 0 a "${nombre}"`,
-        aplicar: (cod) => insertarAntesDePreguntar(cod, nombre),
-      },
-    };
-  }
-
-  if (msg.includes('no se puede asignar un valor de tipo')) {
-    return {
-      titulo: 'Mezcla de texto y número en la misma cajita',
-      explicacion:
-        'Cada cajita guarda un solo tipo: números SIN comillas (10) o texto CON comillas ("Ana"). No puedes mezclar ambos en la misma cajita.',
-      ejemplo: 'asignar edad valor de 10      # número (sin comillas)\nasignar nombre valor de "Ana"  # texto (con comillas)',
-    };
-  }
-
-  if (msg.includes("la condición de 'si'") || msg.includes("la condición de 'mientras'")) {
-    return {
-      titulo: 'Falta una pregunta de verdadero o falso',
-      explicacion:
-        'Después de "si" o "mientras" escribe una comparación (como "es igual a" o "es mayor que") o un valor lógico.',
-      ejemplo: 'si puntos es mayor que 5 entonces\n    mostrar "¡Ganaste!"\nfin',
-    };
-  }
-
-  if (msg.includes('cantidad de repeticiones')) {
-    return {
-      titulo: 'Las vueltas deben ser un número entero',
-      explicacion:
-        'No se puede repetir 2.5 veces ni un número negativo. Usa un número entero como 3, 5 o 10.',
-      ejemplo: 'repetir 3 veces\n    mostrar "¡Hola!"\nfin',
-    };
-  }
-
-  if (msg.includes('función') && msg.includes('no está declarada')) {
-    return {
-      titulo: 'Receta no encontrada',
-      explicacion:
-        'Revisa si escribiste bien el nombre de la función o si la definiste arriba antes de llamarla.',
-      ejemplo: 'definir doble(numero x) devuelve numero\n    devolver x * 2\nfin',
-    };
-  }
-
-  if (msg.includes('argumento') && msg.includes('debe ser de tipo')) {
-    return {
-      titulo: 'Dato del tipo equivocado',
-      explicacion:
-        'La función esperaba un tipo de dato distinto (por ejemplo, un número sin comillas en vez de texto con comillas).',
-      ejemplo: 'mostrar doble(5)',
-    };
-  }
-
-  if (msg.includes('texto sin cerrar')) {
-    return {
-      titulo: 'Faltan las comillas de cierre "',
-      explicacion: 'Todo texto empieza y termina con comillas dobles " en la misma línea.',
-      ejemplo: 'mostrar "¡Hola mundo!"',
-      autoFix: diag.linea
+      titulo: nombre ? `Falta crear la cajita "${nombre}"` : 'Falta crear esa variable primero',
+      explicacion: nombre
+        ? `Antes de usar "${nombre}", créala con "crear variable ${nombre}".`
+        : 'Antes de guardar o mostrar una variable, debes crearla arriba con "crear variable".',
+      ejemplo: nombre
+        ? `crear variable ${nombre}\nasignar ${nombre} valor de 0`
+        : 'crear variable puntos\nasignar puntos valor de 10',
+      autoFix: nombre
         ? {
-            etiqueta: 'Cerrar comillas en esa línea',
-            aplicar: (cod) => {
-              const ls = cod.split(/\r?\n/);
-              const i = (diag.linea ?? 1) - 1;
-              if (ls[i] !== undefined) ls[i] = `${ls[i]}"`;
-              return ls.join('\n');
-            },
+            etiqueta: `Crear variable ${nombre} arriba`,
+            aplicar: (cod) => `crear variable ${nombre}\nasignar ${nombre} valor de 0\n${cod}`,
           }
         : undefined,
     };
   }
 
-  if (msg.includes("falta 'fin'")) {
+  if (msg.includes('ya fue declarada') || msg.includes('ya existe')) {
+    const mVar = /'([^']+)'/.exec(diag.mensaje);
+    const nombre = mVar?.[1];
     return {
-      titulo: 'Falta cerrar el bloque con "fin"',
-      explicacion: 'Cada bloque (si, repetir, mientras o definir) necesita la palabra "fin" para cerrar.',
-      ejemplo: 'si edad es mayor que 10 entonces\n    mostrar "Genial"\nfin',
-      autoFix: {
-        etiqueta: 'Agregar "fin" al final',
-        aplicar: (cod) => `${cod.trimEnd()}\nfin`,
-      },
+      titulo: nombre ? `La cajita "${nombre}" ya existe` : 'Esa variable ya fue creada arriba',
+      explicacion:
+        'Solo necesitas "crear variable" una sola vez. Para cambiar su valor después, usa "asignar ... valor de ...".',
+      ejemplo: nombre
+        ? `asignar ${nombre} valor de 20`
+        : 'asignar puntos valor de 20',
     };
   }
 
-  if (msg.includes('valor de')) {
+  if (msg.includes('ya tiene tipo') || msg.includes('no se puede asignar')) {
     return {
-      titulo: 'Recuerda escribir "valor de"',
-      explicacion: 'Para guardar algo en una cajita siempre usamos: asignar NOMBRE valor de VALOR.',
-      ejemplo: 'asignar puntaje valor de 100',
+      titulo: 'Cajita de otro tipo (texto vs. número)',
+      explicacion:
+        'Cada cajita recuerda si guarda palabras ("entre comillas") o números (sin comillas). Si necesitas otro tipo, crea una cajita nueva o quita/pon las comillas.',
+      ejemplo: 'crear variable nombre\nasignar nombre valor de "Sofía"\ncrear variable edad\nasignar edad valor de 10',
     };
   }
 
-  // Caso muy común: "preguntar" en una línea y "guardar en ..." en la línea siguiente (o faltó "guardar en")
-  if (msg.includes('guardar') || (diag.linea && codigoFuente && /^\s*preguntar\b/i.test(codigoFuente.split(/\r?\n/)[diag.linea - 1] ?? ''))) {
+  if (msg.includes('condición') && msg.includes('logico')) {
+    return {
+      titulo: 'El "si" o "mientras" necesita una comparación',
+      explicacion:
+        'Escribe una pregunta que sea verdadera o falsa usando "es igual a", "es mayor que" o "es menor que".',
+      ejemplo: 'si puntos es mayor que 10 entonces\n    mostrar "¡Ganaste!"\nfin',
+    };
+  }
+
+  if (msg.includes('repetir') && (msg.includes('entero') || msg.includes('numero'))) {
+    return {
+      titulo: '"repetir" necesita un número entero',
+      explicacion: 'Escribe cuántas veces exactas quieres repetir (como 3 o 5, sin decimales).',
+      ejemplo: 'repetir 3 veces\n    mostrar "¡Hola!"\nfin',
+    };
+  }
+
+  if (msg.includes('función') && msg.includes('no está definida')) {
+    return {
+      titulo: 'Esa receta (función) no existe todavía',
+      explicacion: 'Revisa que el nombre esté escrito igual al de tu bloque "definir ... devuelve ...".',
+      ejemplo: 'definir doble(numero x) devuelve numero\n    devolver x * 2\nfin\nmostrar doble(4)',
+    };
+  }
+
+  if (
+    msg.includes('fin') ||
+    msg.includes('entonces') ||
+    msg.includes('hacer') ||
+    msg.includes('veces') ||
+    msg.includes('eof')
+  ) {
+    return {
+      titulo: 'Parece que falta cerrar o completar un bloque',
+      explicacion:
+        'Todo "si ... entonces", "repetir ... veces", "mientras ... hacer" y "definir" debe terminar con la palabra "fin" en su propia línea.',
+      ejemplo: 'si puntos es mayor que 5 entonces\n    mostrar "¡Bien!"\nfin',
+    };
+  }
+
+  if (
+    msg.includes('guardar') ||
+    (diag.linea &&
+      codigoFuente &&
+      /^\s*preguntar\b/i.test(codigoFuente.split(/\r?\n/)[diag.linea - 1] ?? ''))
+  ) {
     const lineas = codigoFuente ? codigoFuente.split(/\r?\n/) : [];
     const idx = (diag.linea ?? 1) - 1;
     const lineaActual = lineas[idx] ?? '';
     const lineaSig = lineas[idx + 1] ?? '';
-    if (/^\s*preguntar\b/i.test(lineaActual) && /^\s*guardar\s+en\b/i.test(lineaSig)) {
+    const partidaEnDos =
+      /^\s*preguntar\s+/i.test(lineaActual) && /^\s*guardar\s+en\s+/i.test(lineaSig);
+    if (partidaEnDos) {
       return {
-        titulo: '¡"preguntar" y "guardar en" van en la misma línea!',
+        titulo: '"preguntar" y "guardar en" van en la misma línea',
         explicacion:
-          'Separaste "guardar en" en la línea de abajo. En Chispa toda la pregunta debe escribirse junta en una sola línea.',
+          'No presiones Enter entre la pregunta y "guardar en". Escribe todo seguido en una sola línea para que Chispa entienda dónde guardar la respuesta.',
         ejemplo: `${lineaActual.trim()} ${lineaSig.trim()}`,
         autoFix: {
-          etiqueta: 'Unir "preguntar" en una sola línea',
+          etiqueta: 'Unir en una sola línea',
           aplicar: (cod) => {
             const ls = cod.split(/\r?\n/);
-            if (ls[idx] !== undefined && ls[idx + 1] !== undefined) {
-              ls[idx] = `${ls[idx].trimEnd()} ${ls[idx + 1].trim()}`;
-              ls.splice(idx + 1, 1);
+            const i = (diag.linea ?? 1) - 1;
+            if (i >= 0 && i + 1 < ls.length) {
+              const indent = /^(\s*)/.exec(ls[i])?.[1] ?? '';
+              ls.splice(i, 2, `${indent}${ls[i].trim()} ${ls[i + 1].trim()}`);
             }
             return ls.join('\n');
           },
@@ -298,6 +217,15 @@ export function obtenerPistaPedagogica(diag: Diagnostico, codigoFuente = ''): Pi
     };
   }
 
+  if (diag.etapa === 'servicio') {
+    return {
+      titulo: 'El servidor Python tardó o no respondió',
+      explicacion:
+        diag.mensaje ||
+        'Render puede estar despertando el servidor Python gratuito (tarda unos segundos). Pulsa Reintentar.',
+    };
+  }
+
   const nombresEtapa: Record<EtapaCompilacion, string> = {
     lexer: 'Revisa los símbolos escritos',
     gramatica: 'Revisa cómo está escrita la frase',
@@ -307,193 +235,513 @@ export function obtenerPistaPedagogica(diag: Diagnostico, codigoFuente = ''): Pi
     limite: 'Se alcanzó un límite de seguridad',
     peticion: 'Revisa el envío al servidor',
     protocolo: 'Error de comunicación',
-    servicio: 'El servidor no está disponible',
+    servicio: 'El servidor Python no está disponible',
   };
 
   return {
     titulo: nombresEtapa[diag.etapa] ?? 'Pista de corrección',
     explicacion:
+      diag.mensaje ||
       'Usa el botón "Ayudante" para armar variables, preguntas o decisiones paso a paso y compararlo con esta línea.',
     ejemplo: 'crear variable nombre\nasignar nombre valor de "Sofía"\nmostrar nombre',
   };
 }
 
-/**
- * Cliente para compilar con la API Python FastAPI (`POST /compilar`).
- */
-export async function compilarConApiRemota(
-  baseUrl: string,
-  codigo: string,
-  signal?: AbortSignal,
-): Promise<{ intermedio: ProgramaIntermedio | null; diagnosticos: Diagnostico[] }> {
-  const url = `${baseUrl.replace(/\/$/, '')}/compilar`;
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ codigo }),
-    signal,
-  });
+/* ==========================================================================
+   CLIENTE HTTP: POST /compilar y POST /compilar?analisis=true
+   ========================================================================== */
 
-  let data: {
-    version?: 1;
-    instrucciones?: ProgramaIntermedio['instrucciones'];
-    diagnosticos?: Diagnostico[];
-  } | null = null;
-  try {
-    data = (await resp.json()) as {
-      version?: 1;
-      instrucciones?: ProgramaIntermedio['instrucciones'];
-      diagnosticos?: Diagnostico[];
-    };
-  } catch {
-    data = null;
-  }
-
-  if (resp.ok && data?.version === 1 && Array.isArray(data.instrucciones)) {
-    return {
-      intermedio: { version: 1, instrucciones: data.instrucciones },
-      diagnosticos: [],
-    };
-  }
-  const mensajeFallback =
-    resp.status === 403
-      ? 'El servidor rechazó el origen web (403). Verifica EDU_ORIGENES en la API Python.'
-      : `La API Python respondió con estado ${resp.status}.`;
-  return {
-    intermedio: null,
-    diagnosticos: data?.diagnosticos ?? [
-      { etapa: 'servicio', mensaje: mensajeFallback, linea: null, columna: null },
-    ],
-  };
+export function normalizarUrlApi(baseUrl: string): string {
+  const limpia = baseUrl.trim().replace(/\/+$/, '');
+  return limpia || URL_API_PYTHON_DEFECTO;
 }
 
 export function construirUrlWebSocketApi(baseUrl: string): string {
-  const limpia = baseUrl.trim().replace(/\/$/, '');
+  const limpia = normalizarUrlApi(baseUrl);
   if (/^wss?:\/\//i.test(limpia)) return `${limpia}/ejecutar`;
   if (/^https:\/\//i.test(limpia)) return `${limpia.replace(/^https:/i, 'wss:')}/ejecutar`;
   if (/^http:\/\//i.test(limpia)) return `${limpia.replace(/^http:/i, 'ws:')}/ejecutar`;
   return `wss://${limpia}/ejecutar`;
 }
 
-export interface EventoEjecucionRemota {
-  tipo: 'salida' | 'pregunta' | 'entrada_invalida' | 'fin' | 'error';
-  texto?: string;
-  mensaje?: string;
-  duracionMs?: number;
-  diagnosticos?: Diagnostico[];
+export interface OpcionesCompilacionRemota {
+  analisis?: boolean;
+  signal?: AbortSignal;
+  fetchImpl?: typeof fetch;
 }
 
 /**
- * Ejecuta el código intermedio directamente en el intérprete Python remoto vía WebSocket (`/ejecutar`)
- * siguiendo el contrato de `docs/api.md`.
+ * Compila un programa en la API Python (`POST /compilar` o `POST /compilar?analisis=true`).
+ * Separa limpiamente el IR (`version` + `instrucciones`) del objeto `analisis`.
  */
-export function ejecutarConApiRemota(
+export async function compilarConApiRemota(
+  baseUrl: string,
+  codigo: string,
+  opciones: OpcionesCompilacionRemota = {},
+): Promise<ResultadoCompilacionApi> {
+  const inicio = performance.now();
+  const base = normalizarUrlApi(baseUrl);
+  const url = `${base}/compilar${opciones.analisis ? '?analisis=true' : ''}`;
+  const fetcher = opciones.fetchImpl ?? fetch;
+
+  let resp: Response;
+  try {
+    resp = await fetcher(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codigo }),
+      signal: opciones.signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw err;
+    }
+    return {
+      intermedio: null,
+      diagnosticos: [
+        {
+          etapa: 'servicio',
+          mensaje: `No se pudo conectar con Python en ${base}. Comprueba tu conexión o intenta de nuevo.`,
+          linea: null,
+          columna: null,
+        },
+      ],
+      analisis: null,
+      duracionMs: Math.round((performance.now() - inicio) * 10) / 10,
+      falloConexion: true,
+    };
+  }
+
+  type RespuestaCompilacionJson = {
+    version?: 1;
+    instrucciones?: ProgramaIntermedio['instrucciones'];
+    diagnosticos?: Diagnostico[];
+    analisis?: AnalisisCompilacion;
+  };
+  let data: RespuestaCompilacionJson | null = null;
+  try {
+    data = (await resp.json()) as RespuestaCompilacionJson;
+  } catch {
+    data = null;
+  }
+
+  const duracionMs = Math.round((performance.now() - inicio) * 10) / 10;
+  const analisis = data?.analisis ?? null;
+
+  if (resp.ok && data?.version === 1 && Array.isArray(data.instrucciones)) {
+    return {
+      intermedio: { version: 1, instrucciones: data.instrucciones },
+      diagnosticos: [],
+      analisis,
+      duracionMs,
+      falloConexion: false,
+    };
+  }
+
+  const falloConexion = resp.status >= 500 || resp.status === 403 || resp.status === 429 || !data;
+  const mensajeFallback =
+    resp.status === 403
+      ? 'El servidor Python rechazó el origen web (403). Verifica EDU_ORIGENES.'
+      : resp.status === 429
+        ? 'Se superó el límite momentáneo de solicitudes. Espera unos segundos y reintenta.'
+        : resp.status === 503 || resp.status === 504
+          ? 'El servidor Python está ocupado o despertando. Pulsa Reintentar.'
+          : `La API Python respondió con estado ${resp.status}.`;
+
+  return {
+    intermedio: null,
+    diagnosticos:
+      Array.isArray(data?.diagnosticos) && data.diagnosticos.length > 0
+        ? data.diagnosticos
+        : [{ etapa: 'servicio', mensaje: mensajeFallback, linea: null, columna: null }],
+    analisis,
+    duracionMs,
+    falloConexion,
+  };
+}
+
+/* ==========================================================================
+   CONTROLADOR DE COMPILACIÓN CON DEBOUNCE, CACHÉ Y DESCARTE DE OBSOLETOS
+   ========================================================================== */
+
+interface EntradaCacheCompilacion {
+  claveTab: string;
+  urlApi: string;
+  codigo: string;
+  conAnalisis: boolean;
+  resultado: ResultadoCompilacionApi;
+}
+
+export class ControladorCompilacion {
+  private version = 0;
+  private timer: ReturnType<typeof setTimeout> | null = null;
+  private abortController: AbortController | null = null;
+  private cache: EntradaCacheCompilacion | null = null;
+  private readonly fetchImpl?: typeof fetch;
+
+  constructor(fetchImpl?: typeof fetch) {
+    this.fetchImpl = fetchImpl;
+  }
+
+  obtenerCache(
+    claveTab: string,
+    urlApi: string,
+    codigo: string,
+    requiereAnalisis = false,
+  ): ResultadoCompilacionApi | null {
+    const c = this.cache;
+    if (!c) return null;
+    if (
+      c.claveTab !== claveTab ||
+      c.urlApi !== normalizarUrlApi(urlApi) ||
+      c.codigo !== codigo ||
+      c.resultado.falloConexion
+    ) {
+      return null;
+    }
+    if (requiereAnalisis && !c.conAnalisis) return null;
+    return c.resultado;
+  }
+
+  invalidarCache(): void {
+    this.cache = null;
+  }
+
+  cancelar(): void {
+    this.version += 1;
+    if (this.timer !== null) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+    this.abortController?.abort();
+    this.abortController = null;
+  }
+
+  programar(
+    claveTab: string,
+    urlApi: string,
+    codigo: string,
+    opciones: {
+      analisis?: boolean;
+      delayMs?: number;
+      onInicio?: () => void;
+      onResultado: (res: ResultadoCompilacionApi) => void;
+    },
+  ): void {
+    this.cancelar();
+    const versionEsperada = this.version;
+    const delayMs = opciones.delayMs ?? 750;
+    const urlNorm = normalizarUrlApi(urlApi);
+    const analisis = Boolean(opciones.analisis);
+
+    const cacheado = this.obtenerCache(claveTab, urlNorm, codigo, analisis);
+    if (cacheado) {
+      opciones.onResultado(cacheado);
+      return;
+    }
+
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      if (this.version !== versionEsperada) return;
+      const controller = new AbortController();
+      this.abortController = controller;
+      opciones.onInicio?.();
+      void compilarConApiRemota(urlNorm, codigo, {
+        analisis,
+        signal: controller.signal,
+        fetchImpl: this.fetchImpl,
+      })
+        .then((res) => {
+          if (this.version !== versionEsperada || controller.signal.aborted) return;
+          this.abortController = null;
+          if (!res.falloConexion) {
+            this.cache = { claveTab, urlApi: urlNorm, codigo, conAnalisis: analisis, resultado: res };
+          }
+          opciones.onResultado(res);
+        })
+        .catch(() => {
+          // AbortError esperado al escribir o cambiar de pestaña
+        });
+    }, delayMs);
+  }
+
+  async compilarAhora(
+    claveTab: string,
+    urlApi: string,
+    codigo: string,
+    opciones: { analisis?: boolean; forzar?: boolean; signal?: AbortSignal } = {},
+  ): Promise<ResultadoCompilacionApi | null> {
+    const urlNorm = normalizarUrlApi(urlApi);
+    const analisis = Boolean(opciones.analisis);
+    if (!opciones.forzar) {
+      const cacheado = this.obtenerCache(claveTab, urlNorm, codigo, analisis);
+      if (cacheado) return cacheado;
+    }
+
+    this.cancelar();
+    const versionEsperada = this.version;
+    const controller = new AbortController();
+    this.abortController = controller;
+
+    const onExtAbort = () => controller.abort();
+    opciones.signal?.addEventListener('abort', onExtAbort, { once: true });
+
+    try {
+      const res = await compilarConApiRemota(urlNorm, codigo, {
+        analisis,
+        signal: controller.signal,
+        fetchImpl: this.fetchImpl,
+      });
+      if (this.version !== versionEsperada || controller.signal.aborted) return null;
+      this.abortController = null;
+      if (!res.falloConexion) {
+        this.cache = { claveTab, urlApi: urlNorm, codigo, conAnalisis: analisis, resultado: res };
+      }
+      return res;
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return null;
+      return null;
+    } finally {
+      opciones.signal?.removeEventListener('abort', onExtAbort);
+    }
+  }
+}
+
+/* ==========================================================================
+   CLIENTE WEBSOCKET: /ejecutar (modo normal, continuo y paso a paso)
+   ========================================================================== */
+
+export interface SocketLike {
+  readonly readyState: number;
+  send(data: string): void;
+  close(code?: number, reason?: string): void;
+  addEventListener(type: string, listener: (event: unknown) => void): void;
+  removeEventListener?(type: string, listener: (event: unknown) => void): void;
+}
+
+export type WebSocketFactory = (url: string) => SocketLike;
+
+export interface SesionEjecucionRemota {
+  promesa: Promise<void>;
+  /** Envía `{"tipo":"respuesta","texto":...}` solo si hay una pregunta pendiente. */
+  responder: (texto: string) => boolean;
+  /** Envía un solo `{"tipo":"siguiente"}` por cada evento `estado` con `pausado: true`. */
+  siguiente: () => boolean;
+  /** Cierra la sesión y el WebSocket inmediatamente. */
+  detener: () => void;
+}
+
+const WS_CONNECTING = 0;
+const WS_OPEN = 1;
+const VENTANA_CIERRE_REMOTO_MS = 10_000;
+const ESPERA_PROXY_CIERRE_MS = 8_800;
+const ultimoCierreManualPorUrl = new Map<string, number>();
+
+/**
+ * Abre `/ejecutar` en el servidor Python, envía `iniciar` con únicamente `{ version, instrucciones }`
+ * y gestiona `salida`, `estado`, `pregunta`, `respuesta`, `siguiente`, `entrada_invalida`, `fin` y `error`.
+ */
+export function iniciarEjecucionRemota(
   baseUrl: string,
   intermedio: ProgramaIntermedio,
   opciones: {
+    modo: ModoEjecucionRemota;
     signal?: AbortSignal;
+    onAbierto?: () => void;
     onEvento: (ev: EventoEjecucionRemota) => void;
-    leerEntrada: (mensaje: string) => Promise<string | null>;
+    crearWebSocket?: WebSocketFactory;
+    reintentosApertura?: number;
+    esperaReintentoMs?: number;
   },
-): Promise<void> {
-  return new Promise((resolve) => {
-    if (opciones.signal?.aborted) {
-      resolve();
-      return;
-    }
+): SesionEjecucionRemota {
+  const wsUrl = construirUrlWebSocketApi(baseUrl);
+  const t0 = performance.now();
+  const cierreRecienteMs = ultimoCierreManualPorUrl.get(wsUrl) ?? 0;
+  const tieneCierreReciente =
+    cierreRecienteMs > 0 && Date.now() - cierreRecienteMs < VENTANA_CIERRE_REMOTO_MS;
+  const maxReintentos =
+    opciones.reintentosApertura ?? (opciones.crearWebSocket ? 0 : tieneCierreReciente ? 2 : 1);
+  const esperaReintentoMs = opciones.esperaReintentoMs ?? 900;
+  let terminado = false;
+  let recibioFinal = false;
+  let abierto = false;
+  let intento = 0;
+  let pausadoPendiente = false;
+  let preguntaPendiente = false;
+  let ws: SocketLike | null = null;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let resolverPromesa: (() => void) | null = null;
 
-    const wsUrl = construirUrlWebSocketApi(baseUrl);
-    const t0 = performance.now();
-    let terminado = false;
-    let recibioFinal = false;
-    let ws: WebSocket;
+  const promesa = new Promise<void>((resolve) => {
+    resolverPromesa = resolve;
+  });
 
-    const finalizar = () => {
-      if (terminado) return;
-      terminado = true;
-      opciones.signal?.removeEventListener('abort', onAbort);
-      resolve();
-    };
-
-    const onAbort = () => {
-      try {
-        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
-          ws.close();
-        }
-      } catch {
-        // ignorar cierre
-      }
-      finalizar();
-    };
-
+  const cerrarSocket = () => {
+    if (!ws) return;
     try {
-      ws = new WebSocket(wsUrl);
+      if (ws.readyState === WS_OPEN || ws.readyState === WS_CONNECTING) {
+        ws.close();
+      }
     } catch {
-      opciones.onEvento({
-        tipo: 'error',
-        diagnosticos: [
-          {
-            etapa: 'servicio',
-            mensaje: `No se pudo abrir la conexión WebSocket hacia ${wsUrl}.`,
-            linea: null,
-            columna: null,
-          },
-        ],
-      });
-      finalizar();
+      // ignorar error al cerrar
+    }
+  };
+
+  const finalizar = () => {
+    if (terminado) return;
+    terminado = true;
+    pausadoPendiente = false;
+    preguntaPendiente = false;
+    if (retryTimer !== null) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
+    }
+    opciones.signal?.removeEventListener('abort', detener);
+    resolverPromesa?.();
+  };
+
+  const detener = () => {
+    if (terminado) return;
+    if (abierto && !recibioFinal) {
+      ultimoCierreManualPorUrl.set(wsUrl, Date.now());
+    }
+    recibioFinal = true;
+    cerrarSocket();
+    finalizar();
+  };
+
+  if (opciones.signal?.aborted) {
+    finalizar();
+    return {
+      promesa,
+      responder: () => false,
+      siguiente: () => false,
+      detener,
+    };
+  }
+
+  opciones.signal?.addEventListener('abort', detener, { once: true });
+
+  // Solo enviar version + instrucciones al servidor (nunca incluir analisis)
+  const payloadInicio = JSON.stringify({
+    tipo: 'iniciar',
+    modo: opciones.modo,
+    intermedio: {
+      version: intermedio.version,
+      instrucciones: intermedio.instrucciones,
+    },
+  });
+
+  const emitirErrorConexion = (mensaje: string) => {
+    if (terminado || opciones.signal?.aborted || recibioFinal) return;
+    recibioFinal = true;
+    cerrarSocket();
+    opciones.onEvento({
+      tipo: 'error',
+      falloConexion: true,
+      diagnosticos: [{ etapa: 'servicio', mensaje, linea: null, columna: null }],
+    });
+    finalizar();
+  };
+
+  const conectar = () => {
+    if (terminado || opciones.signal?.aborted) return;
+    let socketActual: SocketLike;
+    try {
+      socketActual = opciones.crearWebSocket ? opciones.crearWebSocket(wsUrl) : new WebSocket(wsUrl);
+      ws = socketActual;
+    } catch {
+      emitirErrorConexion(`No se pudo abrir la conexión WebSocket hacia ${wsUrl}.`);
       return;
     }
 
-    opciones.signal?.addEventListener('abort', onAbort, { once: true });
+    let reintentoProgramado = false;
+    const intentarReapertura = () => {
+      if (reintentoProgramado || abierto || terminado || opciones.signal?.aborted || recibioFinal) {
+        return false;
+      }
+      if (intento >= maxReintentos) return false;
+      reintentoProgramado = true;
+      intento += 1;
+      let espera = esperaReintentoMs;
+      if (opciones.esperaReintentoMs === undefined && tieneCierreReciente) {
+        if (intento === 1) {
+          const transcurrido = Date.now() - cierreRecienteMs;
+          espera = Math.max(1_500, ESPERA_PROXY_CIERRE_MS - transcurrido);
+        } else {
+          espera = 3_200;
+        }
+      }
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        conectar();
+      }, espera);
+      return true;
+    };
 
-    ws.addEventListener('open', () => {
-      if (opciones.signal?.aborted) {
-        onAbort();
+    socketActual.addEventListener('open', () => {
+      if (terminado || opciones.signal?.aborted || ws !== socketActual) {
+        detener();
         return;
       }
-      ws.send(JSON.stringify({ tipo: 'iniciar', intermedio }));
+      abierto = true;
+      ultimoCierreManualPorUrl.delete(wsUrl);
+      opciones.onAbierto?.();
+      socketActual.send(payloadInicio);
     });
 
-    ws.addEventListener('message', (event) => {
-      if (terminado || opciones.signal?.aborted) return;
+    socketActual.addEventListener('message', (rawEvent) => {
+      if (terminado || opciones.signal?.aborted || ws !== socketActual) return;
+      const data = (rawEvent as { data?: unknown })?.data;
       let msg: {
         tipo?: string;
         texto?: string;
         mensaje?: string;
+        linea?: number | null;
+        columna?: number | null;
+        pausado?: boolean;
+        pila?: string[];
+        variables?: VariableMemoria[];
         diagnosticos?: Diagnostico[];
       };
       try {
-        msg = JSON.parse(String(event.data)) as typeof msg;
+        msg = JSON.parse(String(data)) as typeof msg;
       } catch {
         return;
       }
 
       if (msg.tipo === 'salida') {
         opciones.onEvento({ tipo: 'salida', texto: String(msg.texto ?? '') });
+      } else if (msg.tipo === 'estado') {
+        const pausado = Boolean(msg.pausado);
+        pausadoPendiente = pausado;
+        opciones.onEvento({
+          tipo: 'estado',
+          linea: typeof msg.linea === 'number' ? msg.linea : null,
+          columna: typeof msg.columna === 'number' ? msg.columna : null,
+          pausado,
+          pila: Array.isArray(msg.pila) ? msg.pila : ['programa'],
+          variables: Array.isArray(msg.variables) ? msg.variables : [],
+        });
       } else if (msg.tipo === 'entrada_invalida') {
         opciones.onEvento({
           tipo: 'entrada_invalida',
           mensaje: String(msg.mensaje ?? 'Entrada inválida.'),
         });
       } else if (msg.tipo === 'pregunta') {
-        const pregunta = String(msg.mensaje ?? 'Escribe tu respuesta');
-        opciones.onEvento({ tipo: 'pregunta', mensaje: pregunta });
-        void opciones.leerEntrada(pregunta).then((respuesta) => {
-          if (terminado || opciones.signal?.aborted) return;
-          if (respuesta === null) {
-            onAbort();
-            return;
-          }
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ tipo: 'respuesta', texto: respuesta }));
-          }
+        preguntaPendiente = true;
+        opciones.onEvento({
+          tipo: 'pregunta',
+          mensaje: String(msg.mensaje ?? 'Escribe tu respuesta'),
         });
       } else if (msg.tipo === 'fin') {
         recibioFinal = true;
-        opciones.onEvento({ tipo: 'fin', duracionMs: performance.now() - t0 });
+        cerrarSocket();
+        opciones.onEvento({ tipo: 'fin', duracionMs: Math.round((performance.now() - t0) * 10) / 10 });
         finalizar();
       } else if (msg.tipo === 'error') {
         recibioFinal = true;
+        cerrarSocket();
         opciones.onEvento({
           tipo: 'error',
           diagnosticos:
@@ -512,39 +760,40 @@ export function ejecutarConApiRemota(
       }
     });
 
-    ws.addEventListener('error', () => {
-      if (terminado || opciones.signal?.aborted || recibioFinal) return;
-      recibioFinal = true;
-      opciones.onEvento({
-        tipo: 'error',
-        diagnosticos: [
-          {
-            etapa: 'servicio',
-            mensaje: `No se pudo ejecutar por WebSocket en ${wsUrl}. Verifica que la API Python acepte este origen.`,
-            linea: null,
-            columna: null,
-          },
-        ],
-      });
-      finalizar();
+    socketActual.addEventListener('error', () => {
+      if (ws !== socketActual || terminado || opciones.signal?.aborted || recibioFinal) return;
+      if (intentarReapertura()) return;
+      emitirErrorConexion(
+        `No se pudo conectar con Python en ${wsUrl}. Pulsa Reintentar o revisa la URL en Ajustes.`,
+      );
     });
 
-    ws.addEventListener('close', () => {
-      if (terminado || opciones.signal?.aborted) return;
+    socketActual.addEventListener('close', () => {
+      if (ws !== socketActual || terminado || opciones.signal?.aborted) return;
+      if (reintentoProgramado || intentarReapertura()) return;
       if (!recibioFinal) {
-        opciones.onEvento({
-          tipo: 'error',
-          diagnosticos: [
-            {
-              etapa: 'servicio',
-              mensaje: 'La conexión con el intérprete Python se cerró antes de terminar.',
-              linea: null,
-              columna: null,
-            },
-          ],
-        });
+        emitirErrorConexion('La conexión con Python se cerró antes de terminar. Pulsa Reintentar.');
+      } else {
+        finalizar();
       }
-      finalizar();
     });
-  });
+  };
+
+  conectar();
+
+  const responder = (texto: string): boolean => {
+    if (terminado || !preguntaPendiente || !ws || ws.readyState !== WS_OPEN) return false;
+    preguntaPendiente = false;
+    ws.send(JSON.stringify({ tipo: 'respuesta', texto }));
+    return true;
+  };
+
+  const siguiente = (): boolean => {
+    if (terminado || !pausadoPendiente || !ws || ws.readyState !== WS_OPEN) return false;
+    pausadoPendiente = false;
+    ws.send(JSON.stringify({ tipo: 'siguiente' }));
+    return true;
+  };
+
+  return { promesa, responder, siguiente, detener };
 }
