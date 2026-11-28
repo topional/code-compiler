@@ -9,12 +9,12 @@ from collections import Counter, deque
 from dataclasses import asdict
 from ipaddress import ip_address
 from time import monotonic
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
-from pydantic import BaseModel, StrictStr, ValidationError
+from pydantic import BaseModel, Field, RootModel, StrictStr, ValidationError
 from starlette.requests import ClientDisconnect
 
 from lenguaje.diagnostico import Diagnostico
@@ -25,6 +25,7 @@ from .supervisor_edu import ProcesoFallido, comprobar_fin, enviar, recibir, subp
 
 PLAZO_COMPILACION = 5
 PLAZO_RESPUESTA = 30
+PLAZO_PASO = 30
 PLAZO_SESION = 120
 MAX_COMPILACIONES = 2
 MAX_EJECUCIONES = 4
@@ -40,11 +41,20 @@ class SolicitudCompilacion(BaseModel):
 class Inicio(BaseModel):
     tipo: Literal["iniciar"]
     intermedio: dict[str, Any]
+    modo: Literal["normal", "continuo", "paso"] = "normal"
 
 
 class Respuesta(BaseModel):
     tipo: Literal["respuesta"]
     texto: StrictStr
+
+
+class Siguiente(BaseModel):
+    tipo: Literal["siguiente"]
+
+
+class ControlSesion(RootModel[Annotated[Respuesta | Siguiente, Field(discriminator="tipo")]]):
+    pass
 
 
 class FalloAPI(Exception):
@@ -130,9 +140,9 @@ async def esperar_desconexion(peticion):
     raise ClientDisconnect()
 
 
-async def compilar_en_proceso(codigo):
+async def compilar_en_proceso(codigo, analisis):
     async with subprocesso("compilar") as proceso:
-        await enviar(proceso, codigo)
+        await enviar(proceso, {"codigo": codigo, "analisis": analisis})
         datos = await recibir(proceso)
         await comprobar_fin(proceso)
         return datos
@@ -155,24 +165,32 @@ async def leer_websocket(websocket, modelo, mensaje):
 class Sesion:
     def __init__(self, websocket):
         self.websocket = websocket
-        self.respuesta = None
+        self.pendiente = None
 
-    async def recibir_respuestas(self):
+    async def recibir_controles(self):
         while True:
-            respuesta = await leer_websocket(self.websocket, Respuesta,
-                                             "Se esperaba una respuesta con texto.")
-            if self.respuesta is None or self.respuesta.done():
-                raise FalloAPI(422, "protocolo", "No hay una pregunta pendiente.")
-            self.respuesta.set_result(respuesta.texto)
+            control = (await leer_websocket(self.websocket, ControlSesion,
+                                            "Se esperaba una respuesta con texto o un mensaje 'siguiente'.")).root
+            if (self.pendiente is None or self.pendiente[0] != control.tipo
+                    or self.pendiente[1].done()):
+                mensaje = ("No hay una pregunta pendiente." if control.tipo == "respuesta"
+                           else "No hay un paso pendiente.")
+                raise FalloAPI(422, "protocolo", mensaje)
+            self.pendiente[1].set_result(control.texto if isinstance(control, Respuesta) else None)
 
-    async def ejecutar(self, intermedio):
+    async def ejecutar(self, inicio):
         async with subprocesso("ejecutar") as proceso:
-            await self.enviar_datos(proceso, intermedio)
+            await self.enviar_datos(proceso, {"intermedio": inicio.intermedio, "modo": inicio.modo})
             while True:
                 evento = await recibir(proceso)
                 tipo = evento["tipo"]
                 if tipo == "pregunta":
-                    await self.preguntar(proceso, evento)
+                    await self.esperar_control(proceso, evento, "respuesta", PLAZO_RESPUESTA,
+                                               "Se agotó el plazo para responder la pregunta.")
+                    continue
+                if tipo == "estado" and evento["pausado"]:
+                    await self.esperar_control(proceso, evento, "siguiente", PLAZO_PASO,
+                                               "Se agotó el plazo para avanzar al siguiente paso.")
                     continue
                 terminal = tipo in ("fin", "error")
                 if terminal:
@@ -181,16 +199,17 @@ class Sesion:
                 if terminal:
                     return tipo
 
-    async def preguntar(self, proceso, evento):
-        self.respuesta = asyncio.get_running_loop().create_future()
+    async def esperar_control(self, proceso, evento, tipo, plazo, mensaje):
+        futuro = asyncio.get_running_loop().create_future()
+        self.pendiente = (tipo, futuro)
         try:
             await self.websocket.send_json(evento)
-            texto = await asyncio.wait_for(self.respuesta, PLAZO_RESPUESTA)
+            datos = await asyncio.wait_for(futuro, plazo)
         except asyncio.TimeoutError:
-            raise FalloAPI(504, "limite", "Se agotó el plazo para responder la pregunta.") from None
+            raise FalloAPI(504, "limite", mensaje) from None
         finally:
-            self.respuesta = None
-        await self.enviar_datos(proceso, texto)
+            self.pendiente = None
+        await self.enviar_datos(proceso, datos)
 
     async def enviar_datos(self, proceso, datos):
         try:
@@ -202,7 +221,7 @@ class Sesion:
 async def ejecutar_sesion(websocket):
     inicio = await leer_websocket(websocket, Inicio, "Se esperaba iniciar con el código intermedio.")
     sesion = Sesion(websocket)
-    return await vigilar(sesion.ejecutar(inicio.intermedio), sesion.recibir_respuestas())
+    return await vigilar(sesion.ejecutar(inicio), sesion.recibir_controles())
 
 
 def fallo_del_proceso(error):
@@ -227,7 +246,7 @@ def crear_app(origenes=()):
     @app.post("/compilar", openapi_extra={"requestBody": {"required": True, "content": {
         "application/json": {"schema": SolicitudCompilacion.model_json_schema()},
     }}})
-    async def compilar(peticion: Request):
+    async def compilar(peticion: Request, analisis: bool = False):
         inicio = monotonic()
         estado = 500
         fallo = None
@@ -245,7 +264,7 @@ def crear_app(origenes=()):
             if compilaciones.locked():
                 raise FalloAPI(503, "servicio", "No hay cupos de compilación disponibles.")
             async with compilaciones:
-                datos = await asyncio.wait_for(vigilar(compilar_en_proceso(solicitud.codigo),
+                datos = await asyncio.wait_for(vigilar(compilar_en_proceso(solicitud.codigo, analisis),
                                                        esperar_desconexion(peticion)), PLAZO_COMPILACION)
             estado = 422 if "diagnosticos" in datos else 200
             return JSONResponse(datos, status_code=estado)

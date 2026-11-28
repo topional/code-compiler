@@ -29,8 +29,8 @@ PREGUNTA = 'crear variable dato\npreguntar "Dato" guardar en dato\n'
 CICLO = "mientras verdadero hacer\nfin\n"
 
 
-def iniciar(websocket, intermedio):
-    websocket.send_json({"tipo": "iniciar", "intermedio": intermedio})
+def iniciar(websocket, intermedio, **opciones):
+    websocket.send_json({"tipo": "iniciar", "intermedio": intermedio, **opciones})
 
 
 def responder(websocket, texto):
@@ -124,6 +124,85 @@ class PruebasAPI(unittest.TestCase):
             self.assertEqual(websocket.receive_json(), {"tipo": "salida", "texto": "12"})
             self.assertEqual(websocket.receive_json(), {"tipo": "fin"})
 
+    def test_estado_continuo_y_final(self):
+        programa = self.compilar('crear variable dato\nasignar dato valor de 1 / 2\nmostrar dato\n')
+        with self.cliente.websocket_connect("/ejecutar", headers={"Origin": ORIGEN}) as websocket:
+            iniciar(websocket, programa, modo="continuo")
+            declaracion = websocket.receive_json()
+            self.assertEqual((declaracion["tipo"], declaracion["linea"], declaracion["pausado"]),
+                             ("estado", 1, False))
+            self.assertEqual(declaracion["variables"][0]["tipo"], "sin_valor")
+            asignacion = websocket.receive_json()
+            self.assertEqual(asignacion["variables"][0], {
+                "idInterno": "%v1_dato", "nombre": "dato", "tipo": "numero",
+                "valor": "1/2", "ambito": "global", "cambioReciente": True,
+            })
+            self.assertEqual(websocket.receive_json(), {"tipo": "salida", "texto": "1/2"})
+            self.assertEqual(websocket.receive_json()["linea"], 3)
+            final = websocket.receive_json()
+            self.assertIsNone(final["linea"])
+            self.assertFalse(final["pausado"])
+            self.assertEqual(final["variables"][0]["valor"], "1/2")
+            self.assertEqual(websocket.receive_json(), {"tipo": "fin"})
+
+    def test_paso_en_funcion_con_pregunta(self):
+        programa = self.compilar(dedent('''\
+            definir pedir(numero base) devuelve numero
+                preguntar "Dato" guardar en base
+                devolver base
+            fin
+            mostrar pedir(1)
+        '''))
+        with self.cliente.websocket_connect("/ejecutar") as websocket:
+            iniciar(websocket, programa, modo="paso")
+            llamada = websocket.receive_json()
+            self.assertEqual((llamada["linea"], llamada["pila"], llamada["pausado"]),
+                             (5, ["programa", "pedir"], True))
+            websocket.send_json({"tipo": "siguiente"})
+            parametro = websocket.receive_json()
+            self.assertEqual(parametro["variables"][0]["ambito"], "función pedir")
+            self.assertEqual(parametro["variables"][0]["valor"], "1")
+            websocket.send_json({"tipo": "siguiente"})
+            self.assertEqual(websocket.receive_json(), {"tipo": "pregunta", "mensaje": "Dato"})
+            responder(websocket, "hola")
+            self.assertEqual(websocket.receive_json()["tipo"], "entrada_invalida")
+            self.assertEqual(websocket.receive_json()["tipo"], "pregunta")
+            responder(websocket, ".5")
+            self.assertEqual(websocket.receive_json()["variables"][0]["valor"], "1/2")
+            websocket.send_json({"tipo": "siguiente"})
+            retorno = websocket.receive_json()
+            self.assertEqual(retorno["pila"], ["programa"])
+            self.assertEqual(retorno["variables"], [])
+            websocket.send_json({"tipo": "siguiente"})
+            self.assertEqual(websocket.receive_json(), {"tipo": "salida", "texto": "1/2"})
+            self.assertTrue(websocket.receive_json()["pausado"])
+            websocket.send_json({"tipo": "siguiente"})
+            self.assertFalse(websocket.receive_json()["pausado"])
+            self.assertEqual(websocket.receive_json(), {"tipo": "fin"})
+
+    def test_controles_fuera_de_turno(self):
+        programa = self.compilar(PREGUNTA)
+        with self.cliente.websocket_connect("/ejecutar") as websocket:
+            iniciar(websocket, programa, modo="paso")
+            self.assertTrue(websocket.receive_json()["pausado"])
+            responder(websocket, "anticipada")
+            self.assertEqual(websocket.receive_json()["diagnosticos"][0]["etapa"], "protocolo")
+        with self.cliente.websocket_connect("/ejecutar") as websocket:
+            iniciar(websocket, programa)
+            self.assertEqual(websocket.receive_json()["tipo"], "pregunta")
+            websocket.send_json({"tipo": "siguiente"})
+            self.assertEqual(websocket.receive_json()["diagnosticos"][0]["etapa"], "protocolo")
+
+    def test_plazo_de_paso(self):
+        programa = self.compilar(PREGUNTA)
+        with patch.object(api, "PLAZO_PASO", 0.05):
+            with self.cliente.websocket_connect("/ejecutar") as websocket:
+                iniciar(websocket, programa, modo="paso")
+                self.assertTrue(websocket.receive_json()["pausado"])
+                diagnostico = websocket.receive_json()["diagnosticos"][0]
+                self.assertEqual(diagnostico["etapa"], "limite")
+                self.assertIn("siguiente paso", diagnostico["mensaje"])
+
     def test_diagnosticos_del_compilador(self):
         casos = (("mostrar @", "lexer", 9), ("asignar dato 1", "gramatica", 14),
                  ("mostrar faltante", "semantica", 9))
@@ -135,6 +214,48 @@ class PruebasAPI(unittest.TestCase):
                 self.assertEqual(set(diagnostico), {"etapa", "mensaje", "linea", "columna"})
                 self.assertEqual((diagnostico["etapa"], diagnostico["linea"], diagnostico["columna"]),
                                  (etapa, 2, columna))
+
+    def test_analisis_optativo_con_tokens_arbol_y_simbolos(self):
+        codigo = dedent('''\
+            crear variable nombre
+            asignar nombre valor de "Sofía"
+            definir triple(numero n) devuelve numero
+                devolver n * 3
+            fin
+            mostrar triple(4)
+        ''')
+        intermedio = self.compilar(codigo)
+        respuesta = self.cliente.post("/compilar?analisis=true", json={"codigo": codigo})
+        self.assertEqual(respuesta.status_code, 200)
+        resultado = respuesta.json()
+        analisis = resultado.pop("analisis")
+        self.assertEqual(resultado, intermedio)
+        self.assertEqual(analisis["tokens"][0], {
+            "tipo": "CREAR", "texto": "crear", "linea": 1, "columna": 1,
+        })
+        self.assertIn("Sofía", "".join(t["texto"] for t in analisis["tokens"]))
+        self.assertEqual(analisis["arbol"], {"sentencias": 4})
+        self.assertEqual(analisis["simbolos"], [
+            {"nombre": "nombre", "tipo": "texto", "linea": 1, "columna": 16, "esFuncion": False},
+            {"nombre": "triple", "tipo": "numero", "linea": 3, "columna": 9, "esFuncion": True},
+            {"nombre": "n", "tipo": "numero", "linea": 3, "columna": 23, "esFuncion": False},
+        ])
+
+    def test_analisis_parcial_con_diagnosticos(self):
+        casos = (
+            ("mostrar @", "lexer", None),
+            ("mostrar", "gramatica", None),
+            ("mostrar faltante", "semantica", {"sentencias": 1}),
+        )
+        for codigo, etapa, arbol in casos:
+            with self.subTest(etapa=etapa):
+                respuesta = self.cliente.post("/compilar?analisis=true", json={"codigo": codigo})
+                self.assertEqual(respuesta.status_code, 422)
+                datos = respuesta.json()
+                self.assertEqual(datos["diagnosticos"][0]["etapa"], etapa)
+                self.assertEqual(datos["analisis"]["arbol"], arbol)
+                self.assertEqual(datos["analisis"]["simbolos"], [])
+                self.assertEqual(datos["analisis"]["tokens"][0]["tipo"], "MOSTRAR")
 
     def test_division_por_cero_con_ubicacion(self):
         programa = self.compilar('crear variable dato\nasignar dato valor de 0\n'
@@ -243,7 +364,7 @@ class PruebasAPI(unittest.TestCase):
         liberar = Event()
         solicitudes = []
 
-        async def bloquear_compilacion(codigo):
+        async def bloquear_compilacion(codigo, _analisis):
             solicitudes.append(codigo)
             if len(solicitudes) == 2:
                 cupos_llenos.set()
@@ -279,8 +400,13 @@ class PruebasAPI(unittest.TestCase):
             self.assertEqual(self.compilar("")["instrucciones"], [])
 
     def test_desconexion_de_websocket_recoge_el_proceso(self):
-        for codigo in (PREGUNTA, 'mostrar "listo"\n' + CICLO):
-            with self.subTest(codigo=codigo):
+        casos = (
+            (PREGUNTA, "normal", "pregunta"),
+            ('mostrar "listo"\n' + CICLO, "normal", "salida"),
+            (PREGUNTA, "paso", "estado"),
+        )
+        for codigo, modo, esperado in casos:
+            with self.subTest(codigo=codigo, modo=modo):
                 programa = self.compilar(codigo)
                 original = api.subprocesso
                 terminado = Event()
@@ -297,10 +423,13 @@ class PruebasAPI(unittest.TestCase):
 
                 with patch.object(api, "subprocesso", registrar):
                     with self.cliente.websocket_connect("/ejecutar") as websocket:
-                        iniciar(websocket, programa)
-                        self.assertIn(websocket.receive_json()["tipo"], ("pregunta", "salida"))
+                        iniciar(websocket, programa, modo=modo)
+                        self.assertEqual(websocket.receive_json()["tipo"], esperado)
                     self.assertTrue(terminado.wait(3))
                     self.assertIsNotNone(procesos[0].returncode)
+                with self.cliente.websocket_connect("/ejecutar") as websocket:
+                    iniciar(websocket, {"version": 1, "instrucciones": []})
+                    self.assertEqual(websocket.receive_json(), {"tipo": "fin"})
 
 
 class PruebasSupervisor(unittest.IsolatedAsyncioTestCase):
@@ -315,7 +444,7 @@ class PruebasSupervisor(unittest.IsolatedAsyncioTestCase):
         async def enviar(evento):
             enviados.append(evento)
 
-        async def compilar_sin_entregar_codigo(_codigo):
+        async def compilar_sin_entregar_codigo(_codigo, _analisis):
             async with api.subprocesso("compilar") as proceso:
                 procesos.append(proceso)
                 listo.set()

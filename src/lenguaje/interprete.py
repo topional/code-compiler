@@ -18,6 +18,11 @@ IGUALDAD = {"==": operator.eq, "!=": operator.ne}
 LOGICAS = {"y": operator.and_, "o": operator.or_}
 TIPOS = {"numero": Fraction, "texto": str, "logico": bool}
 LOGICOS = {"verdadero": True, "falso": False}
+OPERACIONES_OBSERVABLES = {
+    "declarar", "asignar", "mostrar", "preguntar", "saltar_si_falso",
+    "llamar", "parametro", "devolver", "aleatorio", "motivacion",
+}
+ESCRITURAS_OBSERVABLES = {"declarar", "asignar", "preguntar", "parametro", "devolver", "aleatorio"}
 
 BINARIA = ("argumento1", "argumento2", "resultado")
 UNARIA = ("argumento1", "resultado")
@@ -44,6 +49,7 @@ class ErrorEjecucion(Exception):
 class Ambito:
     exterior: "Ambito | None" = None
     nombres: dict = field(default_factory=dict)
+    etiqueta: str = "global"
 
     def buscar(self, identificador):
         ambito = self
@@ -59,6 +65,7 @@ class Funcion:
     entrada: int
     tipo_retorno: str
     ambito: Ambito
+    nombre: str
 
 
 @dataclass
@@ -68,6 +75,7 @@ class Marco:
     tipo_retorno: str | None = None
     temporales: dict = field(default_factory=dict)
     pendientes: list = field(default_factory=list)
+    nombre: str = "programa"
 
     @property
     def ambito(self):
@@ -166,8 +174,37 @@ def error_de_ejecucion(instruccion, mensaje):
     return ErrorEjecucion(Diagnostico("ejecucion", mensaje, instruccion.linea, instruccion.columna))
 
 
-def ejecutar(instrucciones, *, leer, escribir, entrada_invalida=None):
-    """Ejecuta instrucciones con callbacks para preguntas, salida y avisos de entrada."""
+def estado_de_ejecucion(instruccion, marco, pila, modificado=None):
+    cadena = []
+    ambito = marco.ambito
+    while ambito is not None:
+        cadena.append(ambito)
+        ambito = ambito.exterior
+
+    variables = []
+    for ambito in reversed(cadena):
+        for identificador, valor in ambito.nombres.items():
+            if not identificador.startswith("%v") or isinstance(valor, Funcion):
+                continue
+            variables.append({
+                "idInterno": identificador,
+                "nombre": identificador.partition("_")[2] or identificador,
+                "tipo": next((tipo for tipo, clase in TIPOS.items()
+                              if isinstance(valor, clase)), "sin_valor"),
+                "valor": "sin valor" if valor is None else formatear(valor),
+                "ambito": ambito.etiqueta,
+                "cambioReciente": identificador == modificado,
+            })
+    return {
+        "linea": instruccion.linea if instruccion else None,
+        "columna": instruccion.columna if instruccion else None,
+        "variables": variables,
+        "pila": [anterior.nombre for anterior, _, _ in pila] + [marco.nombre],
+    }
+
+
+def ejecutar(instrucciones, *, leer, escribir, entrada_invalida=None, observar=None):
+    """Ejecuta instrucciones y permite observar el estado tras cada operación visible."""
     if entrada_invalida is None:
         entrada_invalida = escribir
     etiquetas = etiquetas_del_programa(instrucciones)
@@ -217,7 +254,7 @@ def ejecutar(instrucciones, *, leer, escribir, entrada_invalida=None):
                     if not exigir_tipo(marco.valor(primero), "logico"):
                         posicion = etiquetas[destino]
                 case "abrir_ambito":
-                    marco.ambitos.append(Ambito(marco.ambito))
+                    marco.ambitos.append(Ambito(marco.ambito, etiqueta=f"bloque (L{instruccion.linea or '?'})"))
                 case "cerrar_ambito":
                     if len(marco.ambitos) == 1:
                         raise ValueError("no hay un bloque abierto para cerrar.")
@@ -234,7 +271,8 @@ def ejecutar(instrucciones, *, leer, escribir, entrada_invalida=None):
                         raise ValueError("el límite mínimo del aleatorio no puede ser mayor que el máximo.")
                     marco.guardar(destino, Fraction(randint(minimo, maximo)))
                 case "funcion":
-                    marco.ambito.nombres[destino] = Funcion(etiquetas[primero], segundo, marco.ambito)
+                    nombre = instruccion.nombre or destino.partition("_")[2] or destino
+                    marco.ambito.nombres[destino] = Funcion(etiquetas[primero], segundo, marco.ambito, nombre)
                 case "argumento":
                     if int(segundo) != len(marco.pendientes):
                         raise ValueError("los argumentos de la llamada están fuera de orden.")
@@ -248,7 +286,10 @@ def ejecutar(instrucciones, *, leer, escribir, entrada_invalida=None):
                         raise ValueError("la cantidad de argumentos de la llamada es incorrecta.")
                     marco.pendientes = []
                     pila.append((marco, posicion, destino))
-                    marco = Marco([Ambito(funcion.ambito)], argumentos, funcion.tipo_retorno)
+                    marco = Marco(
+                        [Ambito(funcion.ambito, etiqueta=f"función {funcion.nombre}")],
+                        argumentos, funcion.tipo_retorno, nombre=funcion.nombre,
+                    )
                     posicion = funcion.entrada
                 case "parametro":
                     indice = int(primero)
@@ -265,6 +306,9 @@ def ejecutar(instrucciones, *, leer, escribir, entrada_invalida=None):
                     raise ValueError("la función terminó sin devolver un valor.")
                 case "etiqueta" | "motivacion":
                     pass
+            if observar is not None and operacion in OPERACIONES_OBSERVABLES:
+                modificado = destino if operacion in ESCRITURAS_OBSERVABLES else None
+                observar(estado_de_ejecucion(instruccion, marco, pila, modificado), False)
         except ZeroDivisionError:
             raise error_de_ejecucion(instruccion, "división por cero.") from None
         except EOFError:
@@ -273,3 +317,5 @@ def ejecutar(instrucciones, *, leer, escribir, entrada_invalida=None):
             raise error_de_ejecucion(instruccion, str(error)) from None
     if pila or len(marco.ambitos) != 1:
         raise error_de_ejecucion(instruccion, "el programa terminó con una llamada o un bloque abierto.")
+    if observar is not None:
+        observar(estado_de_ejecucion(None, marco, pila), True)

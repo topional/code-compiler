@@ -6,7 +6,7 @@ from fractions import Fraction
 from generated.EducativoParserVisitor import EducativoParserVisitor
 
 from .diagnostico import Diagnostico
-from .tabla_simbolos import TablaSimbolos
+from .tabla_simbolos import Simbolo, TablaSimbolos
 
 ERROR = "error"
 
@@ -34,13 +34,14 @@ class AnalizadorSemantico(EducativoParserVisitor):
     None indica tipo desconocido; ERROR indica un error previo.
     """
 
-    def __init__(self):
+    def __init__(self, *, registrar_simbolos=False):
         self.tabla = TablaSimbolos()
         self.errores = []
         self.funciones = [{}]
         self.marcos = []
         self.diagnosticos = set()
         self.tipos_entrada = {}
+        self.simbolos = {} if registrar_simbolos else None
 
     def error(self, token, mensaje):
         diagnostico = Diagnostico.desde_token("semantica", mensaje, token)
@@ -56,6 +57,8 @@ class AnalizadorSemantico(EducativoParserVisitor):
             self.error(token, f"la variable '{token.text}' ya está declarada en este ámbito "
                        f"(primera declaración en {anterior.linea}:{anterior.columna}). "
                        "Usa 'asignar' para cambiar su valor.")
+        elif self.simbolos is not None:
+            self.simbolos[token.tokenIndex] = (self.tabla.buscar(token.text), False)
 
     def buscar(self, nodo):
         token = nodo.getSymbol()
@@ -367,6 +370,11 @@ class AnalizadorSemantico(EducativoParserVisitor):
             self.error(ctx.ID().getSymbol(), f"la función '{nombre}' ya está declarada en este ámbito.")
         else:
             self.funciones[-1][nombre] = funcion
+            if self.simbolos is not None:
+                token = ctx.ID().getSymbol()
+                self.simbolos[token.tokenIndex] = (
+                    Simbolo(nombre, token.line, token.column + 1, funcion.retorno), True,
+                )
         funcion.funciones_visibles = [ambito.copy() for ambito in self.funciones]
         if not self.retorno_garantizado(cuerpo):
             self.error(ctx.ID().getSymbol(), f"la función '{nombre}' debe devolver un valor en todos los caminos.")

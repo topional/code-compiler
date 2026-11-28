@@ -34,6 +34,17 @@ devuelve `500`.
 El editor puede enviar el texto tras una pausa al escribir y aplicar los
 diagnósticos solo si la respuesta corresponde a la versión actual del texto.
 
+Para las misiones y la vista de etapas, usa `POST /compilar?analisis=true`.
+La respuesta de compilación añade `analisis` junto a `version` e
+`instrucciones`, o junto a `diagnosticos` si el código contiene errores.
+Pasa solo `version` e `instrucciones` al cliente de ejecución.
+
+| Campo de `analisis` | Contenido |
+| --- | --- |
+| `tokens` | Lista con `tipo`, `texto`, `linea` y `columna`. Incluye saltos de línea y omite el fin de archivo. |
+| `arbol` | Resumen con `sentencias`, la cantidad de instrucciones del nivel principal. Es `null` si falla el lexer o la gramática. |
+| `simbolos` | Declaraciones ordenadas por posición con `nombre`, `tipo`, `linea`, `columna` y `esFuncion`. El tipo puede ser `null` y, en una función, indica el tipo de retorno. La lista queda vacía si el análisis semántico no llega a ejecutarse. |
+
 ## Ejecutar
 
 Abre `/ejecutar` y envía un único mensaje de inicio con el objeto recibido al
@@ -52,11 +63,39 @@ El servidor cierra la conexión después de `fin` o `error`. Un origen web ajeno
 a la lista configurada recibe `403` durante la negociación. Al superar los
 límites de tasa o concurrencia, la negociación devuelve `429` o `503`.
 
+### Estado y paso a paso
+
+El mensaje `iniciar` admite un campo opcional `modo`. `normal` es el valor
+predeterminado. `continuo` emite estados sin detener la ejecución y `paso`
+espera un mensaje del cliente tras cada estado con `pausado: true`.
+
+Envía el código intermedio de `/compilar` con el modo solicitado.
+
+```json
+{"tipo":"iniciar","modo":"paso","intermedio":{"version":1,"instrucciones":[{"operacion":"declarar","resultado":"%v1_dato","linea":1,"columna":1}]}}
+```
+
+El servidor envía `estado` después de una operación observable como una
+asignación, una llamada, un retorno o una salida. La pila va desde `programa`
+hasta la función activa. Las variables incluyen los ámbitos léxicos accesibles
+en ese punto. `valor` es texto y conserva los números exactos, como `1/2`.
+
+```json
+{"tipo":"estado","linea":1,"columna":1,"pausado":true,"pila":["programa"],"variables":[{"idInterno":"%v1_dato","nombre":"dato","tipo":"sin_valor","valor":"sin valor","ambito":"global","cambioReciente":true}]}
+```
+
+Envía una sola vez `{"tipo":"siguiente"}` al recibir un estado pausado.
+Ante `pregunta`, envía `respuesta`. Al terminar correctamente, el último
+estado lleva `linea: null`, `columna: null` y `pausado: false`, seguido de
+`fin`. Cierra WebSocket para detener una sesión en curso.
+
 | Límite | Valor inicial |
 | --- | --- |
 | Fuente / cuerpo HTTP / mensaje WebSocket | 64 KiB / 1 MiB / 1 MiB |
 | Salida de `mostrar` por ejecución | 64 KiB de texto UTF-8. Un evento vacío consume un byte del cupo. |
+| Estados de ejecución por sesión | 4 MiB de JSON UTF-8 |
 | Plazo por compilación / por pregunta / por sesión | 5 s / 30 s por pregunta emitida / 2 min |
+| Plazo por pausa | 30 s por estado pausado |
 | Memoria virtual / CPU por subproceso en Linux | 256 MiB / 2 s |
 | Cupos globales disponibles | 2 compilaciones y 4 ejecuciones simultáneas |
 | Ventana móvil por IP | 120 solicitudes de compilación y 10 intentos de apertura WebSocket por minuto |
