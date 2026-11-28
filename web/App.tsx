@@ -100,7 +100,7 @@ const STORAGE_KEYS = {
   pestanas: 'chispa_edu_wb_pestanas_v5',
   misiones: 'chispa_edu_misiones_ok',
   paneles: 'chispa_edu_tamano_paneles',
-  urlApi: 'chispa_edu_api_url_v1',
+  urlApi: 'chispa_edu_api_url_v2',
 };
 
 function leerUrlApiInicial(): string {

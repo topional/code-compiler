@@ -149,13 +149,20 @@ export function SettingsDialog({
           </div>
 
           <div className="setting-group">
-            <label
-              htmlFor="api-url-input"
-              className="setting-label"
-              style={{ display: 'block', marginBottom: 4 }}
-            >
-              Servidor Python (Render o desarrollo local)
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <label htmlFor="api-url-input" className="setting-label">
+                Servidor Python
+              </label>
+              {urlApi.trim() !== URL_API_PYTHON_DEFECTO && (
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => onCambiarUrlApi(URL_API_PYTHON_DEFECTO)}
+                >
+                  Restaurar Render
+                </button>
+              )}
+            </div>
             <input
               id="api-url-input"
               type="url"
@@ -165,24 +172,8 @@ export function SettingsDialog({
               onChange={(e) => onCambiarUrlApi(e.target.value)}
               placeholder={URL_API_PYTHON_DEFECTO}
             />
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => onCambiarUrlApi(URL_API_PYTHON_DEFECTO)}
-              >
-                Usar Render
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => onCambiarUrlApi('http://127.0.0.1:8000')}
-              >
-                Usar local (127.0.0.1:8000)
-              </button>
-            </div>
             <small style={{ color: 'var(--ink-secondary)', fontSize: '0.74rem', lineHeight: 1.45, display: 'block', marginTop: 4 }}>
-              La compilación, la ejecución en vivo y la depuración paso a paso corren en el motor Python.
+              Por defecto usa Python en Render. Solo cambia esta URL si ejecutas la API localmente en tu equipo.
             </small>
           </div>
         </div>
