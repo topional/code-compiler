@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 76" fill="none">
+  <g transform="translate(8, 10) scale(0.58)">
+    <polygon points="42,6 4,40 4,56 42,90 42,72 19,48 42,24" fill="#facc15" />
+    <path d="M56 10 Q60 43 82 48 Q60 53 56 86 Q52 53 30 48 Q52 43 56 10 Z" fill="#38bdf8" />
+    <polygon points="70,6 108,40 108,56 70,90 70,72 93,48 70,24" fill="#facc15" />
+  </g>
+  <text x="86" y="42" font-family="'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif" font-size="30" font-weight="800" fill="#f8fafc" letter-spacing="-0.6">Chispa</text>
+  <text x="196" y="42" font-family="'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif" font-size="30" font-weight="500" fill="#94a3b8" letter-spacing="-0.4">· Code Compiler</text>
+  <text x="87" y="61" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="12" font-weight="600" fill="#38bdf8" letter-spacing="0.4">LENGUAJE EDUCATIVO .EDU · ANTLR4 · PYTHON · ESTUDIO 2D</text>
+</svg>
